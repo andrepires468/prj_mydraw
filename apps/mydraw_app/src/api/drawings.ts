@@ -1,0 +1,42 @@
+import { http } from './http'
+
+export interface Drawing {
+  id: number
+  user_id: number
+  title: string
+  description: string | null
+  prompt: string | null
+  model: string | null
+  object_key: string
+  mime_type: string | null
+  size: number | null
+  url: string | null
+  created_at: string
+  updated_at: string
+  user?: { id: number; name: string }
+}
+
+export interface Paginated<T> {
+  data: T[]
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+}
+
+export async function listDrawings(page = 1) {
+  const { data } = await http.get<Paginated<Drawing>>('/drawings', {
+    params: { page },
+  })
+  return data
+}
+
+export async function pingApi() {
+  const { data } = await http.get<{
+    pong: boolean
+    service: string
+    env: string
+    timestamp: string
+  }>('/ping')
+  return data
+}

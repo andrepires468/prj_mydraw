@@ -1,0 +1,59 @@
+# ==============================================================================
+# Sistema / IDE
+# ==============================================================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ==============================================================================
+# Ambiente
+# ==============================================================================
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ==============================================================================
+# Docker / volumes locais
+# ==============================================================================
+docker/data/
+docker/logs/
+.docker-volumes/
+
+# ==============================================================================
+# PHP / Lumen (apps/mydraw_api)
+# ==============================================================================
+apps/mydraw_api/vendor/
+apps/mydraw_api/storage/logs/*.log
+apps/mydraw_api/storage/framework/cache/*
+apps/mydraw_api/storage/framework/sessions/*
+apps/mydraw_api/storage/framework/views/*
+apps/mydraw_api/bootstrap/cache/*.php
+apps/mydraw_api/.phpunit.result.cache
+!apps/mydraw_api/storage/logs/.gitkeep
+!apps/mydraw_api/storage/framework/cache/.gitkeep
+!apps/mydraw_api/storage/framework/sessions/.gitkeep
+!apps/mydraw_api/storage/framework/views/.gitkeep
+
+# ==============================================================================
+# Node / Vue / Vite (apps/mydraw_app)
+# ==============================================================================
+apps/mydraw_app/node_modules/
+apps/mydraw_app/dist/
+apps/mydraw_app/dist-ssr/
+apps/mydraw_app/.vite/
+apps/mydraw_app/*.log
+apps/mydraw_app/coverage/
+
+# ==============================================================================
+# Uploads / tempor\u00e1rios
+# ==============================================================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

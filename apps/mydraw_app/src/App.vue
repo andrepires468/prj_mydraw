@@ -22,7 +22,7 @@ onMounted(() => {
   <div class="min-h-screen flex flex-col bg-background">
     <TopNavBar v-if="!isAuthRoute" />
 
-    <RouterView />
+    <RouterView :key="route.path" />
 
     <template v-if="!isAuthRoute">
       <BottomNavBar />

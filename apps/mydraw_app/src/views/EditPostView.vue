@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import {
   deletePost,
@@ -27,8 +27,9 @@ interface Props {
 const props = defineProps<Props>()
 
 const router = useRouter()
+const route = useRoute()
 
-const MAX_FILES = 10
+const MAX_FILES = 30
 
 const post = ref<PostRow | null>(null)
 const title = ref('')
@@ -57,10 +58,17 @@ const submitting = computed(() => pendingAction.value !== null)
 /** Revogar object URLs criadas para previews locais (não as retornadas pela API). */
 const locallyCreatedPreviewUrls = new Set<string>()
 
+/** ID numérico do post na rota (props + params para compatibilidade com o router). */
 const postId = computed(() => {
-  const raw = typeof props.id === 'string' ? parseInt(props.id, 10) : props.id
-  return Number.isFinite(raw) ? raw : null
+  const raw = props.id ?? route.params.id
+  if (raw === undefined || raw === null || raw === '') return null
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw)
+  return Number.isFinite(n) ? n : null
 })
+
+const remainingImageSlots = computed(() =>
+  Math.max(0, MAX_FILES - images.value.length),
+)
 
 const status = computed<'draft' | 'published'>(
   () => post.value?.status ?? 'draft',
@@ -160,6 +168,20 @@ function addFiles(files: File[]) {
   }
 }
 
+async function persistOrderIfAllSynced() {
+  if (!postId.value) return
+  if (images.value.some((i) => i.galleryId === undefined)) return
+  const order = images.value
+    .map((i) => i.galleryId)
+    .filter((id): id is number => id !== undefined)
+  if (order.length === 0) return
+  try {
+    await reorderPostImages(postId.value, order)
+  } catch {
+    /* ordem local já está correta na UI; evita bloquear o fluxo de upload */
+  }
+}
+
 async function uploadOne(localId: string, file: File) {
   if (!postId.value) return
   try {
@@ -181,6 +203,7 @@ async function uploadOne(localId: string, file: File) {
         img.previewUrl = gallery.url
       }
     }
+    await persistOrderIfAllSynced()
   } catch (err) {
     const img = images.value.find((i) => i.id === localId)
     if (img) {
@@ -262,6 +285,10 @@ async function reorder(from: number, to: number) {
     .filter((id): id is number => id !== undefined)
 
   if (!postId.value || order.length === 0) return
+  if (order.length !== images.value.length) {
+    // Upload ainda sem `galleryId`: só reordena na UI; persiste quando concluir.
+    return
+  }
 
   try {
     await reorderPostImages(postId.value, order)
@@ -366,9 +393,18 @@ async function confirmDeletePost() {
   }
 }
 
-onMounted(() => {
-  void load()
-})
+watch(
+  postId,
+  (id) => {
+    if (id === null) {
+      loading.value = false
+      loadError.value = 'ID de post inválido.'
+      return
+    }
+    void load()
+  },
+  { immediate: true },
+)
 
 onBeforeUnmount(() => {
   for (const url of locallyCreatedPreviewUrls) {
@@ -429,7 +465,7 @@ onBeforeUnmount(() => {
         <div class="create-post-page__editor">
           <section>
             <UploadDropzone
-              :max-files="MAX_FILES"
+              :max-files="remainingImageSlots"
               :disabled="submitting || images.length >= MAX_FILES"
               @files="addFiles"
             />
@@ -451,6 +487,7 @@ onBeforeUnmount(() => {
               @remove="requestRemoveImage"
               @preview="previewImage"
               @reorder="reorder"
+              @import-files="addFiles"
             />
           </section>
         </div>

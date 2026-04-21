@@ -20,6 +20,8 @@ const emit = defineEmits<{
   remove: [id: string]
   preview: [id: string]
   reorder: [from: number, to: number]
+  /** Arquivos soltos de fora da página (ex.: Explorer) sobre a fila */
+  importFiles: [files: File[]]
 }>()
 
 const draggingIndex = ref<number | null>(null)
@@ -32,15 +34,37 @@ function onDragOver(event: DragEvent) {
   event.preventDefault()
 }
 
-function onDrop(targetIndex: number) {
+function onDrop(event: DragEvent, targetIndex: number) {
   const from = draggingIndex.value
   draggingIndex.value = null
-  if (from === null || from === targetIndex) return
+  if (from === null) {
+    if (event.dataTransfer?.types?.includes('Files')) {
+      event.preventDefault()
+      const list = event.dataTransfer?.files
+      if (list && list.length > 0) {
+        emit('importFiles', Array.from(list))
+      }
+    }
+    return
+  }
+  if (from === targetIndex) {
+    event.preventDefault()
+    return
+  }
+  event.preventDefault()
   emit('reorder', from, targetIndex)
 }
 
 function onDragEnd() {
   draggingIndex.value = null
+}
+
+function onPlaceholderDrop(event: DragEvent) {
+  event.preventDefault()
+  const list = event.dataTransfer?.files
+  if (list && list.length > 0) {
+    emit('importFiles', Array.from(list))
+  }
 }
 </script>
 
@@ -52,7 +76,7 @@ function onDragEnd() {
       draggable="true"
       @dragstart="onDragStart(index)"
       @dragover="onDragOver"
-      @drop="onDrop(index)"
+      @drop="onDrop($event, index)"
       @dragend="onDragEnd"
     >
       <ImageQueueCard
@@ -70,6 +94,8 @@ function onDragEnd() {
       v-if="showPlaceholder"
       class="image-queue-placeholder"
       aria-hidden="true"
+      @dragover="onDragOver"
+      @drop="onPlaceholderDrop"
     >
       <MaterialIcon name="add" />
     </div>

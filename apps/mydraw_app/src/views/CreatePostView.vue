@@ -21,7 +21,11 @@ const submitting = ref(false)
 const errorMsg = ref<string | null>(null)
 const successMsg = ref<string | null>(null)
 
-const MAX_FILES = 10
+const MAX_FILES = 30
+
+const remainingImageSlots = computed(() =>
+  Math.max(0, MAX_FILES - images.value.length),
+)
 
 const canPublish = computed(
   () =>
@@ -166,7 +170,7 @@ onBeforeUnmount(() => {
       <div class="create-post-page__editor">
         <section>
           <UploadDropzone
-            :max-files="MAX_FILES"
+            :max-files="remainingImageSlots"
             :disabled="submitting || images.length >= MAX_FILES"
             @files="addFiles"
           />
@@ -187,6 +191,7 @@ onBeforeUnmount(() => {
             @remove="removeImage"
             @preview="previewImage"
             @reorder="reorder"
+            @import-files="addFiles"
           />
         </section>
       </div>

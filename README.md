@@ -132,8 +132,59 @@ make mysql-sh    # abre o client mysql dentro do container
 make artisan ARGS="migrate"   # roda artisan na API
 make composer ARGS="require pkg/name"  # roda composer na API
 make npm ARGS="install axios"          # roda npm no APP
+make npm ARGS="run test:e2e"           # E2E Playwright (veja seção abaixo; no container pode exigir deps extras do browser)
 make clean       # remove volumes e containers (cuidado!)
 ```
+
+---
+
+## Testes E2E (Playwright) — fluidez responsiva
+
+O frontend em `apps/mydraw_app` inclui testes de **fluidez de layout**: vários viewports (mobile estreito até desktop), rotas públicas da app e checagem de **overflow horizontal** ao rolar a página. As respostas de `GET /api/v1/posts` e `GET /api/v1/posts/:id` são **interceptadas e mockadas** no navegador, então **não é obrigatório** ter API ou MinIO no ar para essa suíte.
+
+Arquivos principais:
+
+- `apps/mydraw_app/playwright.config.ts` — projetos por resolução, `webServer` sobe o Vite em `http://127.0.0.1:5173`
+- `apps/mydraw_app/e2e/fluidity.spec.ts` — cenários (galeria, modal de post, página do post, login, redirect de `/create`)
+- `apps/mydraw_app/e2e/fixtures/` — mocks da API e helpers de asserção
+
+### Instalação (uma vez por máquina)
+
+Na pasta do app, instale dependências npm (se ainda não fez) e o Chromium usado pelo Playwright:
+
+```bash
+cd apps/mydraw_app
+npm install
+npx playwright install chromium
+```
+
+### Executar os testes
+
+Com o Vite **livre** na porta `5173`, o Playwright sobe o servidor automaticamente:
+
+```bash
+cd apps/mydraw_app
+npm run test:e2e
+```
+
+Modo UI (depuração):
+
+```bash
+cd apps/mydraw_app
+npm run test:e2e:ui
+```
+
+**Desenvolvimento local:** se o `npm run dev` já estiver usando a porta `5173`, os testes reutilizam esse servidor (comportamento padrão fora de `CI=1`).
+
+**CI (`CI=1`):** a porta `5173` precisa estar livre para o `webServer` subir o Vite. Se outro processo já estiver servindo o app nessa porta (por exemplo, o container Docker do frontend), defina:
+
+```bash
+PW_REUSE_DEV=1 CI=1 npm run test:e2e
+```
+
+(diretório atual: `apps/mydraw_app`.)
+
+> Rodar `make npm ARGS="run test:e2e"` dentro do container exige que o Playwright e os browsers estejam instalados na imagem/volume do Node; em geral é mais simples rodar `npm run test:e2e` **no host**, em `apps/mydraw_app`.
 
 ---
 

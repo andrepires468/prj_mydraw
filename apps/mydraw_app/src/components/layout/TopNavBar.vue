@@ -33,7 +33,9 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 const THEME_KEY = 'mydraw:theme'
-const isDark = ref(false)
+// O tema inicial é aplicado por um script inline em `index.html` (evita FOUC);
+// aqui apenas espelhamos a classe atual do documento no estado reativo.
+const isDark = ref(document.documentElement.classList.contains('dark'))
 
 function applyTheme(dark: boolean) {
   const root = document.documentElement
@@ -55,18 +57,6 @@ watch(isDark, (value) => {
 })
 
 onMounted(() => {
-  try {
-    const stored = localStorage.getItem(THEME_KEY)
-    if (stored === 'dark' || stored === 'light') {
-      isDark.value = stored === 'dark'
-    } else if (window.matchMedia) {
-      isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
-    }
-  } catch {
-    // fallback para tema claro
-  }
-  applyTheme(isDark.value)
-
   document.addEventListener('click', onDocumentClick)
   document.addEventListener('keydown', onKeydown)
 })

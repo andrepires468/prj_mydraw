@@ -1,0 +1,67 @@
+@layer components {
+  .app-modal {
+    @apply fixed inset-0 z-[90] flex items-start justify-center p-4 md:p-8;
+    background: color-mix(in srgb, var(--color-background) 65%, #000 35%);
+    backdrop-filter: blur(20px);
+  }
+
+  .app-modal__panel {
+    @apply w-full max-w-[1200px] rounded-2xl overflow-hidden;
+    @apply bg-surface/85 shadow-2xl;
+    max-height: calc(100vh - 2rem);
+    border: 1px solid color-mix(in srgb, var(--color-outline-variant) 18%, transparent);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-modal__header {
+    @apply sticky top-0 z-[2] flex items-center justify-between gap-4 px-4 py-3 md:px-6 md:py-4;
+    background: color-mix(in srgb, var(--color-surface) 74%, transparent);
+    backdrop-filter: blur(28px);
+  }
+
+  .app-modal__title {
+    @apply text-base md:text-lg font-semibold text-on-surface tracking-tight;
+    margin: 0;
+  }
+
+  .app-modal__actions {
+    @apply flex items-center gap-2;
+  }
+
+  .app-modal__open-window {
+    @apply inline-flex items-center rounded-full px-3.5 py-1.5 text-xs font-semibold;
+    @apply text-on-primary bg-primary transition-colors;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+  }
+
+  .app-modal__open-window:hover {
+    @apply bg-primary-container text-on-primary-container;
+  }
+
+  .app-modal__edit-post {
+    @apply inline-flex items-center rounded-full px-3.5 py-1.5 text-xs font-semibold;
+    @apply text-on-surface-variant bg-surface-container-high border border-outline-variant/40;
+    @apply transition-colors;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+  }
+
+  .app-modal__edit-post:hover {
+    @apply text-on-surface bg-surface-container-highest border-outline-variant/60;
+  }
+
+  .app-modal__icon-button {
+    @apply inline-flex items-center justify-center rounded-full w-9 h-9;
+    @apply text-on-surface-variant bg-surface-container-low transition-colors;
+  }
+
+  .app-modal__icon-button:hover {
+    @apply text-on-surface bg-surface-container;
+  }
+
+  .app-modal__body {
+    @apply overflow-y-auto px-1 pb-1 md:px-2 md:pb-2;
+  }
+}

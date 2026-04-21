@@ -46,6 +46,8 @@ $app->singleton(
 $app->configure('app');
 $app->configure('auth');
 $app->configure('jwt');
+$app->configure('cache');
+$app->configure('database');
 $app->configure('filesystems');
 
 /*
@@ -59,8 +61,9 @@ $app->middleware([
 ]);
 
 $app->routeMiddleware([
-    'auth'     => App\Http\Middleware\Authenticate::class,
-    'auth.jwt' => App\Http\Middleware\JwtAuthenticate::class,
+    'auth'              => App\Http\Middleware\Authenticate::class,
+    'auth.jwt'          => App\Http\Middleware\JwtAuthenticate::class,
+    'auth.jwt.optional' => App\Http\Middleware\JwtAuthenticateOptional::class,
 ]);
 
 /*
@@ -70,6 +73,7 @@ $app->routeMiddleware([
 */
 
 $app->register(Illuminate\Filesystem\FilesystemServiceProvider::class);
+$app->register(Illuminate\Cache\CacheServiceProvider::class);
 $app->register(App\Providers\AuthServiceProvider::class);
 $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 

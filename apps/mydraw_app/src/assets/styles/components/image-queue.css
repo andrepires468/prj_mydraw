@@ -20,7 +20,7 @@
 
   .image-queue-card__overlay {
     @apply absolute inset-0 opacity-0 transition-opacity flex items-center justify-center gap-2;
-    background-color: rgba(5, 52, 92, 0.4);
+    background-color: var(--queue-chip-bg);
   }
 
   .image-queue-card:hover .image-queue-card__overlay,
@@ -39,11 +39,11 @@
   }
 
   .image-queue-card__action--danger {
-    background-color: rgba(249, 115, 134, 0.8);
+    background-color: var(--queue-error-bg);
   }
 
   .image-queue-card__action--primary {
-    background-color: rgba(74, 75, 215, 0.8);
+    background-color: var(--queue-progress-bg);
   }
 
   .image-queue-card__badge {
@@ -61,6 +61,6 @@
   .image-queue-placeholder {
     @apply rounded-xl flex items-center justify-center text-outline-variant;
     aspect-ratio: 4 / 5;
-    border: 2px dashed rgba(145, 180, 228, 0.2);
+    border: 2px dashed var(--queue-dashed-border);
   }
 }

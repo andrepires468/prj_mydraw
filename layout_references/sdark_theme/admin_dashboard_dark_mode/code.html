@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Dashboard | mydrow.app</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#818cf8",
+                        "on-primary": "#ffffff",
+                        "secondary": "#94a3b8",
+                        "background": "#0b0c0e",
+                        "surface": "#1e293b",
+                        "surface-container-lowest": "#0b0c0e",
+                        "surface-container-low": "#1e293b",
+                        "surface-container": "#334155",
+                        "surface-container-high": "#475569",
+                        "surface-container-highest": "#64748b",
+                        "on-surface": "#f1f5f9",
+                        "on-surface-variant": "#94a3b8",
+                        "outline": "#475569",
+                        "tertiary": "#c084fc",
+                        "tertiary-container": "#581c87",
+                        "on-tertiary-container": "#f5d0fe",
+                        "error": "#f87171"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }</script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-gradient-btn {
+            background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+        }
+        .aura-slate-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen pb-32">
+<!-- TopNavBar -->
+<nav class="backdrop-blur-2xl docked full-width top-0 sticky z-50 border-b border-white/5 bg-[#0b0c0e]/70">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-screen-2xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold tracking-tighter text-on-surface">mydrow.app</span>
+<div class="hidden md:flex gap-6">
+<a class="text-on-surface-variant font-medium hover:text-on-surface transition-colors px-3 py-1 rounded-lg" href="#">Gallery</a>
+<a class="text-on-surface-variant font-medium hover:text-on-surface transition-colors px-3 py-1 rounded-lg" href="#">Drafts</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:block">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="bg-surface-container border-none rounded-full pl-10 pr-4 py-2 text-sm text-on-surface focus:ring-2 focus:ring-primary/50 w-64 transition-all placeholder:text-on-surface-variant/50" placeholder="Search posts..." type="text"/>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors text-primary">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="max-w-screen-2xl mx-auto px-6 mt-12">
+<header class="mb-12">
+<h1 class="text-[2.75rem] font-bold tracking-tight text-on-surface leading-tight">Admin Dashboard</h1>
+<p class="text-on-surface-variant body-md mt-2 max-w-2xl">Manage your digital collection, curate gallery spotlights, and monitor post engagement from a unified control center.</p>
+</header>
+<!-- Metrics Overview (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
+<div class="aura-slate-card p-8 rounded-xl flex flex-col justify-between shadow-lg">
+<div>
+<span class="text-[0.75rem] uppercase tracking-[0.05em] font-bold text-on-surface-variant">Total Posts</span>
+<h3 class="text-4xl font-extrabold mt-2 text-primary">1,284</h3>
+</div>
+<div class="mt-4 flex items-center text-xs text-on-surface-variant font-medium">
+<span class="material-symbols-outlined text-sm mr-1 text-emerald-400">trending_up</span> +12% from last month
+            </div>
+</div>
+<div class="aura-slate-card p-8 rounded-xl flex flex-col justify-between shadow-lg">
+<div>
+<span class="text-[0.75rem] uppercase tracking-[0.05em] font-bold text-on-surface-variant">Published</span>
+<h3 class="text-4xl font-extrabold mt-2 text-on-surface">1,102</h3>
+</div>
+<div class="mt-4 bg-emerald-500/10 text-emerald-400 w-fit px-2 py-1 rounded-full text-[10px] font-bold uppercase">85% Live Rate</div>
+</div>
+<div class="aura-slate-card p-8 rounded-xl flex flex-col justify-between shadow-lg">
+<div>
+<span class="text-[0.75rem] uppercase tracking-[0.05em] font-bold text-on-surface-variant">Drafts</span>
+<h3 class="text-4xl font-extrabold mt-2 text-on-surface">182</h3>
+</div>
+<div class="mt-4 flex items-center text-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-sm mr-1">schedule</span> Pending Review
+            </div>
+</div>
+<div class="glass-gradient-btn p-8 rounded-xl flex flex-col justify-between text-on-primary shadow-[0_8px_24px_rgba(99,102,241,0.3)]">
+<div>
+<span class="text-[0.75rem] uppercase tracking-[0.05em] font-bold opacity-80">Quick Action</span>
+<h3 class="text-2xl font-bold mt-2">New Publication</h3>
+</div>
+<button class="mt-4 bg-white/20 backdrop-blur-md rounded-full py-2 px-4 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/30 transition-all">
+<span class="material-symbols-outlined">add</span> Create Post
+            </button>
+</div>
+</div>
+<!-- Post Management List -->
+<section class="bg-surface-container-low rounded-[2rem] overflow-hidden p-2 shadow-2xl border border-white/5">
+<div class="bg-surface rounded-[1.75rem]">
+<div class="p-8 flex items-center justify-between">
+<h2 class="text-xl font-bold tracking-tight text-on-surface">Recent Submissions</h2>
+<div class="flex gap-4">
+<button class="text-sm font-semibold text-primary px-4 py-2 hover:bg-primary/10 rounded-full transition-all">Export CSV</button>
+<button class="bg-surface-container-high text-on-surface text-sm font-semibold px-4 py-2 rounded-full hover:bg-surface-container-highest transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">filter_list</span> Filter
+                    </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="text-[10px] uppercase tracking-[0.1em] text-on-surface-variant bg-surface-container/50">
+<th class="px-8 py-4 font-semibold">Post Details</th>
+<th class="px-8 py-4 font-semibold">Created Date</th>
+<th class="px-8 py-4 font-semibold text-center">Status</th>
+<th class="px-8 py-4 font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<!-- Post Row 1 -->
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-white/10">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="abstract flowing 3d shapes" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCimXLHOOw_kRmmV0PS9w6mPVKFDJBkpSBoQq3qlWn4SE04T3I4VKs38eQpxcAEHQTrrrACgWgyzyD7vDwpiXkj7d4MIaL3FPTUHrMUjT_YbQObTbV37WIyck5HYMNXOQieyWhsGdOR0mXowq91SdEu75jFuseC4Af7IKsgqNyI88M1iONrJNzGKzXp04vCZ-K9LHtK9zNXwwUKbsaBGbi5oNIp299gsIFOB79q0-T9zboM_vLd7wv2I1yqBJtE3E0mglFkkXK8QXUv"/>
+</div>
+<div>
+<div class="font-bold text-on-surface leading-tight">Neon Ethereal Waves</div>
+<div class="text-xs text-on-surface-variant mt-1">ID: #DRW-8921 • Digital Art</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<div class="text-sm font-medium text-on-surface">Oct 24, 2023</div>
+<div class="text-[10px] text-on-surface-variant uppercase">14:22 PM</div>
+</td>
+<td class="px-8 py-6 text-center">
+<span class="bg-tertiary-container/30 text-tertiary border border-tertiary/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Published</span>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 hover:bg-surface-container-high rounded-full text-primary transition-all" title="Preview"><span class="material-symbols-outlined text-lg">visibility</span></button>
+<button class="p-2 hover:bg-surface-container-high rounded-full text-on-surface-variant transition-all" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-2 hover:bg-error/10 rounded-full text-error transition-all" title="Delete"><span class="material-symbols-outlined text-lg">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Post Row 2 -->
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-white/10">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="minimalist architectural fragment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBirXm_eEilpC7rmVMrUuME3Txf8GJoQezM4DRKHIR6w27RiHdumdYovh_FdKLxy46ti8WATv2zbu9j1E3NrtwYT1k-jerfojlg7IBEhOt_Z_VC6AKMtK99qEn4rGAteyRLcydi2iJ7mvrWDDM_8z0nCEfnOBpJR2waPSCqjbEUPNMnwMmYBbGnTNxZ6Nh6CneOwp3ki7I2T1mOiG3Dq-NdUyGc2ahqUh2QVlJDHX8iqVcwTM5drcq6RSvbcK3ho51d7FWymVOP-QAP"/>
+</div>
+<div>
+<div class="font-bold text-on-surface leading-tight">Concrete Brutalist Form</div>
+<div class="text-xs text-on-surface-variant mt-1">ID: #DRW-8845 • Architecture</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<div class="text-sm font-medium text-on-surface">Oct 23, 2023</div>
+<div class="text-[10px] text-on-surface-variant uppercase">09:15 AM</div>
+</td>
+<td class="px-8 py-6 text-center">
+<span class="bg-surface-container-highest/20 text-on-surface-variant border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Draft</span>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 hover:bg-surface-container-high rounded-full text-primary transition-all" title="Preview"><span class="material-symbols-outlined text-lg">visibility</span></button>
+<button class="p-2 hover:bg-surface-container-high rounded-full text-on-surface-variant transition-all" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-2 hover:bg-error/10 rounded-full text-error transition-all" title="Delete"><span class="material-symbols-outlined text-lg">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Post Row 3 -->
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-white/10">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="vibrant liquid splash" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDyhpxj_9GcpqZLBZSCGjYkhbCtLfLbYjRmMsBjexLixk2CB7r1x6h6YdWpAyZ3oWTC7DE9Q5FyCFuwzhdf9uBfy__g1XvGmsEnxcOlJgpxqbchsPe9bjwXeCVEAiSCvdEAz6pJnhQc4xCPjVvejlGu3DOOZ3J-tQQgywqtZ9tr6wVcuf9TJ2-ZvUJgrIRZAeimgvW0RN2HcMA1j24R7mCQTd_WUxZwvDfE3ePox6a4RHZVVIupiWADXmf0B2nMsRmOyBaMGXg1L9N"/>
+</div>
+<div>
+<div class="font-bold text-on-surface leading-tight">Vibrant Liquid Splash</div>
+<div class="text-xs text-on-surface-variant mt-1">ID: #DRW-8712 • Macro</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<div class="text-sm font-medium text-on-surface">Oct 21, 2023</div>
+<div class="text-[10px] text-on-surface-variant uppercase">18:45 PM</div>
+</td>
+<td class="px-8 py-6 text-center">
+<span class="bg-tertiary-container/30 text-tertiary border border-tertiary/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Published</span>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 hover:bg-surface-container-high rounded-full text-primary transition-all" title="Preview"><span class="material-symbols-outlined text-lg">visibility</span></button>
+<button class="p-2 hover:bg-surface-container-high rounded-full text-on-surface-variant transition-all" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-2 hover:bg-error/10 rounded-full text-error transition-all" title="Delete"><span class="material-symbols-outlined text-lg">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-8 border-t border-white/5 flex items-center justify-between">
+<span class="text-xs text-on-surface-variant font-medium">Showing 3 of 1,284 entries</span>
+<div class="flex gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full glass-gradient-btn text-white shadow-lg">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-end px-4 pb-6 pt-2 backdrop-blur-3xl z-50 rounded-t-[2rem] shadow-[0_-8px_32px_rgba(0,0,0,0.4)] md:hidden border-t border-white/5 bg-[#0b0c0e]/80">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium mt-1">Feed</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium mt-1">Create</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-full p-3 mb-2 scale-110 shadow-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="hidden">Admin</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

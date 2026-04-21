@@ -2,7 +2,7 @@
   .post-metadata {
     @apply sticky p-6 xl:p-8 rounded-[2rem] flex flex-col gap-6;
     top: 6rem;
-    background-color: rgba(239, 244, 255, 0.5);
+    background-color: var(--surface-soft-bg);
   }
 
   .post-metadata__group {
@@ -40,8 +40,7 @@
       theme('colors.primary'),
       theme('colors.primary-container')
     );
-    box-shadow: 0 20px 25px -5px rgba(74, 75, 215, 0.2),
-      0 8px 10px -6px rgba(74, 75, 215, 0.2);
+    box-shadow: var(--shadow-primary-soft);
     border: none;
     cursor: pointer;
   }
@@ -57,7 +56,7 @@
 
   .post-metadata__publish-spinner {
     @apply w-4 h-4 rounded-full;
-    border: 2px solid rgba(251, 247, 255, 0.4);
+    border: 2px solid var(--spinner-track);
     border-top-color: theme('colors.on-primary');
     animation: post-metadata-spin 0.8s linear infinite;
   }
@@ -68,8 +67,44 @@
     }
   }
 
+  .post-metadata__secondary-actions {
+    @apply mt-3 flex flex-col gap-2;
+  }
+
+  .post-metadata__secondary {
+    @apply w-full py-3 px-3 rounded-full font-semibold uppercase tracking-wider text-[11px] transition-all duration-200 flex items-center justify-center gap-2;
+    @apply bg-surface-container-high text-on-surface;
+    border: none;
+    cursor: pointer;
+  }
+
+  .post-metadata__secondary:hover:not(:disabled) {
+    @apply bg-surface-container-highest;
+  }
+
+  .post-metadata__secondary:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .post-metadata__danger {
+    @apply w-full py-3 px-3 rounded-full font-semibold uppercase tracking-wider text-[11px] transition-all duration-200 flex items-center justify-center gap-2;
+    @apply bg-transparent text-on-error;
+    border: 1px solid theme('colors.error / 40%');
+    cursor: pointer;
+  }
+
+  .post-metadata__danger:hover:not(:disabled) {
+    @apply bg-error/5;
+  }
+
+  .post-metadata__danger:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
   .post-metadata__terms {
     @apply text-[10px] text-center italic px-4;
-    color: rgba(90, 125, 169, 0.7);
+    color: var(--post-terms-color);
   }
 }

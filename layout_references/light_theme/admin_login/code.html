@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Login | mydrow.app</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#eff4ff",
+                    "secondary": "#5d5d72",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary": "#fff7fb",
+                    "secondary-container": "#e2e0f9",
+                    "on-secondary-fixed": "#3d3e51",
+                    "surface-dim": "#c4dcff",
+                    "background": "#f8f9ff",
+                    "on-error-container": "#6e0523",
+                    "tertiary-container": "#f5cdf9",
+                    "on-primary-fixed": "#000000",
+                    "error": "#a8364b",
+                    "on-surface-variant": "#3d618c",
+                    "on-error": "#fff7f7",
+                    "on-tertiary-container": "#604266",
+                    "on-secondary-container": "#505064",
+                    "surface-container-highest": "#d2e4ff",
+                    "secondary-fixed": "#e2e0f9",
+                    "inverse-on-surface": "#8e9eb7",
+                    "on-background": "#05345c",
+                    "on-tertiary-fixed": "#4c2f52",
+                    "error-dim": "#6b0221",
+                    "tertiary-dim": "#67486c",
+                    "outline-variant": "#91b4e4",
+                    "on-surface": "#05345c",
+                    "inverse-primary": "#8083ff",
+                    "on-primary": "#fbf7ff",
+                    "tertiary": "#745479",
+                    "on-primary-fixed-variant": "#010028",
+                    "primary-fixed-dim": "#6366f1",
+                    "primary-container": "#7073ff",
+                    "surface-container-high": "#dce9ff",
+                    "inverse-surface": "#000f21",
+                    "on-secondary-fixed-variant": "#5a5a6f",
+                    "tertiary-fixed": "#f5cdf9",
+                    "surface": "#f8f9ff",
+                    "on-secondary": "#fbf7ff",
+                    "secondary-fixed-dim": "#d4d2eb",
+                    "surface-tint": "#4a4bd7",
+                    "on-tertiary-fixed-variant": "#6a4b70",
+                    "primary-dim": "#3d3dcb",
+                    "primary-fixed": "#7073ff",
+                    "primary": "#4a4bd7",
+                    "error-container": "#f97386",
+                    "on-primary-container": "#000000",
+                    "tertiary-fixed-dim": "#e7bfea",
+                    "surface-variant": "#d2e4ff",
+                    "outline": "#5a7da9",
+                    "surface-container": "#e5eeff",
+                    "surface-bright": "#f8f9ff",
+                    "secondary-dim": "#515166"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .input-transition {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-surface min-h-screen flex items-center justify-center p-6 selection:bg-primary-container selection:text-on-primary-container overflow-hidden">
+<!-- Background Decorative Elements -->
+<div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+<div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-surface-container-high rounded-full blur-[120px] opacity-40"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary-container/20 rounded-full blur-[100px] opacity-30"></div>
+</div>
+<!-- Login Container -->
+<main class="w-full max-w-[440px]">
+<!-- Brand Identity Section -->
+<div class="flex flex-col items-center mb-12">
+<div class="w-16 h-16 bg-gradient-to-br from-primary to-primary-container rounded-full flex items-center justify-center shadow-[0_8px_32px_rgba(74,75,215,0.15)] mb-6">
+<span class="material-symbols-outlined text-on-primary text-3xl" data-icon="admin_panel_settings">admin_panel_settings</span>
+</div>
+<h1 class="text-3xl font-extrabold tracking-tighter text-on-surface mb-2">mydrow.app</h1>
+<p class="text-on-surface-variant font-medium tracking-tight text-sm">Administrative Gateway</p>
+</div>
+<!-- Login Card -->
+<div class="surface-container-lowest glass-panel rounded-3xl p-8 md:p-10 shadow-[0_32px_64px_-16px_rgba(5,52,92,0.08)]">
+<form action="#" class="space-y-6" method="POST">
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="block text-[10px] uppercase tracking-[0.1em] font-bold text-on-surface-variant ml-1" for="email">
+                        Email Address
+                    </label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-on-surface-variant group-focus-within:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="mail">mail</span>
+</div>
+<input class="w-full bg-surface-container-low border-none rounded-2xl py-4 pl-12 pr-4 text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-primary-container/30 focus:bg-surface-container-high input-transition text-sm" id="email" name="email" placeholder="admin@mydrow.app" required="" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex justify-between items-center px-1">
+<label class="block text-[10px] uppercase tracking-[0.1em] font-bold text-on-surface-variant" for="password">
+                            Password
+                        </label>
+<a class="text-[10px] uppercase tracking-[0.1em] font-bold text-primary hover:text-primary-dim transition-colors" href="#">
+                            Forgot?
+                        </a>
+</div>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-on-surface-variant group-focus-within:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="lock">lock</span>
+</div>
+<input class="w-full bg-surface-container-low border-none rounded-2xl py-4 pl-12 pr-12 text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-primary-container/30 focus:bg-surface-container-high input-transition text-sm" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+<button class="absolute inset-y-0 right-0 pr-4 flex items-center text-on-surface-variant hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-xl" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+<!-- Primary Action -->
+<div class="pt-2">
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary py-4 rounded-full font-semibold tracking-tight shadow-[0_12px_24px_-8px_rgba(74,75,215,0.4)] hover:shadow-[0_16px_32px_-8px_rgba(74,75,215,0.5)] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 group" type="submit">
+<span>Authorize Session</span>
+<span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<!-- Security Footer -->
+<div class="flex items-center justify-center gap-4 pt-4">
+<div class="flex items-center gap-1.5 opacity-60">
+<span class="material-symbols-outlined text-sm" data-icon="security" style="font-variation-settings: 'FILL' 1;">security</span>
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-surface">256-bit AES</span>
+</div>
+<div class="w-1 h-1 rounded-full bg-outline-variant/30"></div>
+<div class="flex items-center gap-1.5 opacity-60">
+<span class="material-symbols-outlined text-sm" data-icon="fingerprint">fingerprint</span>
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-surface">Biometrics Ready</span>
+</div>
+</div>
+</form>
+</div>
+<!-- System Footer -->
+<div class="mt-12 text-center">
+<p class="text-[11px] text-on-surface-variant font-medium tracking-wide">
+                SYSTEM ID: DROW-ADMIN-001 • <span class="text-primary cursor-pointer hover:underline">NODE STATUS: ONLINE</span>
+</p>
+</div>
+</main>
+<!-- Invisible Image placeholders for aesthetic balance if needed in rendering, using decorative descriptions -->
+<div class="hidden">
+<img data-alt="smooth gradient abstract background with flowing curves of soft indigo and deep slate blue minimal lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCreb1EEipKB59_LRmNdI1SJ1UynbRIO3malBApmwuKrZYJbnlwkwuPkzagRoK71GgbO5smPuYNndWKqiNhFl3X-ORZtKYIpObPAtax18MjT5CrIoOBj12SK9JlRIBXP_TJXhneVDhY0hXFTowvmhlwdhZdhdZer5cu8QwFEbONu75ag-uDoCFuxjsZToimGcTqAwwtxL8djH0XUw9X5xhtVPreHmMxfLWfxsVdV1yebz1MawCcQkcD_9KQGyy4WAUR5_Cw_oEUdHt0"/>
+<img data-alt="close up of a modern sleek aluminum server rack with subtle blue led status lights in a dark room" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfioVfZ2jYJKBM63c6oaUaFR7c-hsjZqolm2u36tVocnD45Narq7oeZbya-vFy-IIwXkug8bUbcM9vE_Xm01G6bh1Lls7ftYFnAma9wZeOTve9fuadipNy-fyBqlBSwPq5SdlQtRAMrzE4Hbyx9Ph1HtyqBFSW2OVuzyCk8nmK-OEGfdtu7L_Dj52bEUBPeR-6Xy-22Tavakg_CdTnPX5V8-gVoHfubufjJbjFVoRusxpeYID2fQTwiOXhCzgotbtfztp7vSPoXifp"/>
+</div>
+</body></html>

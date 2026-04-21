@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import GalleryView from '@/views/GalleryView.vue'
 import LoginView from '@/views/LoginView.vue'
 import CreatePostView from '@/views/CreatePostView.vue'
+import EditPostView from '@/views/EditPostView.vue'
 import PostView from '@/views/PostView.vue'
 import { isJwtExpired } from '@/utils/jwt'
 
@@ -18,10 +19,23 @@ export const router = createRouter({
       component: GalleryView,
     },
     {
+      path: '/gallery/post/:id(\\d+)',
+      name: 'gallery-post',
+      component: GalleryView,
+      props: true,
+    },
+    {
       path: '/posts/:id(\\d+)',
       name: 'post',
       component: PostView,
       props: true,
+    },
+    {
+      path: '/posts/:id(\\d+)/edit',
+      name: 'edit-post',
+      component: EditPostView,
+      props: true,
+      meta: { requiresAuth: true },
     },
     {
       path: '/create',

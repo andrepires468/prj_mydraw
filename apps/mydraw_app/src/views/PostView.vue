@@ -1,30 +1,67 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPost, type PostRow } from '@/api/posts'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import LoadingIndicator from '@/components/gallery/LoadingIndicator.vue'
+import PostViewModeToggle from '@/components/post/PostViewModeToggle.vue'
+import PostImageCarousel from '@/components/post/PostImageCarousel.vue'
+import PostImageList from '@/components/post/PostImageList.vue'
+import type { PostMediaImage, PostMediaViewMode } from '@/components/post/post-media'
+
+const MEDIA_VIEW_MODE_STORAGE_KEY = 'mydraw:post-view:media-mode'
+
+function postIdMatches(
+  resolved: number | string | null,
+  candidate: number,
+): boolean {
+  if (resolved === null) return false
+  return Number(resolved) === Number(candidate)
+}
+
+function readSavedMediaViewMode(): PostMediaViewMode {
+  if (typeof window === 'undefined') return 'carousel'
+  const saved = window.localStorage.getItem(MEDIA_VIEW_MODE_STORAGE_KEY)
+  return saved === 'list' ? 'list' : 'carousel'
+}
 
 const route = useRoute()
 const router = useRouter()
 
+interface Props {
+  postId?: number | string
+  embedded?: boolean
+  /** Dados já carregados (ex.: lista da galeria); evita GET /posts/:id. */
+  initialPost?: PostRow | null
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  postId: undefined,
+  embedded: false,
+  initialPost: undefined,
+})
+
+const emit = defineEmits<{
+  close: []
+}>()
+
 const post = ref<PostRow | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
-const current = ref(0)
-const failedIds = ref<Set<number | string>>(new Set())
+const mediaViewMode = ref<PostMediaViewMode>(readSavedMediaViewMode())
 
-const images = computed(() =>
-  (post.value?.images ?? []).filter((img) => !!img.url),
+const images = computed<PostMediaImage[]>(() =>
+  (post.value?.images ?? [])
+    .map((img): PostMediaImage | null => {
+      if (!img.url) return null
+      return {
+        id: img.id,
+        url: img.url,
+        thumbUrl: img.thumbs?.['180x180'] ?? img.url,
+      }
+    })
+    .filter((img): img is PostMediaImage => img !== null),
 )
-
-const activeImage = computed(() => images.value[current.value] ?? null)
-
-const activeFailed = computed(
-  () => !!activeImage.value && failedIds.value.has(activeImage.value.id),
-)
-
-const hasMultiple = computed(() => images.value.length > 1)
 
 const authorName = computed(
   () => post.value?.user?.name?.trim() || 'Autor desconhecido',
@@ -45,12 +82,18 @@ const formattedDate = computed(() => {
   })
 })
 
+const resolvedPostId = computed<number | string | null>(() => {
+  if (props.postId !== undefined && props.postId !== null) {
+    return props.postId
+  }
+  const id = route.params.id
+  return id ? (id as string) : null
+})
+
 async function load(id: number | string) {
   loading.value = true
   error.value = null
   post.value = null
-  current.value = 0
-  failedIds.value = new Set()
   try {
     post.value = await getPost(id)
   } catch (err: unknown) {
@@ -60,47 +103,49 @@ async function load(id: number | string) {
   }
 }
 
-function onError(id: number | string) {
-  failedIds.value = new Set(failedIds.value).add(id)
-}
-
-function prev() {
-  if (!hasMultiple.value) return
-  current.value =
-    (current.value - 1 + images.value.length) % images.value.length
-}
-
-function next() {
-  if (!hasMultiple.value) return
-  current.value = (current.value + 1) % images.value.length
-}
-
-function goTo(index: number) {
-  if (index < 0 || index >= images.value.length) return
-  current.value = index
-}
-
 function goBack() {
+  if (props.embedded) {
+    emit('close')
+    return
+  }
   if (window.history.length > 1) router.back()
   else router.push({ name: 'gallery' })
 }
 
-watch(
-  () => route.params.id,
-  (id) => {
-    if (id) void load(id as string)
-  },
-)
-
-onMounted(() => {
-  const id = route.params.id
-  if (id) void load(id as string)
+watch(mediaViewMode, (mode) => {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(MEDIA_VIEW_MODE_STORAGE_KEY, mode)
 })
+
+watch(
+  [resolvedPostId, () => props.initialPost],
+  ([id, initial]) => {
+    if (!id) {
+      post.value = null
+      error.value = null
+      loading.value = false
+      return
+    }
+    if (initial && postIdMatches(id, initial.id)) {
+      post.value = initial
+      error.value = null
+      loading.value = false
+      return
+    }
+    void load(id as string)
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
-  <main class="post-view">
-    <button type="button" class="post-view__back" @click="goBack">
+  <component :is="props.embedded ? 'div' : 'main'" class="post-view" :class="{ 'post-view--embedded': props.embedded }">
+    <button
+      v-if="!props.embedded"
+      type="button"
+      class="post-view__back"
+      @click="goBack"
+    >
       <MaterialIcon name="arrow_back" />
       <span>Voltar</span>
     </button>
@@ -126,64 +171,21 @@ onMounted(() => {
 
     <article v-else-if="post" class="post-view__layout">
       <section class="post-view__media-wrapper">
-        <div class="post-view__media">
-          <template v-if="activeImage && !activeFailed">
-            <img
-              :key="activeImage.id"
-              class="post-view__image"
-              :src="activeImage.url!"
-              :alt="post.description ?? post.title"
-              @error="onError(activeImage.id)"
-            />
-          </template>
-          <div v-else class="post-view__placeholder">
-            <MaterialIcon name="broken_image" />
-            <span>Imagem indisponível</span>
-          </div>
+        <PostViewModeToggle
+          v-if="images.length > 1"
+          v-model="mediaViewMode"
+        />
 
-          <template v-if="hasMultiple">
-            <button
-              type="button"
-              class="post-view__nav post-view__nav--prev"
-              aria-label="Imagem anterior"
-              @click="prev"
-            >
-              <MaterialIcon name="chevron_left" />
-            </button>
-            <button
-              type="button"
-              class="post-view__nav post-view__nav--next"
-              aria-label="Próxima imagem"
-              @click="next"
-            >
-              <MaterialIcon name="chevron_right" />
-            </button>
-            <span class="post-view__counter">
-              {{ current + 1 }} / {{ images.length }}
-            </span>
-          </template>
-        </div>
-
-        <div v-if="hasMultiple" class="post-view__thumbs" role="tablist">
-          <button
-            v-for="(img, i) in images"
-            :key="img.id"
-            type="button"
-            class="post-view__thumb"
-            :class="{ 'post-view__thumb--active': i === current }"
-            :aria-label="`Ir para imagem ${i + 1}`"
-            :aria-selected="i === current"
-            role="tab"
-            @click="goTo(i)"
-          >
-            <img
-              :src="img.url!"
-              :alt="`Miniatura ${i + 1}`"
-              loading="lazy"
-              @error="onError(img.id)"
-            />
-          </button>
-        </div>
+        <PostImageCarousel
+          v-if="mediaViewMode === 'carousel'"
+          :images="images"
+          :alt-text="post.description ?? post.title"
+        />
+        <PostImageList
+          v-else
+          :images="images"
+          :alt-text="post.description ?? post.title"
+        />
       </section>
 
       <aside class="post-view__info">
@@ -221,5 +223,5 @@ onMounted(() => {
         </dl>
       </aside>
     </article>
-  </main>
+  </component>
 </template>

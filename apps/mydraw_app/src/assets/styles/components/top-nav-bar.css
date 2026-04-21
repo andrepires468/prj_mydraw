@@ -1,11 +1,8 @@
 @layer components {
   .top-nav-bar {
     @apply sticky top-0 z-50 w-full backdrop-blur-2xl;
-    background-color: rgba(248, 249, 255, 0.7);
-  }
-
-  .top-nav-bar--dark {
-    background-color: rgba(0, 15, 33, 0.7);
+    background-color: var(--glass-nav-bg);
+    border-bottom: 1px solid var(--glass-border);
   }
 
   .top-nav-bar__inner {
@@ -31,7 +28,7 @@
   }
 
   .top-nav-bar__link:hover {
-    background-color: rgba(196, 220, 255, 0.2);
+    background-color: var(--nav-hover-bg);
   }
 
   .top-nav-bar__link--active {
@@ -63,7 +60,7 @@
   }
 
   .top-nav-bar__search-input::placeholder {
-    color: rgba(61, 97, 140, 0.5);
+    color: var(--nav-search-placeholder);
   }
 
   .top-nav-bar__actions {
@@ -78,7 +75,7 @@
   }
 
   .top-nav-bar__icon-button:hover {
-    background-color: rgba(196, 220, 255, 0.2);
+    background-color: var(--nav-hover-bg);
   }
 
   .top-nav-bar__login {
@@ -133,9 +130,7 @@
 
   .top-nav-bar__dropdown {
     @apply absolute right-0 mt-2 w-64 p-2 rounded-xl border border-outline-variant bg-surface-container-lowest;
-    box-shadow:
-      0 12px 32px -8px rgba(5, 52, 92, 0.18),
-      0 4px 12px -4px rgba(5, 52, 92, 0.12);
+    box-shadow: var(--shadow-dropdown);
     z-index: 60;
   }
 
@@ -186,7 +181,7 @@
 
   .top-nav-bar__dropdown-item--danger:hover,
   .top-nav-bar__dropdown-item--danger:focus-visible {
-    background-color: rgba(168, 54, 75, 0.08);
+    background-color: var(--error-item-hover-bg);
   }
 
   .top-nav-bar__dropdown-divider {
@@ -207,7 +202,7 @@
 
   .top-nav-bar__switch-thumb {
     @apply absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-surface-container-lowest transition-transform;
-    box-shadow: 0 1px 2px rgba(5, 52, 92, 0.25);
+    box-shadow: var(--switch-thumb-shadow);
   }
 
   .top-nav-bar__switch--on .top-nav-bar__switch-thumb {

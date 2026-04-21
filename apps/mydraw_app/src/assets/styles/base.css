@@ -1,6 +1,245 @@
 @layer base {
+  /* ----------------------------------------------------------------------
+   * Paleta — Light (Atmospheric Fluidity / Deep Slate & Soft Indigo)
+   *
+   * As cores são definidas como triplets `R G B` (sem vírgulas) para que
+   * o Tailwind possa aplicar modificadores de opacidade como `bg-primary/20`
+   * via `rgb(var(--color-primary) / <alpha-value>)` no tailwind.config.
+   * -------------------------------------------------------------------- */
   :root {
     color-scheme: light;
+
+    --color-background: 248 249 255;              /* #f8f9ff */
+    --color-surface: 248 249 255;                 /* #f8f9ff */
+    --color-surface-bright: 248 249 255;          /* #f8f9ff */
+    --color-surface-dim: 196 220 255;             /* #c4dcff */
+    --color-surface-container-lowest: 255 255 255; /* #ffffff */
+    --color-surface-container-low: 239 244 255;   /* #eff4ff */
+    --color-surface-container: 229 238 255;       /* #e5eeff */
+    --color-surface-container-high: 220 233 255;  /* #dce9ff */
+    --color-surface-container-highest: 210 228 255; /* #d2e4ff */
+    --color-surface-variant: 210 228 255;         /* #d2e4ff */
+    --color-surface-tint: 74 75 215;              /* #4a4bd7 */
+
+    --color-on-background: 5 52 92;               /* #05345c */
+    --color-on-surface: 5 52 92;                  /* #05345c */
+    --color-on-surface-variant: 61 97 140;        /* #3d618c */
+    --color-inverse-surface: 0 15 33;             /* #000f21 */
+    --color-inverse-on-surface: 142 158 183;      /* #8e9eb7 */
+
+    --color-primary: 74 75 215;                   /* #4a4bd7 */
+    --color-primary-dim: 61 61 203;               /* #3d3dcb */
+    --color-primary-fixed: 112 115 255;           /* #7073ff */
+    --color-primary-fixed-dim: 99 102 241;        /* #6366f1 */
+    --color-primary-container: 112 115 255;       /* #7073ff */
+    --color-on-primary: 251 247 255;              /* #fbf7ff */
+    --color-on-primary-container: 0 0 0;          /* #000000 */
+    --color-on-primary-fixed: 0 0 0;              /* #000000 */
+    --color-on-primary-fixed-variant: 1 0 40;     /* #010028 */
+    --color-inverse-primary: 128 131 255;         /* #8083ff */
+
+    --color-secondary: 93 93 114;                 /* #5d5d72 */
+    --color-secondary-dim: 81 81 102;             /* #515166 */
+    --color-secondary-fixed: 226 224 249;         /* #e2e0f9 */
+    --color-secondary-fixed-dim: 212 210 235;     /* #d4d2eb */
+    --color-secondary-container: 226 224 249;     /* #e2e0f9 */
+    --color-on-secondary: 251 247 255;            /* #fbf7ff */
+    --color-on-secondary-container: 80 80 100;    /* #505064 */
+    --color-on-secondary-fixed: 61 62 81;         /* #3d3e51 */
+    --color-on-secondary-fixed-variant: 90 90 111; /* #5a5a6f */
+
+    --color-tertiary: 116 84 121;                 /* #745479 */
+    --color-tertiary-dim: 103 72 108;             /* #67486c */
+    --color-tertiary-fixed: 245 205 249;          /* #f5cdf9 */
+    --color-tertiary-fixed-dim: 231 191 234;      /* #e7bfea */
+    --color-tertiary-container: 245 205 249;      /* #f5cdf9 */
+    --color-on-tertiary: 255 247 251;             /* #fff7fb */
+    --color-on-tertiary-container: 96 66 102;     /* #604266 */
+    --color-on-tertiary-fixed: 76 47 82;          /* #4c2f52 */
+    --color-on-tertiary-fixed-variant: 106 75 112; /* #6a4b70 */
+
+    --color-error: 168 54 75;                     /* #a8364b */
+    --color-error-dim: 107 2 33;                  /* #6b0221 */
+    --color-error-container: 249 115 134;         /* #f97386 */
+    --color-on-error: 255 247 247;                /* #fff7f7 */
+    --color-on-error-container: 110 5 35;         /* #6e0523 */
+
+    --color-outline: 90 125 169;                  /* #5a7da9 */
+    --color-outline-variant: 145 180 228;         /* #91b4e4 */
+
+    /* Tokens semânticos (sombras, glass, scrim, overlays, etc.) */
+    --glass-nav-bg: rgba(248, 249, 255, 0.7);
+    --glass-nav-bottom-bg: rgba(248, 249, 255, 0.8);
+    --glass-border: transparent;
+    --surface-soft-bg: rgba(239, 244, 255, 0.5);
+    --shadow-card-hover: 0 10px 28px -12px rgba(5, 52, 92, 0.25);
+    --shadow-media: 0 14px 40px -18px rgba(5, 52, 92, 0.35);
+    --shadow-auth-card: 0 32px 64px -16px rgba(5, 52, 92, 0.08);
+    --shadow-fab: 0 10px 25px rgba(5, 52, 92, 0.2);
+    --shadow-dropdown:
+      0 12px 32px -8px rgba(5, 52, 92, 0.18),
+      0 4px 12px -4px rgba(5, 52, 92, 0.12);
+    --shadow-primary-soft:
+      0 20px 25px -5px rgba(74, 75, 215, 0.2),
+      0 8px 10px -6px rgba(74, 75, 215, 0.2);
+    --shadow-primary-strong: 0 16px 32px -8px rgba(74, 75, 215, 0.5);
+    --shadow-primary-button: 0 12px 24px -8px rgba(74, 75, 215, 0.4);
+    --shadow-brand-logo: 0 8px 32px rgba(74, 75, 215, 0.15);
+    --shadow-input: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --ring-primary-soft: 0 0 0 2px rgba(74, 75, 215, 0.2);
+    --ring-primary-field: 0 0 0 2px rgba(112, 115, 255, 0.3);
+    --dropzone-border: rgba(145, 180, 228, 0.3);
+    --auth-footer-divider: rgba(145, 180, 228, 0.3);
+    --auth-card-bg: rgba(255, 255, 255, 0.7);
+    --error-surface-bg: rgba(249, 115, 134, 0.12);
+    --error-surface-border: rgba(168, 54, 75, 0.3);
+    --info-surface-bg: rgba(112, 115, 255, 0.12);
+    --info-surface-border: rgba(74, 75, 215, 0.3);
+    --login-blur-primary: rgba(112, 115, 255, 0.2);
+    --queue-chip-bg: rgba(5, 52, 92, 0.4);
+    --queue-error-bg: rgba(249, 115, 134, 0.8);
+    --queue-progress-bg: rgba(74, 75, 215, 0.8);
+    --queue-dashed-border: rgba(145, 180, 228, 0.2);
+    --overlay-gradient-from: rgba(5, 52, 92, 0.85);
+    --overlay-gradient-mid: rgba(5, 52, 92, 0.55);
+    --overlay-text-muted: rgba(251, 247, 255, 0.85);
+    --overlay-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    --overlay-badge-bg: rgba(17, 17, 17, 0.65);
+    --overlay-badge-bg-strong: rgba(17, 17, 17, 0.85);
+    --overlay-badge-bg-soft: rgba(17, 17, 17, 0.5);
+    --overlay-badge-bg-dim: rgba(17, 17, 17, 0.55);
+    --overlay-badge-bg-deep: rgba(17, 17, 17, 0.9);
+    --media-empty-gradient: linear-gradient(180deg, #0b0f14 0%, #111827 100%);
+    --dot-inactive-bg: rgba(255, 255, 255, 0.45);
+    --dot-hover-bg: rgba(255, 255, 255, 0.8);
+    --dot-ring: 0 0 0 1px rgba(0, 0, 0, 0.12);
+    --nav-hover-bg: rgba(196, 220, 255, 0.2);
+    --nav-search-placeholder: rgba(61, 97, 140, 0.5);
+    --post-terms-color: rgba(90, 125, 169, 0.7);
+    --post-form-placeholder: rgba(90, 125, 169, 0.5);
+    --switch-thumb-shadow: 0 1px 2px rgba(5, 52, 92, 0.25);
+    --error-item-hover-bg: rgba(168, 54, 75, 0.08);
+    --spinner-track: rgba(251, 247, 255, 0.4);
+  }
+
+  /* ----------------------------------------------------------------------
+   * Paleta — Dark (Deep Slate & Soft Indigo)
+   * Baseado nos templates stitch_mydrow_minimalist_gallery_dark_theme/
+   * -------------------------------------------------------------------- */
+  .dark {
+    color-scheme: dark;
+
+    --color-background: 11 12 14;                 /* #0b0c0e */
+    --color-surface: 11 12 14;                    /* #0b0c0e */
+    --color-surface-bright: 30 41 59;             /* #1e293b */
+    --color-surface-dim: 11 12 14;                /* #0b0c0e */
+    --color-surface-container-lowest: 15 23 42;   /* #0f172a */
+    --color-surface-container-low: 30 41 59;      /* #1e293b */
+    --color-surface-container: 15 23 42;          /* #0f172a */
+    --color-surface-container-high: 30 41 59;     /* #1e293b */
+    --color-surface-container-highest: 51 65 85;  /* #334155 */
+    --color-surface-variant: 30 41 59;            /* #1e293b */
+    --color-surface-tint: 99 102 241;             /* #6366f1 */
+
+    --color-on-background: 248 250 252;           /* #f8fafc */
+    --color-on-surface: 241 245 249;              /* #f1f5f9 */
+    --color-on-surface-variant: 148 163 184;      /* #94a3b8 */
+    --color-inverse-surface: 241 245 249;         /* #f1f5f9 */
+    --color-inverse-on-surface: 15 23 42;         /* #0f172a */
+
+    --color-primary: 99 102 241;                  /* #6366f1 */
+    --color-primary-dim: 79 70 229;               /* #4f46e5 */
+    --color-primary-fixed: 129 140 248;           /* #818cf8 */
+    --color-primary-fixed-dim: 129 140 248;       /* #818cf8 */
+    --color-primary-container: 67 56 202;         /* #4338ca */
+    --color-on-primary: 255 255 255;              /* #ffffff */
+    --color-on-primary-container: 255 255 255;    /* #ffffff */
+    --color-on-primary-fixed: 0 0 0;              /* #000000 */
+    --color-on-primary-fixed-variant: 255 255 255; /* #ffffff */
+    --color-inverse-primary: 79 70 229;           /* #4f46e5 */
+
+    --color-secondary: 148 163 184;               /* #94a3b8 */
+    --color-secondary-dim: 148 163 184;           /* #94a3b8 */
+    --color-secondary-fixed: 51 65 85;            /* #334155 */
+    --color-secondary-fixed-dim: 71 85 105;       /* #475569 */
+    --color-secondary-container: 51 65 85;        /* #334155 */
+    --color-on-secondary: 255 255 255;            /* #ffffff */
+    --color-on-secondary-container: 226 232 240;  /* #e2e8f0 */
+    --color-on-secondary-fixed: 241 245 249;      /* #f1f5f9 */
+    --color-on-secondary-fixed-variant: 203 213 225; /* #cbd5e1 */
+
+    --color-tertiary: 167 139 250;                /* #a78bfa */
+    --color-tertiary-dim: 139 92 246;             /* #8b5cf6 */
+    --color-tertiary-fixed: 221 214 254;          /* #ddd6fe */
+    --color-tertiary-fixed-dim: 167 139 250;      /* #a78bfa */
+    --color-tertiary-container: 76 29 149;        /* #4c1d95 */
+    --color-on-tertiary: 255 255 255;             /* #ffffff */
+    --color-on-tertiary-container: 237 233 254;   /* #ede9fe */
+    --color-on-tertiary-fixed: 237 233 254;       /* #ede9fe */
+    --color-on-tertiary-fixed-variant: 196 181 253; /* #c4b5fd */
+
+    --color-error: 251 113 133;                   /* #fb7185 */
+    --color-error-dim: 244 63 94;                 /* #f43f5e */
+    --color-error-container: 147 0 10;            /* #93000a */
+    --color-on-error: 105 0 5;                    /* #690005 */
+    --color-on-error-container: 255 218 214;      /* #ffdad6 */
+
+    --color-outline: 100 116 139;                 /* #64748b */
+    --color-outline-variant: 71 85 105;           /* #475569 */
+
+    /* Tokens semânticos — variantes dark (glass e overlays ajustados) */
+    --glass-nav-bg: rgba(11, 12, 14, 0.7);
+    --glass-nav-bottom-bg: rgba(11, 12, 14, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --surface-soft-bg: rgba(30, 41, 59, 0.4);
+    --shadow-card-hover: 0 10px 28px -12px rgba(0, 0, 0, 0.6);
+    --shadow-media: 0 14px 40px -18px rgba(0, 0, 0, 0.7);
+    --shadow-auth-card: 0 32px 64px -16px rgba(0, 0, 0, 0.6);
+    --shadow-fab: 0 10px 25px rgba(99, 102, 241, 0.3);
+    --shadow-dropdown:
+      0 12px 32px -8px rgba(0, 0, 0, 0.6),
+      0 4px 12px -4px rgba(0, 0, 0, 0.4);
+    --shadow-primary-soft:
+      0 20px 25px -5px rgba(99, 102, 241, 0.25),
+      0 8px 10px -6px rgba(99, 102, 241, 0.2);
+    --shadow-primary-strong: 0 16px 32px -8px rgba(99, 102, 241, 0.45);
+    --shadow-primary-button: 0 12px 24px -8px rgba(99, 102, 241, 0.4);
+    --shadow-brand-logo: 0 8px 32px rgba(99, 102, 241, 0.2);
+    --shadow-input: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --ring-primary-soft: 0 0 0 2px rgba(99, 102, 241, 0.35);
+    --ring-primary-field: 0 0 0 2px rgba(129, 140, 248, 0.4);
+    --dropzone-border: rgba(255, 255, 255, 0.1);
+    --auth-footer-divider: rgba(255, 255, 255, 0.08);
+    --auth-card-bg: rgba(15, 23, 42, 0.7);
+    --error-surface-bg: rgba(251, 113, 133, 0.12);
+    --error-surface-border: rgba(251, 113, 133, 0.3);
+    --info-surface-bg: rgba(99, 102, 241, 0.15);
+    --info-surface-border: rgba(129, 140, 248, 0.35);
+    --login-blur-primary: rgba(99, 102, 241, 0.25);
+    --queue-chip-bg: rgba(15, 23, 42, 0.7);
+    --queue-error-bg: rgba(251, 113, 133, 0.7);
+    --queue-progress-bg: rgba(99, 102, 241, 0.85);
+    --queue-dashed-border: rgba(255, 255, 255, 0.08);
+    --overlay-gradient-from: rgba(0, 0, 0, 0.9);
+    --overlay-gradient-mid: rgba(0, 0, 0, 0.5);
+    --overlay-text-muted: rgba(255, 255, 255, 0.85);
+    --overlay-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --overlay-badge-bg: rgba(0, 0, 0, 0.7);
+    --overlay-badge-bg-strong: rgba(0, 0, 0, 0.9);
+    --overlay-badge-bg-soft: rgba(0, 0, 0, 0.55);
+    --overlay-badge-bg-dim: rgba(0, 0, 0, 0.6);
+    --overlay-badge-bg-deep: rgba(0, 0, 0, 0.92);
+    --media-empty-gradient: linear-gradient(180deg, #05070b 0%, #0f172a 100%);
+    --dot-inactive-bg: rgba(255, 255, 255, 0.35);
+    --dot-hover-bg: rgba(255, 255, 255, 0.7);
+    --dot-ring: 0 0 0 1px rgba(0, 0, 0, 0.3);
+    --nav-hover-bg: rgba(255, 255, 255, 0.08);
+    --nav-search-placeholder: rgba(148, 163, 184, 0.6);
+    --post-terms-color: rgba(148, 163, 184, 0.7);
+    --post-form-placeholder: rgba(148, 163, 184, 0.5);
+    --switch-thumb-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    --error-item-hover-bg: rgba(251, 113, 133, 0.12);
+    --spinner-track: rgba(255, 255, 255, 0.2);
   }
 
   html,
@@ -11,6 +250,7 @@
 
   body {
     @apply bg-background text-on-surface font-body antialiased;
+    transition: background-color 200ms ease, color 200ms ease;
   }
 
   * {

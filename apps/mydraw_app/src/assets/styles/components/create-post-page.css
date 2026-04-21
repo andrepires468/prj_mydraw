@@ -44,14 +44,14 @@
   }
 
   .create-post-page__alert--error {
-    background-color: rgba(249, 115, 134, 0.12);
-    border: 1px solid rgba(168, 54, 75, 0.3);
+    background-color: var(--error-surface-bg);
+    border: 1px solid var(--error-surface-border);
     color: theme('colors.error');
   }
 
   .create-post-page__alert--success {
-    background-color: rgba(112, 115, 255, 0.12);
-    border: 1px solid rgba(74, 75, 215, 0.3);
+    background-color: var(--info-surface-bg);
+    border: 1px solid var(--info-surface-border);
     color: theme('colors.primary');
   }
 }

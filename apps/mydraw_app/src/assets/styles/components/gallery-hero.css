@@ -1,14 +1,33 @@
 @layer components {
-  .gallery-hero {
-    @apply flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8;
+  .gallery-toolbar {
+    @apply mb-8 flex flex-wrap items-center justify-between gap-4;
+  }
+
+  .gallery-hero-card {
+    @apply p-0 sm:p-0;
+    @apply min-h-[320px] md:min-h-[340px] flex items-start;
+    background: transparent;
+    box-shadow: none;
+    border: none;
+  }
+
+  @media (min-width: 1024px) {
+    .gallery-hero-card {
+      grid-column: span 2;
+    }
+  }
+
+  .gallery-hero__text {
+    @apply relative w-full max-w-none;
   }
 
   .gallery-hero__title {
-    @apply text-5xl md:text-7xl font-extrabold tracking-tighter text-on-background mb-4;
-    line-height: 1;
+    @apply text-5xl md:text-6xl xl:text-7xl font-extrabold tracking-tighter text-on-background mb-4;
+    line-height: 0.95;
+    max-width: 18ch;
   }
 
   .gallery-hero__subtitle {
-    @apply text-on-surface-variant max-w-md font-body text-lg leading-relaxed;
+    @apply text-on-surface-variant max-w-3xl font-body text-lg md:text-xl leading-relaxed;
   }
 }

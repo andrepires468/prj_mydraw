@@ -47,7 +47,7 @@
 
   .auth-field__input:focus {
     @apply bg-surface-container-high outline-none;
-    box-shadow: 0 0 0 2px rgba(112, 115, 255, 0.3);
+    box-shadow: var(--ring-primary-field);
   }
 
   .auth-field__input:disabled {

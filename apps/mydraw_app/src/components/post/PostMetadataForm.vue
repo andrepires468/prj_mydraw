@@ -1,21 +1,64 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
+type Mode = 'create' | 'edit'
+
 interface Props {
   title: string
   description: string
   submitting?: boolean
   canPublish?: boolean
+  /**
+   * `create` exibe apenas "Publish" (padrão do fluxo de criação).
+   * `edit` exibe "Save Draft" + "Publish" (ou "Unpublish" quando já publicado)
+   * além de permitir excluir o post.
+   */
+  mode?: Mode
+  /**
+   * Status atual do post quando em modo `edit`.
+   */
+  status?: 'draft' | 'published'
+  /**
+   * Indica se uma ação específica está em andamento (opcional).
+   */
+  pendingAction?: 'save' | 'publish' | 'unpublish' | 'delete' | null
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   submitting: false,
   canPublish: false,
+  mode: 'create',
+  status: 'draft',
+  pendingAction: null,
 })
 
 defineEmits<{
   'update:title': [value: string]
   'update:description': [value: string]
   publish: []
+  save: []
+  unpublish: []
+  destroy: []
 }>()
+
+const publishLabel = computed(() => {
+  if (props.mode === 'create') {
+    return props.submitting ? 'Publishing…' : 'Publish'
+  }
+  if (props.status === 'published') {
+    return props.pendingAction === 'publish' ? 'Saving…' : 'Save'
+  }
+  return props.pendingAction === 'publish' ? 'Publishing…' : 'Publish'
+})
+
+const isPublishBusy = computed(
+  () =>
+    props.submitting ||
+    props.pendingAction === 'publish',
+)
+
+const isSaveBusy = computed(() => props.pendingAction === 'save')
+const isDeleteBusy = computed(() => props.pendingAction === 'delete')
 </script>
 
 <template>
@@ -53,7 +96,9 @@ defineEmits<{
     <div class="post-metadata__options">
       <div class="post-metadata__option-row">
         <span class="post-metadata__option-label">Visibility</span>
-        <span class="post-metadata__option-value">Public</span>
+        <span class="post-metadata__option-value">
+          {{ mode === 'edit' && status === 'draft' ? 'Draft (private)' : 'Public' }}
+        </span>
       </div>
       <div class="post-metadata__option-row">
         <span class="post-metadata__option-label">Auto-Archive</span>
@@ -70,13 +115,48 @@ defineEmits<{
         :disabled="submitting || !canPublish"
         @click="$emit('publish')"
       >
-        <span v-if="submitting" class="post-metadata__publish-spinner" />
-        <span>{{ submitting ? 'Publishing…' : 'Publish' }}</span>
+        <span v-if="isPublishBusy" class="post-metadata__publish-spinner" />
+        <span>{{ publishLabel }}</span>
       </button>
+
+      <div v-if="mode === 'edit'" class="post-metadata__secondary-actions">
+        <button
+          type="button"
+          class="post-metadata__secondary"
+          :disabled="submitting"
+          @click="$emit('save')"
+        >
+          <span v-if="isSaveBusy" class="post-metadata__publish-spinner" />
+          <span>{{ isSaveBusy ? 'Saving…' : 'Save draft' }}</span>
+        </button>
+
+        <button
+          v-if="status === 'published'"
+          type="button"
+          class="post-metadata__secondary"
+          :disabled="submitting"
+          @click="$emit('unpublish')"
+        >
+          <span>{{ pendingAction === 'unpublish' ? 'Unpublishing…' : 'Unpublish' }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="post-metadata__danger"
+          :disabled="submitting"
+          @click="$emit('destroy')"
+        >
+          <span v-if="isDeleteBusy" class="post-metadata__publish-spinner" />
+          <span>{{ isDeleteBusy ? 'Deleting…' : 'Delete post' }}</span>
+        </button>
+      </div>
     </div>
 
-    <p class="post-metadata__terms">
+    <p v-if="mode === 'create'" class="post-metadata__terms">
       By publishing, you agree to our curator terms of service.
+    </p>
+    <p v-else class="post-metadata__terms">
+      Drafts are only visible to you until you publish.
     </p>
   </aside>
 </template>

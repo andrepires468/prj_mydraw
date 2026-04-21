@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "axios": "^1.15.1",
@@ -20,10 +22,12 @@
     "@vitejs/plugin-vue": "^6.0.5",
     "@vue/tsconfig": "^0.9.1",
     "autoprefixer": "^10.5.0",
+    "esbuild": "^0.28.0",
     "postcss": "^8.5.10",
     "tailwindcss": "^3.4.19",
     "typescript": "~6.0.2",
     "vite": "^8.0.4",
-    "vue-tsc": "^3.2.6"
+    "vue-tsc": "^3.2.6",
+    "@playwright/test": "^1.52.0"
   }
 }

@@ -1,8 +1,9 @@
 @layer components {
   .bottom-nav-bar {
     @apply md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-end px-4 pb-6 pt-2 shadow-nav-top;
-    background-color: rgba(248, 249, 255, 0.8);
+    background-color: var(--glass-nav-bottom-bg);
     backdrop-filter: blur(24px);
+    border-top: 1px solid var(--glass-border);
     border-top-left-radius: 2rem;
     border-top-right-radius: 2rem;
   }

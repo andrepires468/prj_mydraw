@@ -11,12 +11,17 @@ class Post extends Model
 {
     use HasFactory;
 
+    public const STATUS_DRAFT     = 'draft';
+    public const STATUS_PUBLISHED = 'published';
+
     protected $table = 'posts';
 
     protected $fillable = [
         'user_id',
         'title',
         'description',
+        'status',
+        'draft_uuid',
     ];
 
     public function user(): BelongsTo

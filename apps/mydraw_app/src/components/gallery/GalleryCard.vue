@@ -78,11 +78,18 @@ function goTo(index: number) {
       </div>
 
       <template v-if="hasMultiple">
+        <!--
+          Os botões ficam dentro de um <RouterLink> (renderizado como <a>)
+          no GalleryView. `.stop` isola a propagação do click, mas o browser
+          ainda dispara o default action do anchor (navegação) quando o
+          click ocorre em qualquer descendente do <a>. Por isso precisamos
+          também de `.prevent` para cancelar a navegação.
+        -->
         <button
           type="button"
           class="gallery-card__nav gallery-card__nav--prev"
           aria-label="Imagem anterior"
-          @click.stop="prev"
+          @click.stop.prevent="prev"
         >
           <MaterialIcon name="chevron_left" />
         </button>
@@ -90,7 +97,7 @@ function goTo(index: number) {
           type="button"
           class="gallery-card__nav gallery-card__nav--next"
           aria-label="Próxima imagem"
-          @click.stop="next"
+          @click.stop.prevent="next"
         >
           <MaterialIcon name="chevron_right" />
         </button>
@@ -109,7 +116,7 @@ function goTo(index: number) {
             :aria-label="`Ir para imagem ${i + 1}`"
             :aria-selected="i === current"
             role="tab"
-            @click.stop="goTo(i)"
+            @click.stop.prevent="goTo(i)"
           />
         </div>
       </template>

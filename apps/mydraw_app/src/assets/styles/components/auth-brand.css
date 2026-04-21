@@ -10,7 +10,7 @@
       theme('colors.primary'),
       theme('colors.primary-container')
     );
-    box-shadow: 0 8px 32px rgba(74, 75, 215, 0.15);
+    box-shadow: var(--shadow-brand-logo);
   }
 
   .auth-brand__icon .material-symbols-outlined {

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR" class="light">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -26,6 +26,26 @@
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
       rel="stylesheet"
     />
+    <script>
+      // Aplica o tema salvo antes do Vue carregar, evitando flash de cor
+      // ao recarregar a página (FOUC). O toggle em TopNavBar.vue mantém
+      // a mesma chave no localStorage.
+      (function () {
+        try {
+          var stored = localStorage.getItem('mydraw:theme');
+          var prefersDark =
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var isDark =
+            stored === 'dark' || (stored !== 'light' && prefersDark);
+          var root = document.documentElement;
+          root.classList.toggle('dark', isDark);
+          root.style.colorScheme = isDark ? 'dark' : 'light';
+        } catch (_) {
+          /* ignora erros de acesso ao storage */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

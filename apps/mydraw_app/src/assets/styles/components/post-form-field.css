@@ -23,13 +23,13 @@
 
   .post-form-field__input::placeholder,
   .post-form-field__textarea::placeholder {
-    color: rgba(90, 125, 169, 0.5);
+    color: var(--post-form-placeholder);
   }
 
   .post-form-field__input:focus,
   .post-form-field__textarea:focus {
     @apply outline-none;
-    box-shadow: 0 0 0 2px rgba(74, 75, 215, 0.2);
+    box-shadow: var(--ring-primary-soft);
   }
 
   .post-form-field__input:disabled,

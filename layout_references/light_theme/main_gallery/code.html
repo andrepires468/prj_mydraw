@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>mydrow.app | Digital Curator Gallery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#eff4ff",
+                        "secondary": "#5d5d72",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#fff7fb",
+                        "secondary-container": "#e2e0f9",
+                        "on-secondary-fixed": "#3d3e51",
+                        "surface-dim": "#c4dcff",
+                        "background": "#f8f9ff",
+                        "on-error-container": "#6e0523",
+                        "tertiary-container": "#f5cdf9",
+                        "on-primary-fixed": "#000000",
+                        "error": "#a8364b",
+                        "on-surface-variant": "#3d618c",
+                        "on-error": "#fff7f7",
+                        "on-tertiary-container": "#604266",
+                        "on-secondary-container": "#505064",
+                        "surface-container-highest": "#d2e4ff",
+                        "secondary-fixed": "#e2e0f9",
+                        "inverse-on-surface": "#8e9eb7",
+                        "on-background": "#05345c",
+                        "on-tertiary-fixed": "#4c2f52",
+                        "error-dim": "#6b0221",
+                        "tertiary-dim": "#67486c",
+                        "outline-variant": "#91b4e4",
+                        "on-surface": "#05345c",
+                        "inverse-primary": "#8083ff",
+                        "on-primary": "#fbf7ff",
+                        "tertiary": "#745479",
+                        "on-primary-fixed-variant": "#010028",
+                        "primary-fixed-dim": "#6366f1",
+                        "primary-container": "#7073ff",
+                        "surface-container-high": "#dce9ff",
+                        "inverse-surface": "#000f21",
+                        "on-secondary-fixed-variant": "#5a5a6f",
+                        "tertiary-fixed": "#f5cdf9",
+                        "surface": "#f8f9ff",
+                        "on-secondary": "#fbf7ff",
+                        "secondary-fixed-dim": "#d4d2eb",
+                        "surface-tint": "#4a4bd7",
+                        "on-tertiary-fixed-variant": "#6a4b70",
+                        "primary-dim": "#3d3dcb",
+                        "primary-fixed": "#7073ff",
+                        "primary": "#4a4bd7",
+                        "error-container": "#f97386",
+                        "on-primary-container": "#000000",
+                        "tertiary-fixed-dim": "#e7bfea",
+                        "surface-variant": "#d2e4ff",
+                        "outline": "#5a7da9",
+                        "surface-container": "#e5eeff",
+                        "surface-bright": "#f8f9ff",
+                        "secondary-dim": "#515166"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom Masonry Columns - using CSS column-count for fluid Pinterest-style */
+        .masonry-grid {
+            column-count: 1;
+            column-gap: 1.5rem;
+        }
+        @media (min-width: 640px) { .masonry-grid { column-count: 2; } }
+        @media (min-width: 1024px) { .masonry-grid { column-count: 3; } }
+        @media (min-width: 1280px) { .masonry-grid { column-count: 4; } }
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopNavBar -->
+<header class="bg-[#f8f9ff]/70 backdrop-blur-2xl dark:bg-[#000f21]/70 docked full-width top-0 sticky z-50">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-screen-2xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold tracking-tighter text-[#05345c] dark:text-[#eff4ff]">mydrow.app</span>
+<nav class="hidden md:flex gap-6 font-['Inter'] tracking-tight font-medium">
+<a class="text-[#4a4bd7] font-bold border-b-2 border-[#4a4bd7]" href="#">Gallery</a>
+<a class="text-[#3d618c] dark:text-[#91b4e4] hover:bg-[#c4dcff]/20 transition-colors px-2 py-1 rounded" href="#">Drafts</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<!-- Search Bar Container (Right) -->
+<div class="hidden sm:flex items-center bg-surface-container-low px-4 py-2 rounded-full w-64 focus-within:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm ml-2 w-full placeholder:text-on-surface-variant/50" placeholder="Search gallery..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-[#c4dcff]/20 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">admin_panel_settings</span>
+</button>
+<button class="p-2 rounded-full hover:bg-[#c4dcff]/20 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">account_circle</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-screen-2xl mx-auto px-6 pt-12 pb-24">
+<!-- Editorial Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
+<div>
+<h1 class="text-5xl md:text-7xl font-extrabold tracking-tighter text-on-background mb-4">Atmospheric<br/>Curations</h1>
+<p class="text-on-surface-variant max-w-md font-body text-lg leading-relaxed">
+                    A sensory journey through high-fidelity digital art and curated photography. Exploring the fluid boundaries of light and form.
+                </p>
+</div>
+<!-- Filters & Sorting (Atmospheric Fluidity Style) -->
+<div class="flex flex-wrap items-center gap-4">
+<div class="bg-surface-container-low p-1 rounded-full flex gap-1">
+<button class="px-6 py-2 rounded-full bg-primary text-on-primary font-medium text-sm transition-all shadow-sm">Published</button>
+<button class="px-6 py-2 rounded-full text-on-surface-variant font-medium text-sm hover:bg-surface-container-high transition-all">Drafts</button>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low px-4 py-2 rounded-full">
+<span class="text-[10px] uppercase tracking-[0.05em] font-bold text-on-surface-variant">Sort:</span>
+<select class="bg-transparent border-none text-sm font-semibold p-0 focus:ring-0 text-on-surface cursor-pointer">
+<option>Newest</option>
+<option>Popular</option>
+<option>Oldest</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Masonry Grid Content -->
+<div class="masonry-grid">
+<!-- Item 1 -->
+<div class="masonry-item group relative overflow-hidden rounded-xl bg-surface-container-low">
+<img class="w-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105" data-alt="ethereal landscape with rolling violet hills and a single glowing tree at twilight, soft atmospheric perspective" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDflOC64NWuLQHCIbN_VuHhg3Jf9LcYJIJ_-g9c3bzjN147lHp6ixI7Kqw-KAE4QBmyIEU_bPOUaXTRlAUXpqmhki6CizKzgE8xhtu_MlJaC0n6tuVtqyvm8zTp8gxhR9uGsocbin2OwBzl2hxhZXeJa9acNLrV9SmCaK-1GWkLypWmdsw_uyMH6tfOK59JTPIJ3m71k2n_HawuwOkrEqFZ4mZ97fwNwAAgxk7GKBq8gVfRCh6fwhZD1eN8q2ks2FjTKh77K5llZxwi"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-primary/80 mb-1">Concept Art</span>
+<h3 class="text-on-primary font-bold text-lg">Ethereal Drift</h3>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="masonry-item group relative overflow-hidden rounded-xl bg-surface-container-low">
+<img class="w-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105" data-alt="architectural close-up of a brutalist concrete building with sharp angular shadows and a bright blue sky background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACcrpufQC5CWa_9k_F6nlbiR6J6-vq_r89u9dJLDNzCNMu5yKKBsRtmOR8PJ-3WAPhGpCu6ZRdzZhT3hEhB5DjzXWo_V4vxTaYyx4g0eRstyvWQlg2wx9ss8hEPwu6f3HdqcNIEhaFmP3XxdGcByyvFKn7Tciyt3Y0jZnXxg9voZx0CVSK-oiEPG-7tkrF8VhtI4PXoK_hMb-RfV4QkukIIaoLd7E44rc3j65FaDuIuJGxHlKcRsvYQQFrCtEetDqK9g1k_Px5iJ6X"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-primary/80 mb-1">Architecture</span>
+<h3 class="text-on-primary font-bold text-lg">Monolith Study</h3>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="masonry-item group relative overflow-hidden rounded-xl bg-surface-container-low">
+<img class="w-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105" data-alt="macro photography of liquid glass swirling with iridescent colors of deep teal and gold, highly detailed textures" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB94LcigCTc6pGAPpTAoaR11b_KvEUXjFXtLN6ZyeUAECUIw3RYMS25DTdA-B1q-cOwpOrXK9xa2pHObnBNmd5pvz3OzS1d9QG9netvJ3P43QrKDF70YPDUDVxLfhPTqTPSvWggsD-QM1GTpl_k8iovLMPpDHOodPxnOMu1zzP0r4LU8-fcETUtaXlIlIs5D_l91k_DcsxvJS5dtTtZuZjys9pfjgh-ysuKCQexPKlKmtQH-oDwu77lCeOrfUQT1nA5i-3yvdZv2r7F"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-primary/80 mb-1">Abstract</span>
+<h3 class="text-on-primary font-bold text-lg">Vitreous Flux</h3>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="masonry-item group relative overflow-hidden rounded-xl bg-surface-container-low">
+<img class="w-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105" data-alt="portrait of a futuristic botanical garden inside a crystalline dome with bioluminescent plants glowing in soft blue" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkAmjSSKZCaYB4ABXsQ_aiIqfHqiAJmI9kvBSniqRK871jlbh0izf70MLP2HS94Eej-fvB9ld-Gxt-GghN1BRBTpxxiQSesp3iKbI6fTP_Q5MmtTbdcCfGk6aO43OSGaPaALgibPuXuQvLsamdT79b68KP2TMHWBVpcX81TlPNJEcxj9URcLrsV1nWpkIN8cglMIwK6NN8ZjdZ8Po1dLejTOk8ZC0H2guHNafWspg50hFuy8amdvyPavRs3S1pyUUDZBSybbOmb7-_"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-primary/80 mb-1">Environment</span>
+<h3 class="text-on-primary font-bold text-lg">Neon Greenhouse</h3>
+</div>
+</div>
+<!-- Item 5 -->
+<div class="masonry-item group relative overflow-hidden rounded-xl bg-surface-container-low">
+<img class="w-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105" data-alt="minimalist composition of a single white bird flying over a calm navy ocean at dawn, vast negative space" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzyn9ky0RnAQpdfuxXCHJQZFswvfPJ3jlnXhyEW-COpA2PIVwUQl5nxAyPzclElaKIPAdDvRWLQdw_ElF2YpQhKJeiWdHw3mlDyBLtx5C72fme3qP4lTc3GWenymSinsdOJ1aG9WcIYNJC3tXoxeFKo9ro-GDXxxWGcMBPGVHimNR0FKOOGShlsBBgirW5sWbtA90EpjEyKzQ10t6EBdChUMxKwUKzqBBIVW4Uj9N21Zw3BcUSD99iCewtvdBPcJtX8x8oRKhD3QCY"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-primary/80 mb-1">Photography</span>
+<h3 class="text-on-primary font-bold text-lg">Silent Ascent</h3>
+</div>
+</div>
+<!-- Item 6 -->
+<div class="masonry-item group relative overflow-hidden rounded-xl bg-surface-container-low">
+<img class="w-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105" data-alt="close-up of silk fabric rippling in the wind, soft focus with pearlescent sheen and subtle indigo highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBc4Uc8HYM-YkFQi2zOmNxTDEwoq4ym6aVYeRXluf8PD228fbxZZ_6sUT7vHro9LddiO7VqFOdEO9WQ08pLDGWI4hEO2Hh9U6JNi21uJJBqK_dHdhX6iNVbVpy1NosKWWSqa0ZeKZJILlS3CCerYBjS4q2KsLX8ABSmYwgGUcoPnvEjCZuCdlTSMlgq-y0Z1BVGD8Z6rda6N6BgtC2XD-e_mvFAdofFEZbsef1PZs8cpBha7KgCBTwB36MuP1kcaRHmjnsDgHZLO05I"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-primary/80 mb-1">Macro</span>
+<h3 class="text-on-primary font-bold text-lg">Fabric of Light</h3>
+</div>
+</div>
+<!-- Item 7 -->
+<div class="masonry-item group relative overflow-hidden rounded-xl bg-surface-container-low">
+<img class="w-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105" data-alt="aerial view of a futuristic desert city with winding sand-colored structures and turquoise pools, cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnNHj1ANIahNAD6zxFqdzS5S9To4MRCoRdKOuMWzhQvduKUjbCVXSN2bOrO0w9QiZzbzqVfnBLgfkUa-4IoT5Tb1uqzAdjrrn6RWpZDxubhszQLwSRZByebRPlNJ2NqPHeqQ_LEU7XEKX4FR3pnGW2IZHQ3IxLovc5qa5QMf67W2aWPkNqhxdATHLuMgEOCOGOclpaKbX_I-GBVnvGCV_CHJRSZWg7aISBTpgHBeDblal8dvYXJWTYfBvUxBKTujpWIL2tcnc99QyO"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-primary/80 mb-1">Urbanism</span>
+<h3 class="text-on-primary font-bold text-lg">Mirage District</h3>
+</div>
+</div>
+<!-- Item 8 -->
+<div class="masonry-item group relative overflow-hidden rounded-xl bg-surface-container-low">
+<img class="w-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105" data-alt="surreal digital art of planets visible through clouds in a deep purple sky above a misty forest" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABEjSVtxAaEFWP2LdU3BI8Moow9JkorBZ2gBQjigG9oBEnCxvq-ed89C282JenM9l98dX1eEk1GDhLGX6xKqKHM8HJYBXvvYxTLRd1XevJA-sHo_B59LPumDvsJDiuAv_epcNZOlf3MQOoM6NWCZmLHvsKsitQtwDA1ldRPP2ytQscvvX-5BCMGINHEnnwpEZxjegdoYSNEi1wx3VsuEi3FGTgAJ9lf-ys1TjbP-CnfUlViGAgaw5RI5rOuSz7eh47pX7e4dpoBRis"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium text-on-primary/80 mb-1">Digital Art</span>
+<h3 class="text-on-primary font-bold text-lg">Event Horizon</h3>
+</div>
+</div>
+</div>
+<!-- Infinite Scroll Loading Indicator -->
+<div class="mt-16 flex flex-col items-center justify-center py-12">
+<div class="w-12 h-12 border-4 border-surface-container-high border-t-primary rounded-full animate-spin"></div>
+<p class="mt-4 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Gathering more inspirations...</p>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 rounded-t-[2rem] bg-[#f8f9ff]/80 backdrop-blur-3xl shadow-[0_-8px_32px_rgba(5,52,92,0.06)] flex justify-around items-end px-4 pb-6 pt-2">
+<a class="flex flex-col items-center justify-center bg-[#4a4bd7] text-white rounded-full p-3 mb-2 scale-110 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="grid_view" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#3d618c] dark:text-[#91b4e4] p-2 hover:text-[#4a4bd7] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium font-['Inter']">Create</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#3d618c] dark:text-[#91b4e4] p-2 hover:text-[#4a4bd7] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium font-['Inter']">Admin</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#3d618c] dark:text-[#91b4e4] p-2 hover:text-[#4a4bd7] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium font-['Inter']">Profile</span>
+</a>
+</nav>
+<!-- Floating Action Button (Only on Mobile for Gallery) -->
+<button class="md:hidden fixed bottom-28 right-6 w-14 h-14 bg-gradient-to-br from-primary to-primary-container text-white rounded-full flex items-center justify-center shadow-xl z-40 active:scale-95 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</body></html>

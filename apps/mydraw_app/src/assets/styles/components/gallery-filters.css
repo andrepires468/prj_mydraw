@@ -9,9 +9,21 @@
 
   .gallery-filters__tab {
     @apply px-6 py-2 rounded-full font-medium text-sm transition-all text-on-surface-variant;
+    @apply inline-flex items-center gap-2;
     border: none;
     background: transparent;
     cursor: pointer;
+  }
+
+  .gallery-status-toggle__count {
+    @apply inline-flex items-center justify-center min-w-[1.75rem] h-5 px-2 rounded-full;
+    @apply text-[11px] font-semibold leading-none tabular-nums;
+    @apply bg-surface-container-highest text-on-surface-variant;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .gallery-filters__tab--active .gallery-status-toggle__count {
+    @apply bg-on-primary/20 text-on-primary;
   }
 
   .gallery-filters__tab:hover {
@@ -20,7 +32,7 @@
 
   .gallery-filters__tab--active {
     @apply bg-primary text-on-primary;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-primary-button);
   }
 
   .gallery-filters__tab--active:hover {

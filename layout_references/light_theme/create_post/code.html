@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#eff4ff",
+                        "secondary": "#5d5d72",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#fff7fb",
+                        "secondary-container": "#e2e0f9",
+                        "on-secondary-fixed": "#3d3e51",
+                        "surface-dim": "#c4dcff",
+                        "background": "#f8f9ff",
+                        "on-error-container": "#6e0523",
+                        "tertiary-container": "#f5cdf9",
+                        "on-primary-fixed": "#000000",
+                        "error": "#a8364b",
+                        "on-surface-variant": "#3d618c",
+                        "on-error": "#fff7f7",
+                        "on-tertiary-container": "#604266",
+                        "on-secondary-container": "#505064",
+                        "surface-container-highest": "#d2e4ff",
+                        "secondary-fixed": "#e2e0f9",
+                        "inverse-on-surface": "#8e9eb7",
+                        "on-surface": "#05345c",
+                        "inverse-primary": "#8083ff",
+                        "on-primary": "#fbf7ff",
+                        "tertiary": "#745479",
+                        "on-primary-fixed-variant": "#010028",
+                        "primary-fixed-dim": "#6366f1",
+                        "primary-container": "#7073ff",
+                        "surface-container-high": "#dce9ff",
+                        "inverse-surface": "#000f21",
+                        "on-secondary-fixed-variant": "#5a5a6f",
+                        "tertiary-fixed": "#f5cdf9",
+                        "surface": "#f8f9ff",
+                        "on-secondary": "#fbf7ff",
+                        "secondary-fixed-dim": "#d4d2eb",
+                        "surface-tint": "#4a4bd7",
+                        "on-tertiary-fixed-variant": "#6a4b70",
+                        "primary-dim": "#3d3dcb",
+                        "primary-fixed": "#7073ff",
+                        "primary": "#4a4bd7",
+                        "error-container": "#f97386",
+                        "on-primary-container": "#000000",
+                        "tertiary-fixed-dim": "#e7bfea",
+                        "surface-variant": "#d2e4ff",
+                        "outline": "#5a7da9",
+                        "surface-container": "#e5eeff",
+                        "surface-bright": "#f8f9ff",
+                        "secondary-dim": "#515166"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen selection:bg-surface-container-highest">
+<!-- TopNavBar -->
+<nav class="bg-[#f8f9ff]/70 backdrop-blur-2xl dark:bg-[#000f21]/70 sticky top-0 z-50">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-screen-2xl mx-auto">
+<div class="text-2xl font-bold tracking-tighter text-[#05345c] dark:text-[#eff4ff]">mydrow.app</div>
+<div class="hidden md:flex items-center gap-8 font-['Inter'] tracking-tight font-medium">
+<a class="text-[#3d618c] dark:text-[#91b4e4] hover:bg-[#c4dcff]/20 transition-colors px-3 py-1 rounded-lg" href="#">Gallery</a>
+<a class="text-[#3d618c] dark:text-[#91b4e4] hover:bg-[#c4dcff]/20 transition-colors px-3 py-1 rounded-lg" href="#">Drafts</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#3d618c] dark:text-[#91b4e4] hover:bg-[#c4dcff]/20 p-2 rounded-full transition-colors" data-icon="admin_panel_settings">admin_panel_settings</button>
+<button class="material-symbols-outlined text-[#3d618c] dark:text-[#91b4e4] hover:bg-[#c4dcff]/20 p-2 rounded-full transition-colors" data-icon="account_circle">account_circle</button>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="max-w-6xl mx-auto px-6 py-12 mb-32">
+<header class="mb-12">
+<h1 class="text-4xl md:text-5xl font-extrabold tracking-tighter text-on-surface mb-2">Create New Post</h1>
+<p class="text-on-surface-variant text-lg">Curate your visual story with high-resolution imagery and elegant typography.</p>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+<!-- Editor Column -->
+<div class="lg:col-span-7 space-y-12">
+<!-- Upload Section -->
+<section>
+<div class="group relative flex flex-col items-center justify-center border-2 border-dashed border-outline-variant/30 bg-surface-container-low rounded-3xl p-12 hover:bg-surface-container-high transition-all duration-300">
+<div class="bg-surface-container-lowest shadow-sm p-6 rounded-full mb-6">
+<span class="material-symbols-outlined text-4xl text-primary" data-icon="cloud_upload">cloud_upload</span>
+</div>
+<h3 class="text-xl font-semibold mb-2">Drop your imagery here</h3>
+<p class="text-on-surface-variant text-center max-w-xs mb-8">Supports high-res JPG, PNG, and WebP. Max 10 files per post.</p>
+<button class="bg-primary text-on-primary px-8 py-3 rounded-full font-semibold hover:scale-95 transition-transform duration-200 shadow-xl shadow-primary/20">
+                            Browse Files
+                        </button>
+<input class="absolute inset-0 opacity-0 cursor-pointer" multiple="" type="file"/>
+</div>
+</section>
+<!-- Sortable Grid -->
+<section class="space-y-6">
+<div class="flex items-center justify-between">
+<h2 class="text-xs uppercase tracking-[0.1em] font-bold text-on-surface-variant">Manage Queue (4 Images)</h2>
+<span class="text-xs text-outline font-medium">Drag to reorder</span>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+<!-- Image Card 1 -->
+<div class="relative group aspect-[4/5] bg-surface-container-low rounded-xl overflow-hidden cursor-move">
+<img class="w-full h-full object-cover" data-alt="minimalist architectural photography of a concrete building against a clear blue sky with sharp geometric shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACQ2ho_qjvvBUGGqVnMUM6UWdjyK3Hk1irXJ0vuAq-PB_gM57sR8QbZtAL0T0SC7xyR0U_tgfGmuXrkycqkb9qKrLA9TO34HNUOWGuLSVu5TROkzQE5nHYid9W3LzWL1tL-N4DNsQ0_FK1SjhM5cNjo0BrrwDRoqgrC1vA8tNvkfpL7mY6-0UMv1_q3jKlCa7S9PlRz5CgtgvtApNrKrREndUr1qyTvLWhWphJBBNVrGxR_0qBeux6mu1ghNlcR0XijKjplm5rSIBP"/>
+<div class="absolute inset-0 bg-on-surface/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+<button class="material-symbols-outlined text-white bg-error-container/80 p-2 rounded-full hover:scale-110 transition-transform" data-icon="delete">delete</button>
+<button class="material-symbols-outlined text-white bg-primary/80 p-2 rounded-full hover:scale-110 transition-transform" data-icon="open_in_full">open_in_full</button>
+</div>
+</div>
+<!-- Image Card 2 -->
+<div class="relative group aspect-[4/5] bg-surface-container-low rounded-xl overflow-hidden cursor-move">
+<img class="w-full h-full object-cover" data-alt="abstract flowing liquid shapes in shades of lavender and deep indigo with a soft grain texture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVyg_zX7PlrIWjJBsD6ltyxiY_PkSBj0kZ0bIrYNfO0kTZcefTyUZVCXZsneCzAIpRDyo93QkuK4QyvlCuWyxPov2205M4axGNoJrjRW4Igtt0u-5PhMpsCiUeyS9-fASHF7T-6Ug4QkHXk_We0-aDwroQ4e25LoHEcU-IP3CB-0Sv2XKdaZnIHqsjGkf4beKEgsDyA7uhgFbIEXlTlrmI-IL8l2rGZODFFzMUI7h1Mi1k-4L2mi0UQ6t89GtKsgPgoDCgWRfl_et9"/>
+<div class="absolute inset-0 bg-on-surface/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+<button class="material-symbols-outlined text-white bg-error-container/80 p-2 rounded-full" data-icon="delete">delete</button>
+<button class="material-symbols-outlined text-white bg-primary/80 p-2 rounded-full" data-icon="open_in_full">open_in_full</button>
+</div>
+</div>
+<!-- Image Card 3 -->
+<div class="relative group aspect-[4/5] bg-surface-container-low rounded-xl overflow-hidden cursor-move">
+<img class="w-full h-full object-cover" data-alt="scenic mountain range at sunrise with soft golden light hitting the peaks and valley mist" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDInknG_f5nSxyYfnqvDyo-tNlVd4oCs0tPqgzLgQFgY1CyjBgFkrnn2U0Pmcie3QofM3i9fXtK_QhWv8GkcgF8SeY_xqR7qSg-7KekpZJTFSrC0NQPiqYD-J7WpSc6dMs1NqpGgLqxXZXKrQjThoP2RH4Ew-Hht0UzQewnbdp2ly3Zu2HdBQgmrvKhlG263v0VdWCG-ViGrzku2BMLrba10yG4FORZOZHhra2U1sXVyAyK-_i_6QZO7cdSEt6DiU9ZDkwmmTAUWjbq"/>
+<div class="absolute inset-0 bg-on-surface/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+<button class="material-symbols-outlined text-white bg-error-container/80 p-2 rounded-full" data-icon="delete">delete</button>
+<button class="material-symbols-outlined text-white bg-primary/80 p-2 rounded-full" data-icon="open_in_full">open_in_full</button>
+</div>
+</div>
+<!-- Image Card 4 -->
+<div class="relative group aspect-[4/5] bg-surface-container-low rounded-xl overflow-hidden cursor-move">
+<img class="w-full h-full object-cover" data-alt="close-up of clean white fabric textures with soft natural sunlight creating gentle folds and shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZcqLC6perkqWsa68UlHbJdin9ggQkC39hXkE_AVnorevwSBU2FxathxVlDfuGeraUOiT2ZQwANU7flW2juDuogewdyrg2hmWt_q20abH7xETrojuykZuV0ud7tvmRH82_268KNMU14iXxi3Qw_S96fiWMWEoIgeWGgsd3FP7tTZNq6ZAhhQu3gPMjNQ3Ou9uLvTJ0Scq1JcHNHm8i1AAYn-xiA3jVO4dgnRk9_nhduYbtmuHNtP4tUWIaAXrCr4c6VtZG_1NrZRpY"/>
+<div class="absolute inset-0 bg-on-surface/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+<button class="material-symbols-outlined text-white bg-error-container/80 p-2 rounded-full" data-icon="delete">delete</button>
+<button class="material-symbols-outlined text-white bg-primary/80 p-2 rounded-full" data-icon="open_in_full">open_in_full</button>
+</div>
+</div>
+<!-- Placeholder Slot -->
+<div class="aspect-[4/5] border-2 border-dashed border-outline-variant/20 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-outline-variant" data-icon="add">add</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Metadata Column -->
+<aside class="lg:col-span-5">
+<div class="sticky top-32 space-y-8 bg-surface-container-low/50 p-8 rounded-[2rem]">
+<div class="space-y-4">
+<label class="text-[10px] uppercase tracking-[0.15em] font-bold text-on-surface-variant block px-1">Post Title</label>
+<input class="w-full bg-surface-container-lowest border-none rounded-xl px-6 py-4 text-on-surface placeholder:text-outline/50 focus:ring-2 focus:ring-primary/20 transition-all text-lg font-medium" placeholder="E.g. Summer Architectural Studies" type="text"/>
+</div>
+<div class="space-y-4">
+<label class="text-[10px] uppercase tracking-[0.15em] font-bold text-on-surface-variant block px-1">Description</label>
+<textarea class="w-full bg-surface-container-lowest border-none rounded-2xl px-6 py-4 text-on-surface placeholder:text-outline/50 focus:ring-2 focus:ring-primary/20 transition-all resize-none" placeholder="Describe the atmosphere and technique..." rows="6"></textarea>
+</div>
+<div class="space-y-4 pt-4">
+<div class="flex items-center justify-between text-sm px-1">
+<span class="text-on-surface-variant">Visibility</span>
+<span class="font-bold text-primary">Public</span>
+</div>
+<div class="flex items-center justify-between text-sm px-1">
+<span class="text-on-surface-variant">Auto-Archive</span>
+<span class="text-outline">Disabled</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 pt-8">
+<button class="bg-secondary-container text-on-secondary-container py-4 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-surface-dim transition-colors">
+                            Save Draft
+                        </button>
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary py-4 rounded-full font-bold uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-95 transition-transform duration-200">
+                            Publish
+                        </button>
+</div>
+<p class="text-[10px] text-center text-outline/70 italic px-4">
+                        By publishing, you agree to our curator terms of service.
+                    </p>
+</div>
+</aside>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden bg-[#f8f9ff]/80 backdrop-blur-3xl dark:bg-[#000f21]/80 fixed bottom-0 left-0 w-full flex justify-around items-end px-4 pb-6 pt-2 z-50 rounded-t-[2rem] shadow-[0_-8px_32px_rgba(5,52,92,0.06)]">
+<a class="flex flex-col items-center justify-center text-[#3d618c] dark:text-[#91b4e4] p-2 hover:text-[#4a4bd7] transition-all" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="grid_view">grid_view</span>
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium font-['Inter'] mt-1">Feed</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#4a4bd7] text-white rounded-full p-3 mb-2 scale-110 transition-all" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="add_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+<span class="hidden">Create</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#3d618c] dark:text-[#91b4e4] p-2 hover:text-[#4a4bd7] transition-all" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium font-['Inter'] mt-1">Admin</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#3d618c] dark:text-[#91b4e4] p-2 hover:text-[#4a4bd7] transition-all" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="person">person</span>
+<span class="text-[10px] uppercase tracking-[0.05em] font-medium font-['Inter'] mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

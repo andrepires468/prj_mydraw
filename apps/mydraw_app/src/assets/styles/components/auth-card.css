@@ -1,9 +1,10 @@
 @layer components {
   .auth-card {
     @apply rounded-3xl p-8 md:p-10;
-    background: rgba(255, 255, 255, 0.7);
+    background: var(--auth-card-bg);
     backdrop-filter: blur(20px);
-    box-shadow: 0 32px 64px -16px rgba(5, 52, 92, 0.08);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-auth-card);
   }
 
   .auth-card__form {

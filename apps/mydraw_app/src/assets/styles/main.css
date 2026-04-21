@@ -9,6 +9,7 @@
 @import './components/masonry-grid.css';
 @import './components/gallery-card.css';
 @import './components/post-view.css';
+@import './components/app-modal.css';
 @import './components/loading-indicator.css';
 
 @import './components/login-page.css';

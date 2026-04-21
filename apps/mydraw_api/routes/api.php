@@ -37,10 +37,22 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         });
     });
 
-    // Posts (listagem pública com imagens da Gallery)
-    $router->group(['prefix' => 'posts'], function () use ($router) {
-        $router->get('/',     'PostController@index');
-        $router->get('/{id}', 'PostController@show');
+    // Posts (listagem pública com imagens da Gallery).
+    //
+    // Leituras: JWT opcional — endpoints são públicos mas personalizam a
+    // resposta quando o token é enviado (drafts do próprio usuário, etc.).
+    $router->group(['prefix' => 'posts', 'middleware' => 'auth.jwt.optional'], function () use ($router) {
+        $router->get('/',       'PostController@index');
+        $router->get('/{id}',   'PostController@show');
+    });
+
+    // Escritas em posts existentes: JWT obrigatório; o controller verifica
+    // ainda que o recurso pertence ao usuário autenticado.
+    $router->group(['prefix' => 'posts', 'middleware' => 'auth.jwt'], function () use ($router) {
+        $router->put('/{id}',                             'EditPostController@update');
+        $router->delete('/{id}',                          'EditPostController@destroy');
+        $router->post('/{id}/images',                     'EditPostController@uploadImage');
+        $router->delete('/{id}/images/{galleryId}',       'EditPostController@destroyImage');
     });
 
     // Criação de post (draft UUID + galeria)
@@ -49,7 +61,12 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->get('/storage-check', 'CreatePostController@storageCheck');
 
         $router->group(['middleware' => 'auth.jwt'], function () use ($router) {
-            $router->post('/upload', 'CreatePostController@upload');
+            // Mantém JWT explícito neste endpoint para evitar regressão caso o
+            // agrupamento seja alterado no futuro.
+            $router->post('/upload', [
+                'middleware' => 'auth.jwt',
+                'uses'       => 'CreatePostController@upload',
+            ]);
             $router->post('/',       'CreatePostController@store');
         });
     });

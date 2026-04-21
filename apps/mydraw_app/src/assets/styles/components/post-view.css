@@ -1,6 +1,18 @@
 @layer components {
   .post-view {
-    @apply max-w-screen-2xl mx-auto px-6 pt-8 pb-32 md:pb-24 w-full;
+    @apply max-w-screen-2xl mx-auto px-6 pt-8 pb-32 md:pb-24 w-full min-w-0 max-w-full;
+  }
+
+  .post-view--embedded {
+    @apply max-w-none px-3 pt-3 pb-4 md:px-5 md:pt-4 md:pb-5;
+  }
+
+  .post-view--embedded .post-view__layout {
+    @apply gap-5 xl:gap-8;
+  }
+
+  .post-view--embedded .post-view__title {
+    @apply text-2xl md:text-3xl;
   }
 
   .post-view__back {
@@ -22,29 +34,67 @@
   }
 
   .post-view__alert--error {
-    background-color: rgba(249, 115, 134, 0.12);
-    border: 1px solid rgba(168, 54, 75, 0.3);
+    background-color: var(--error-surface-bg);
+    border: 1px solid var(--error-surface-border);
     color: theme('colors.error');
   }
 
   .post-view__layout {
-    @apply grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-12;
+    @apply grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-12 min-w-0;
   }
 
   .post-view__media-wrapper {
-    @apply lg:col-span-8 flex flex-col gap-4;
+    @apply lg:col-span-8 flex flex-col gap-4 min-w-0 max-w-full;
+  }
+
+  .post-view__media-mode {
+    @apply inline-flex items-center gap-1 p-1 rounded-full bg-surface-container-low self-start;
+  }
+
+  .post-view__media-mode-btn {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold;
+    @apply text-on-surface-variant transition-colors;
+  }
+
+  .post-view__media-mode-btn:hover {
+    @apply text-on-surface bg-surface-container;
+  }
+
+  .post-view__media-mode-btn--active {
+    @apply text-on-primary bg-primary;
+    box-shadow: var(--shadow-primary-button);
+  }
+
+  .post-view__list {
+    @apply flex flex-col gap-4;
+  }
+
+  .post-view__list-card {
+    @apply relative overflow-hidden rounded-2xl bg-surface-container;
+    box-shadow: var(--shadow-media);
+  }
+
+  .post-view__list-image {
+    @apply w-full object-contain block;
+    max-height: min(80vh, 900px);
+    background: var(--media-empty-gradient);
+  }
+
+  .post-view__list-card .post-view__placeholder {
+    @apply min-h-[20rem];
+    position: static;
   }
 
   .post-view__media {
     @apply relative overflow-hidden rounded-2xl bg-surface-container;
     aspect-ratio: 4 / 3;
-    box-shadow: 0 14px 40px -18px rgba(5, 52, 92, 0.35);
+    box-shadow: var(--shadow-media);
   }
 
   .post-view__image {
     @apply w-full h-full object-contain;
     display: block;
-    background: linear-gradient(180deg, #0b0f14 0%, #111827 100%);
+    background: var(--media-empty-gradient);
   }
 
   .post-view__placeholder {
@@ -62,7 +112,7 @@
       rounded-full backdrop-blur-sm transition-all;
     width: 2.5rem;
     height: 2.5rem;
-    background-color: rgba(17, 17, 17, 0.55);
+    background-color: var(--overlay-badge-bg-dim);
     color: #fff;
     z-index: 3;
     opacity: 0.85;
@@ -70,7 +120,7 @@
 
   .post-view__nav:hover {
     opacity: 1;
-    background-color: rgba(17, 17, 17, 0.9);
+    background-color: var(--overlay-badge-bg-deep);
     transform: translateY(-50%) scale(1.06);
   }
 
@@ -88,14 +138,14 @@
 
   .post-view__counter {
     @apply absolute top-3 right-3 text-xs font-semibold px-2.5 py-1 rounded-full;
-    background-color: rgba(17, 17, 17, 0.65);
+    background-color: var(--overlay-badge-bg);
     color: #fff;
     letter-spacing: 0.03em;
     z-index: 3;
   }
 
   .post-view__thumbs {
-    @apply flex items-center gap-2 overflow-x-auto pb-2;
+    @apply flex items-center gap-2 overflow-x-auto pb-2 max-w-full min-w-0;
     scrollbar-width: thin;
   }
 
@@ -123,7 +173,7 @@
   }
 
   .post-view__info {
-    @apply lg:col-span-4 flex flex-col gap-6;
+    @apply lg:col-span-4 flex flex-col gap-6 min-w-0 max-w-full;
   }
 
   .post-view__header {
@@ -131,7 +181,7 @@
   }
 
   .post-view__title {
-    @apply text-3xl md:text-4xl font-extrabold tracking-tight text-on-surface leading-tight;
+    @apply text-3xl md:text-4xl font-extrabold tracking-tight text-on-surface leading-tight break-words;
     margin: 0;
   }
 
@@ -152,7 +202,7 @@
   }
 
   .post-view__author-meta {
-    @apply flex flex-col;
+    @apply flex flex-col min-w-0;
   }
 
   .post-view__author-label {
@@ -160,7 +210,7 @@
   }
 
   .post-view__author-name {
-    @apply text-base font-semibold text-on-surface;
+    @apply text-base font-semibold text-on-surface break-words;
   }
 
   .post-view__description {
@@ -173,8 +223,9 @@
   }
 
   .post-view__description p {
-    @apply text-base leading-relaxed text-on-surface whitespace-pre-line;
+    @apply text-base leading-relaxed text-on-surface whitespace-pre-line break-words;
     margin: 0;
+    overflow-wrap: anywhere;
   }
 
   .post-view__stats {

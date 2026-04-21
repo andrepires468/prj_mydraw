@@ -56,9 +56,7 @@ function emitFiles(fileList: FileList | null) {
     @dragleave.prevent="isDragging = false"
     @drop.prevent="handleDrop"
   >
-    <div class="upload-dropzone__icon-wrap">
-      <MaterialIcon name="cloud_upload" />
-    </div>
+    <MaterialIcon name="cloud_upload" class="upload-dropzone__icon" />
 
     <h3 class="upload-dropzone__title">Drop your imagery here</h3>
     <p class="upload-dropzone__hint">

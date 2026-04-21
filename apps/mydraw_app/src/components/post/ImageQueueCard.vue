@@ -5,9 +5,14 @@ import type { QueuedImage } from './types'
 interface Props {
   image: QueuedImage
   dragging?: boolean
+  /** Quando true, o botão de remover não dispara ação (ex.: última imagem obrigatória). */
+  removeDisabled?: boolean
 }
 
-withDefaults(defineProps<Props>(), { dragging: false })
+withDefaults(defineProps<Props>(), {
+  dragging: false,
+  removeDisabled: false,
+})
 
 defineEmits<{
   remove: [id: string]
@@ -61,7 +66,13 @@ defineEmits<{
         v-if="image.status !== 'uploading'"
         type="button"
         class="image-queue-card__action image-queue-card__action--danger"
-        aria-label="Remover imagem"
+        :class="{ 'image-queue-card__action--disabled': removeDisabled }"
+        :disabled="removeDisabled"
+        :aria-label="
+          removeDisabled
+            ? 'Não é possível remover a única imagem do post'
+            : 'Remover imagem'
+        "
         @click="$emit('remove', image.id)"
       >
         <MaterialIcon name="delete" />

@@ -31,6 +31,7 @@ class PostController extends Controller
      *  - `status=published` (padrão): público, todos os posts publicados.
      *  - `status=draft`: requer autenticação JWT; retorna apenas os drafts
      *    do usuário autenticado (ninguém pode ver drafts de outros).
+     *  - `sort=newest|oldest` (padrão `newest`): ordenação por `created_at`.
      */
     public function index(Request $request): JsonResponse
     {
@@ -58,8 +59,11 @@ class PostController extends Controller
             return response()->json(['error' => 'unauthorized'], 401);
         }
 
+        $sort = $this->resolveSort($request);
+
         $cacheKey = $this->buildListCacheKey(
             $status,
+            $sort,
             $perPage,
             $pageNumber,
             $includeCounts,
@@ -72,12 +76,12 @@ class PostController extends Controller
             $payload = Cache::remember(
                 $cacheKey,
                 Carbon::now()->addSeconds($cacheTtl),
-                function () use ($status, $perPage, $includeCounts, $user) {
-                    return $this->queryListPayload($status, $perPage, $includeCounts, $user);
+                function () use ($status, $sort, $perPage, $includeCounts, $user) {
+                    return $this->queryListPayload($status, $sort, $perPage, $includeCounts, $user);
                 }
             );
         } else {
-            $payload = $this->queryListPayload($status, $perPage, $includeCounts, $user);
+            $payload = $this->queryListPayload($status, $sort, $perPage, $includeCounts, $user);
         }
 
         return response()->json($payload);
@@ -88,17 +92,24 @@ class PostController extends Controller
      */
     private function queryListPayload(
         string $status,
+        string $sort,
         int $perPage,
         bool $includeCounts,
         ?User $user
     ): array {
-        $query = Post::query()->where('status', $status)->latest();
+        $query = Post::query()->where('status', $status);
 
         if ($status === Post::STATUS_PUBLISHED) {
             $query
                 ->leftJoin('users', 'users.Id', '=', 'posts.user_id')
                 ->select('posts.*')
                 ->selectRaw('users.Name as author_name');
+        }
+
+        if ($sort === 'oldest') {
+            $query->orderBy('posts.created_at', 'asc');
+        } else {
+            $query->orderByDesc('posts.created_at');
         }
 
         $query->with([
@@ -134,6 +145,7 @@ class PostController extends Controller
 
     private function buildListCacheKey(
         string $status,
+        string $sort,
         int $perPage,
         int $page,
         bool $includeCounts,
@@ -144,8 +156,9 @@ class PostController extends Controller
         $userPart = $userId !== null ? (string) $userId : 'guest';
 
         return sprintf(
-            'posts:list:v3:%s:p%s:pp%s:counts%s:u%s:gv%s:uv%s',
+            'posts:list:v4:%s:sort:%s:p%s:pp%s:counts%s:u%s:gv%s:uv%s',
             $status,
+            $sort,
             $page,
             $perPage,
             $includeCounts ? '1' : '0',
@@ -153,6 +166,16 @@ class PostController extends Controller
             $globalVersion,
             $userVersion
         );
+    }
+
+    /**
+     * Ordenação da listagem: `newest` (padrão) ou `oldest`.
+     */
+    private function resolveSort(Request $request): string
+    {
+        $raw = strtolower((string) $request->query('sort', 'newest'));
+
+        return in_array($raw, ['newest', 'oldest'], true) ? $raw : 'newest';
     }
 
     /**

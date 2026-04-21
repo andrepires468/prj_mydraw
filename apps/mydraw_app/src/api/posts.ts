@@ -1,4 +1,5 @@
 import { http } from './http'
+import type { GallerySort } from '@/components/gallery/types'
 
 export type PostStatus = 'draft' | 'published'
 
@@ -81,9 +82,16 @@ export async function listPosts(
   perPage = 20,
   status: PostStatus = 'published',
   includeCounts = false,
+  sort: GallerySort = 'newest',
 ) {
   const { data } = await http.get<PostsPage>('/posts', {
-    params: { page, per_page: perPage, status, include_counts: includeCounts ? 1 : 0 },
+    params: {
+      page,
+      per_page: perPage,
+      status,
+      include_counts: includeCounts ? 1 : 0,
+      sort,
+    },
   })
   return data
 }
@@ -159,6 +167,17 @@ export async function deletePostImage(
   galleryId: number,
 ): Promise<void> {
   await http.delete(`/posts/${postId}/images/${galleryId}`)
+}
+
+/**
+ * Persiste a ordem das imagens do post (`gallery.position`).
+ * `order` deve conter cada `gallery.id` do post exatamente uma vez, na ordem desejada.
+ */
+export async function reorderPostImages(
+  postId: number,
+  order: number[],
+): Promise<void> {
+  await http.put(`/posts/${postId}/images/reorder`, { order })
 }
 
 export interface UpdatePostPayload {

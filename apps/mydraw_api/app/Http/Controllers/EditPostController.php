@@ -19,6 +19,7 @@ use Throwable;
  *
  *  - `PUT    /api/v1/posts/{id}`                 — atualiza título/descrição/status
  *  - `DELETE /api/v1/posts/{id}`                 — remove post + imagens + arquivos
+ *  - `PUT    /api/v1/posts/{id}/images/reorder`   — persiste ordem (`gallery.position`)
  *  - `POST   /api/v1/posts/{id}/images`          — anexa nova imagem a post existente
  *  - `DELETE /api/v1/posts/{id}/images/{gid}`    — remove uma imagem (banco + storage)
  *
@@ -70,8 +71,7 @@ class EditPostController extends Controller
      *  - Despublicar (voltar a draft): enviar `status=draft`.
      *  - Somente `title`/`description`: mantém status atual.
      *
-     * Se o status final for `published`, `title` é obrigatório e deve ter
-     * pelo menos 1 caractere visível.
+     * O título pode ficar vazio; a UI pode exibir um rótulo alternativo.
      */
     public function update(Request $request, int $id): JsonResponse
     {
@@ -105,14 +105,6 @@ class EditPostController extends Controller
         $targetStatus = $request->input('status', $post->status);
 
         if ($targetStatus === Post::STATUS_PUBLISHED) {
-            $finalTitle = trim((string) ($updates['title'] ?? $post->title));
-            if ($finalTitle === '') {
-                return response()->json([
-                    'error'   => 'title_required',
-                    'message' => 'O título é obrigatório para publicar.',
-                ], 422);
-            }
-
             $hasImages = Gallery::query()->where('post_id', $post->id)->exists();
             if (!$hasImages) {
                 return response()->json([
@@ -360,5 +352,79 @@ class EditPostController extends Controller
         ]);
 
         return response()->json(['deleted' => true]);
+    }
+
+    /**
+     * PUT /api/v1/posts/{id}/images/reorder — persiste a ordem das imagens
+     * (`gallery.position`) conforme a fila exibida na edição.
+     *
+     * Body JSON: `{ "order": [galleryId, ...] }` — deve listar cada id de
+     * `gallery` deste post exatamente uma vez, na ordem desejada.
+     */
+    public function reorderImages(Request $request, int $id): JsonResponse
+    {
+        $user = $this->authUser($request);
+        if (!$user) {
+            return response()->json(['error' => 'unauthorized'], 401);
+        }
+
+        $post = $this->findOwnedPost($request, $id, $user);
+        if (!$post) {
+            return response()->json(['error' => 'not_found'], 404);
+        }
+
+        $this->validate($request, [
+            'order'   => 'required|array',
+            'order.*' => 'integer|distinct|min:1',
+        ]);
+
+        /** @var int[] $order */
+        $order = array_map('intval', $request->input('order'));
+
+        $existingIds = Gallery::query()
+            ->where('post_id', $post->id)
+            ->orderBy('id')
+            ->pluck('id')
+            ->map(static fn ($gid) => (int) $gid)
+            ->values()
+            ->all();
+
+        $sortedRequested = $order;
+        sort($sortedRequested);
+
+        if ($existingIds !== $sortedRequested) {
+            return response()->json([
+                'error'   => 'order_mismatch',
+                'message' => 'A lista de ids não corresponde às imagens deste post.',
+            ], 422);
+        }
+
+        try {
+            DB::transaction(function () use ($order, $post): void {
+                foreach ($order as $position => $galleryId) {
+                    Gallery::query()
+                        ->where('id', $galleryId)
+                        ->where('post_id', $post->id)
+                        ->update(['position' => $position]);
+                }
+            });
+            $touchGlobal = $post->status === Post::STATUS_PUBLISHED;
+            PostListCache::bump($this->userId($user), $touchGlobal);
+        } catch (Throwable $e) {
+            Log::error('edit-post/reorder-images failed', [
+                'user_id'   => $this->userId($user),
+                'post_id'   => $post->id,
+                'exception' => get_class($e),
+                'message'   => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error'   => 'reorder_failed',
+                'message' => 'Falha ao reordenar imagens.',
+                'detail'  => env('APP_DEBUG') ? $e->getMessage() : null,
+            ], 500);
+        }
+
+        return response()->json(['ok' => true]);
     }
 }

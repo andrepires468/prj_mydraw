@@ -1,0 +1,50 @@
+@layer components {
+  /**
+   * Diálogo de confirmação em tela cheia (referência: create_post — painel
+   * lateral com cantos amplos; botões pill uppercase como Save/Publish).
+   */
+  .app-confirm-alert {
+    @apply fixed inset-0 z-[95] flex items-center justify-center p-4 md:p-8;
+    background: color-mix(in srgb, var(--color-background) 65%, #000 35%);
+    backdrop-filter: blur(20px);
+  }
+
+  .app-confirm-alert__panel {
+    @apply w-full max-w-md rounded-[2rem] p-6 md:p-8 shadow-2xl;
+    @apply bg-surface/90 text-on-surface;
+    border: 1px solid color-mix(in srgb, var(--color-outline-variant) 22%, transparent);
+  }
+
+  .app-confirm-alert__title {
+    @apply text-lg md:text-xl font-bold tracking-tight text-on-surface m-0;
+  }
+
+  .app-confirm-alert__message {
+    @apply mt-3 text-sm md:text-base leading-relaxed text-on-surface-variant m-0;
+  }
+
+  .app-confirm-alert__actions {
+    @apply grid grid-cols-2 gap-3 md:gap-4 mt-8;
+  }
+
+  .app-confirm-alert__btn {
+    @apply w-full py-3.5 md:py-4 rounded-full font-bold uppercase tracking-widest text-xs;
+    @apply transition-colors duration-200 focus:outline-none focus-visible:ring-2;
+    @apply focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-surface;
+  }
+
+  .app-confirm-alert__btn--secondary {
+    @apply bg-secondary-container text-on-secondary-container;
+    @apply hover:bg-surface-dim;
+  }
+
+  .app-confirm-alert__btn--danger {
+    @apply bg-error text-on-error shadow-lg shadow-error/15;
+    @apply hover:opacity-95 active:scale-[0.98];
+  }
+
+  .app-confirm-alert__btn--primary {
+    @apply bg-primary text-on-primary shadow-lg shadow-primary/20;
+    @apply hover:bg-primary-container hover:text-on-primary-container;
+  }
+}

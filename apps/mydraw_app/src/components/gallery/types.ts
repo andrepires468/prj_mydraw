@@ -1,4 +1,4 @@
-export type GallerySort = 'newest' | 'popular' | 'oldest'
+export type GallerySort = 'newest' | 'oldest'
 
 export interface GalleryItem {
   id: string | number

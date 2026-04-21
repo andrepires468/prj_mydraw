@@ -31,11 +31,32 @@ interface PostCard {
 }
 
 const GALLERY_CACHE_PREFIX = 'mydraw:gallery-cache:v1'
+const GALLERY_SORT_STORAGE_KEY = 'mydraw:gallery-sort:v1'
 
 interface GalleryCachePayload {
   page: PostsPage
   counts: PostsCounts
   updatedAt: string
+}
+
+function readStoredSort(): GallerySort {
+  if (typeof window === 'undefined') return 'newest'
+  try {
+    const raw = window.localStorage.getItem(GALLERY_SORT_STORAGE_KEY)
+    if (raw === 'newest' || raw === 'oldest') return raw
+  } catch {
+    /* storage indisponível */
+  }
+  return 'newest'
+}
+
+function writeStoredSort(value: GallerySort): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(GALLERY_SORT_STORAGE_KEY, value)
+  } catch {
+    /* quota / privado */
+  }
 }
 
 const auth = useAuthStore()
@@ -45,7 +66,7 @@ const router = useRouter()
 const loading = ref(false)
 const error = ref<string | null>(null)
 const page = ref<PostsPage | null>(null)
-const sort = ref<GallerySort>('newest')
+const sort = ref<GallerySort>(readStoredSort())
 const status = ref<PostStatus>('published')
 const counts = ref<PostsCounts>({ published: 0, draft: 0 })
 
@@ -58,6 +79,11 @@ const cards = computed<PostCard[]>(() => {
     // caímos de volta para a original caso a thumb não exista (imagens
     // antigas, falha na geração, etc.).
     const images: GalleryCardImage[] = (post.images ?? [])
+      .slice()
+      .sort(
+        (a, b) =>
+          (a.position ?? 0) - (b.position ?? 0) || a.id - b.id,
+      )
       .map((img): GalleryCardImage | null => {
         const src = img.thumbs?.['320x320'] ?? img.url
         if (!src) return null
@@ -115,13 +141,21 @@ const canEditActivePost = computed(() => {
   return row.user_id === auth.user.id
 })
 
-function getGalleryCacheKey(postStatus: PostStatus, pageNumber: number): string {
-  return `${GALLERY_CACHE_PREFIX}:${postStatus}:page:${pageNumber}`
+function getGalleryCacheKey(
+  postStatus: PostStatus,
+  sortOrder: GallerySort,
+  pageNumber: number,
+): string {
+  return `${GALLERY_CACHE_PREFIX}:${postStatus}:sort:${sortOrder}:page:${pageNumber}`
 }
 
-function readGalleryCache(postStatus: PostStatus, pageNumber: number): GalleryCachePayload | null {
+function readGalleryCache(
+  postStatus: PostStatus,
+  sortOrder: GallerySort,
+  pageNumber: number,
+): GalleryCachePayload | null {
   if (typeof window === 'undefined') return null
-  const raw = window.localStorage.getItem(getGalleryCacheKey(postStatus, pageNumber))
+  const raw = window.localStorage.getItem(getGalleryCacheKey(postStatus, sortOrder, pageNumber))
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as GalleryCachePayload
@@ -132,18 +166,30 @@ function readGalleryCache(postStatus: PostStatus, pageNumber: number): GalleryCa
   }
 }
 
-function writeGalleryCache(postStatus: PostStatus, pageNumber: number, nextPage: PostsPage): void {
+function writeGalleryCache(
+  postStatus: PostStatus,
+  sortOrder: GallerySort,
+  pageNumber: number,
+  nextPage: PostsPage,
+): void {
   if (typeof window === 'undefined') return
   const payload: GalleryCachePayload = {
     page: nextPage,
     counts: nextPage.counts ?? counts.value,
     updatedAt: new Date().toISOString(),
   }
-  window.localStorage.setItem(getGalleryCacheKey(postStatus, pageNumber), JSON.stringify(payload))
+  window.localStorage.setItem(
+    getGalleryCacheKey(postStatus, sortOrder, pageNumber),
+    JSON.stringify(payload),
+  )
 }
 
-function hydrateGalleryFromCache(postStatus: PostStatus, pageNumber: number): boolean {
-  const cached = readGalleryCache(postStatus, pageNumber)
+function hydrateGalleryFromCache(
+  postStatus: PostStatus,
+  sortOrder: GallerySort,
+  pageNumber: number,
+): boolean {
+  const cached = readGalleryCache(postStatus, sortOrder, pageNumber)
   if (!cached) return false
   page.value = cached.page
   counts.value = cached.counts
@@ -154,12 +200,12 @@ async function load(p = 1, includeCounts = false) {
   loading.value = true
   error.value = null
   try {
-    const nextPage = await listPosts(p, 20, status.value, includeCounts)
+    const nextPage = await listPosts(p, 20, status.value, includeCounts, sort.value)
     page.value = nextPage
     if (nextPage.counts) {
       counts.value = nextPage.counts
     }
-    writeGalleryCache(status.value, p, nextPage)
+    writeGalleryCache(status.value, sort.value, p, nextPage)
   } catch (err: unknown) {
     error.value = err instanceof Error ? err.message : 'Erro desconhecido'
     if (!page.value) {
@@ -180,12 +226,18 @@ function closePostModal() {
 }
 
 watch(status, () => {
-  hydrateGalleryFromCache(status.value, 1)
+  hydrateGalleryFromCache(status.value, sort.value, 1)
+  void load(1, false)
+})
+
+watch(sort, () => {
+  writeStoredSort(sort.value)
+  hydrateGalleryFromCache(status.value, sort.value, 1)
   void load(1, false)
 })
 
 onMounted(() => {
-  hydrateGalleryFromCache(status.value, 1)
+  hydrateGalleryFromCache(status.value, sort.value, 1)
   void load(1, true)
 })
 </script>

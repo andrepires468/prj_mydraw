@@ -7,9 +7,14 @@ import type { QueuedImage } from './types'
 interface Props {
   images: QueuedImage[]
   showPlaceholder?: boolean
+  /** Se true, impede remover quando só restar uma imagem na fila. */
+  requireAtLeastOneImage?: boolean
 }
 
-withDefaults(defineProps<Props>(), { showPlaceholder: true })
+withDefaults(defineProps<Props>(), {
+  showPlaceholder: true,
+  requireAtLeastOneImage: false,
+})
 
 const emit = defineEmits<{
   remove: [id: string]
@@ -53,6 +58,9 @@ function onDragEnd() {
       <ImageQueueCard
         :image="image"
         :dragging="draggingIndex === index"
+        :remove-disabled="
+          requireAtLeastOneImage && images.length <= 1
+        "
         @remove="emit('remove', $event)"
         @preview="emit('preview', $event)"
       />

@@ -38,6 +38,18 @@
     transform: scale(1.1);
   }
 
+  .image-queue-card__action--disabled,
+  .image-queue-card__action:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .image-queue-card__action--disabled:hover,
+  .image-queue-card__action:disabled:hover {
+    transform: none;
+  }
+
   .image-queue-card__action--danger {
     background-color: var(--queue-error-bg);
   }

@@ -6,11 +6,14 @@ import {
   deletePost,
   deletePostImage,
   getPost,
+  reorderPostImages,
   updatePost,
   uploadPostImage,
   type GalleryRow,
   type PostRow,
 } from '@/api/posts'
+import AppConfirmAlert from '@/components/common/AppConfirmAlert.vue'
+import AppModal from '@/components/common/AppModal.vue'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import UploadDropzone from '@/components/post/UploadDropzone.vue'
 import ImageQueueGrid from '@/components/post/ImageQueueGrid.vue'
@@ -38,6 +41,14 @@ const loadError = ref<string | null>(null)
 const errorMsg = ref<string | null>(null)
 const successMsg = ref<string | null>(null)
 
+const previewModalUrl = ref<string | null>(null)
+const previewModalAlt = ref('')
+/** No modal de pré-visualização: mostra pixels naturais da imagem (com rolagem). */
+const previewModalNaturalSize = ref(false)
+
+const removeConfirmImageId = ref<string | null>(null)
+const deletePostConfirmOpen = ref(false)
+
 const pendingAction = ref<
   'save' | 'publish' | 'unpublish' | 'delete' | null
 >(null)
@@ -61,7 +72,6 @@ const canPublish = computed(() => {
   const anyUploading = images.value.some((i) => i.status === 'uploading')
   if (anyUploading) return false
   if (images.value.length === 0) return false
-  if (title.value.trim().length === 0) return false
   return true
 })
 
@@ -115,6 +125,11 @@ async function load() {
     description.value = data.description ?? ''
     images.value = (data.images ?? [])
       .filter((img) => !!img.url)
+      .slice()
+      .sort(
+        (a, b) =>
+          (a.position ?? 0) - (b.position ?? 0) || a.id - b.id,
+      )
       .map(galleryToQueued)
   } catch (err) {
     loadError.value = extractErrorMessage(err)
@@ -175,12 +190,37 @@ async function uploadOne(localId: string, file: File) {
   }
 }
 
-async function removeImage(localId: string) {
+function requestRemoveImage(localId: string) {
   if (!postId.value) return
+  if (images.value.length <= 1) {
+    errorMsg.value =
+      'O post precisa manter ao menos uma imagem. Adicione outra antes de remover esta.'
+    return
+  }
   const idx = images.value.findIndex((i) => i.id === localId)
   if (idx < 0) return
   const img = images.value[idx]
   if (img.status === 'uploading') return
+  removeConfirmImageId.value = localId
+}
+
+function cancelRemoveImage() {
+  removeConfirmImageId.value = null
+}
+
+async function confirmRemoveImage() {
+  const localId = removeConfirmImageId.value
+  removeConfirmImageId.value = null
+  if (!localId) return
+  await removeImageNow(localId)
+}
+
+async function removeImageNow(localId: string) {
+  if (!postId.value) return
+  if (images.value.length <= 1) return
+  const idx = images.value.findIndex((i) => i.id === localId)
+  if (idx < 0) return
+  if (images.value[idx].status === 'uploading') return
 
   // Remoção otimista da UI; rollback em caso de falha.
   const [removed] = images.value.splice(idx, 1)
@@ -202,14 +242,33 @@ async function removeImage(localId: string) {
 
 function previewImage(localId: string) {
   const img = images.value.find((i) => i.id === localId)
-  if (img?.previewUrl) window.open(img.previewUrl, '_blank')
+  if (!img?.previewUrl) return
+  previewModalNaturalSize.value = false
+  previewModalUrl.value = img.previewUrl
+  previewModalAlt.value = img.file.name || 'Pré-visualização'
 }
 
-function reorder(from: number, to: number) {
-  // Reordenação local apenas; persistência de `position` não é escopo desta
-  // tela ainda, mas fica o hook pronto para endpoint futuro.
+function closePreviewModal() {
+  previewModalUrl.value = null
+  previewModalNaturalSize.value = false
+}
+
+async function reorder(from: number, to: number) {
   const [moved] = images.value.splice(from, 1)
   images.value.splice(to, 0, moved)
+
+  const order = images.value
+    .map((i) => i.galleryId)
+    .filter((id): id is number => id !== undefined)
+
+  if (!postId.value || order.length === 0) return
+
+  try {
+    await reorderPostImages(postId.value, order)
+  } catch (err) {
+    errorMsg.value = extractErrorMessage(err)
+    await load()
+  }
 }
 
 function clearMessages() {
@@ -282,11 +341,18 @@ async function unpublish() {
   }
 }
 
-async function destroy() {
+function requestDeletePost() {
   if (submitting.value || !postId.value) return
-  if (!window.confirm('Excluir este post e todas as imagens? Esta ação é irreversível.')) {
-    return
-  }
+  deletePostConfirmOpen.value = true
+}
+
+function cancelDeletePost() {
+  deletePostConfirmOpen.value = false
+}
+
+async function confirmDeletePost() {
+  if (submitting.value || !postId.value) return
+  deletePostConfirmOpen.value = false
   clearMessages()
   pendingAction.value = 'delete'
   try {
@@ -381,7 +447,8 @@ onBeforeUnmount(() => {
             <ImageQueueGrid
               :images="images"
               :show-placeholder="images.length < MAX_FILES"
-              @remove="removeImage"
+              require-at-least-one-image
+              @remove="requestRemoveImage"
               @preview="previewImage"
               @reorder="reorder"
             />
@@ -402,10 +469,92 @@ onBeforeUnmount(() => {
             @publish="publishOrSave"
             @save="saveDraft"
             @unpublish="unpublish"
-            @destroy="destroy"
+            @destroy="requestDeletePost"
           />
         </div>
       </div>
     </template>
+
+    <AppConfirmAlert
+      v-if="removeConfirmImageId"
+      title="Remover imagem"
+      message="A imagem será excluída do post e removida da fila. Deseja continuar?"
+      cancel-label="Cancelar"
+      confirm-label="Remover"
+      confirm-variant="danger"
+      @cancel="cancelRemoveImage"
+      @confirm="confirmRemoveImage"
+    />
+
+    <AppConfirmAlert
+      v-if="deletePostConfirmOpen"
+      title="Excluir post"
+      message="Este post e todas as imagens serão excluídos de forma permanente. Esta ação não pode ser desfeita."
+      cancel-label="Cancelar"
+      confirm-label="Excluir post"
+      confirm-variant="danger"
+      @cancel="cancelDeletePost"
+      @confirm="confirmDeletePost"
+    />
+
+    <AppModal
+      v-if="previewModalUrl"
+      title="Visualização da imagem"
+      @close="closePreviewModal"
+    >
+      <template #actions>
+        <button
+          type="button"
+          class="app-modal__edit-post"
+          :aria-pressed="previewModalNaturalSize"
+          :title="
+            previewModalNaturalSize
+              ? 'Encaixar a imagem na área visível'
+              : 'Ver a imagem no tamanho real (1:1)'
+          "
+          @click="previewModalNaturalSize = !previewModalNaturalSize"
+        >
+          {{
+            previewModalNaturalSize ? 'Ajustar à tela' : 'Tamanho real'
+          }}
+        </button>
+      </template>
+      <div
+        class="p-2 md:p-4"
+        :class="
+          previewModalNaturalSize
+            ? 'overflow-auto max-h-[min(85vh,calc(100vh-8rem))] w-full min-h-0'
+            : 'flex justify-center'
+        "
+      >
+        <img
+          :src="previewModalUrl"
+          :alt="previewModalAlt"
+          :class="
+            previewModalNaturalSize
+              ? 'block max-w-none max-h-none w-max h-max shrink-0 rounded-lg'
+              : 'max-h-[min(85vh,calc(100vh-8rem))] max-w-full rounded-lg object-contain'
+          "
+        />
+      </div>
+    </AppModal>
   </main>
 </template>
+
+<style scoped>
+/* Botão "Delete post" na barra lateral — tom #b770c2 */
+.create-post-page :deep(.post-metadata__danger) {
+  color: #b770c2;
+  border-color: rgb(183 112 194 / 40%);
+  background: transparent;
+}
+
+.create-post-page :deep(.post-metadata__danger:hover:not(:disabled)) {
+  background: rgb(183 112 194 / 8%);
+}
+
+.create-post-page :deep(.post-metadata__danger .post-metadata__publish-spinner) {
+  border-color: rgb(183 112 194 / 25%);
+  border-top-color: #b770c2;
+}
+</style>

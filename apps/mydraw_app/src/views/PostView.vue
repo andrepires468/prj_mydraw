@@ -52,6 +52,11 @@ const mediaViewMode = ref<PostMediaViewMode>(readSavedMediaViewMode())
 
 const images = computed<PostMediaImage[]>(() =>
   (post.value?.images ?? [])
+    .slice()
+    .sort(
+      (a, b) =>
+        (a.position ?? 0) - (b.position ?? 0) || a.id - b.id,
+    )
     .map((img): PostMediaImage | null => {
       if (!img.url) return null
       return {

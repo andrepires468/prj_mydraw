@@ -51,6 +51,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
     $router->group(['prefix' => 'posts', 'middleware' => 'auth.jwt'], function () use ($router) {
         $router->put('/{id}',                             'EditPostController@update');
         $router->delete('/{id}',                          'EditPostController@destroy');
+        $router->put('/{id}/images/reorder',            'EditPostController@reorderImages');
         $router->post('/{id}/images',                     'EditPostController@uploadImage');
         $router->delete('/{id}/images/{galleryId}',       'EditPostController@destroyImage');
     });

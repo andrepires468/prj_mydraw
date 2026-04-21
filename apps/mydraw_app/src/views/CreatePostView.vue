@@ -26,7 +26,6 @@ const MAX_FILES = 10
 const canPublish = computed(
   () =>
     !submitting.value &&
-    title.value.trim().length > 0 &&
     images.value.length > 0 &&
     images.value.every((i) => i.status === 'done'),
 )

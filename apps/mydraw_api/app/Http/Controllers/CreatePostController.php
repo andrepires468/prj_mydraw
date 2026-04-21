@@ -216,7 +216,7 @@ class CreatePostController extends Controller
 
         $this->validate($request, [
             'draft_uuid'  => 'required|uuid',
-            'title'       => 'required|string|max:160',
+            'title'       => 'nullable|string|max:160',
             'description' => 'nullable|string|max:2000',
         ]);
 
@@ -243,7 +243,7 @@ class CreatePostController extends Controller
 
         try {
             $post->update([
-                'title'       => $request->input('title'),
+                'title'       => (string) ($request->input('title') ?? ''),
                 'description' => $request->input('description'),
                 'status'      => Post::STATUS_PUBLISHED,
                 'draft_uuid'  => null,

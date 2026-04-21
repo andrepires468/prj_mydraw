@@ -1,6 +1,11 @@
 @layer components {
+  /**
+   * Layout mais baixo (~40% menos área vertical vs. p-12 + icon-wrap):
+   * padding reduzido, ícone sem cápsula, textos e CTA mais compactos.
+   */
   .upload-dropzone {
-    @apply relative flex flex-col items-center justify-center rounded-3xl p-12 bg-surface-container-low transition-all duration-300;
+    @apply relative flex flex-col items-center justify-center rounded-3xl;
+    @apply py-5 px-6 md:py-6 md:px-8 bg-surface-container-low transition-all duration-300;
     border: 2px dashed var(--dropzone-border);
   }
 
@@ -13,26 +18,22 @@
     border-color: theme('colors.primary');
   }
 
-  .upload-dropzone__icon-wrap {
-    @apply bg-surface-container-lowest p-6 rounded-full mb-6;
-    box-shadow: var(--shadow-input);
-  }
-
-  .upload-dropzone__icon-wrap .material-symbols-outlined {
-    @apply text-primary;
+  .upload-dropzone__icon {
+    @apply text-primary mb-3 block;
     font-size: 2.25rem;
+    line-height: 1;
   }
 
   .upload-dropzone__title {
-    @apply text-xl font-semibold mb-2 text-on-surface;
+    @apply text-lg font-semibold mb-1 text-on-surface text-center;
   }
 
   .upload-dropzone__hint {
-    @apply text-on-surface-variant text-center max-w-xs mb-8;
+    @apply text-on-surface-variant text-center max-w-xs text-sm mb-4 leading-snug;
   }
 
   .upload-dropzone__button {
-    @apply bg-primary text-on-primary px-8 py-3 rounded-full font-semibold transition-transform duration-200;
+    @apply bg-primary text-on-primary px-6 py-2.5 rounded-full text-sm font-semibold transition-transform duration-200;
     box-shadow: var(--shadow-primary-soft);
     border: none;
     cursor: pointer;

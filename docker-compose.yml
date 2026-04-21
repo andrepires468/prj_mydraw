@@ -86,12 +86,20 @@ services:
       - mydraw
 
   # ============================================================================
-  # MinIO — object storage (S3-compatível)
+  # MinIO — object storage (S3-compatível) — OPCIONAL
+  # ----------------------------------------------------------------------------
+  # Só sobe quando o profile `local-storage` é ativado. Em produção/staging a
+  # API aponta para um MinIO externo via `MINIO_API_URL` no `.env` raiz.
+  #
+  # Para subir o MinIO local use:
+  #   docker compose --profile local-storage up -d
+  # (ou `make up-local`).
   # ============================================================================
   minio:
     image: minio/minio:latest
     container_name: mydraw_minio
     restart: unless-stopped
+    profiles: ["local-storage"]
     command: server /data --console-address ":9001"
     ports:
       - "${MINIO_API_PORT:-9000}:9000"
@@ -111,12 +119,13 @@ services:
       - mydraw
 
   # ============================================================================
-  # createbuckets — cria o bucket padrão no MinIO e define policy pública de
-  # leitura. Roda uma única vez e encerra.
+  # createbuckets — cria o bucket padrão no MinIO local e define policy pública
+  # de leitura. Também só sobe sob o profile `local-storage`.
   # ============================================================================
   createbuckets:
     image: minio/mc:latest
     container_name: mydraw_createbuckets
+    profiles: ["local-storage"]
     depends_on:
       minio:
         condition: service_healthy

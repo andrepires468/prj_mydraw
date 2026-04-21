@@ -1,0 +1,197 @@
+@layer components {
+  .post-view {
+    @apply max-w-screen-2xl mx-auto px-6 pt-8 pb-32 md:pb-24 w-full;
+  }
+
+  .post-view__back {
+    @apply inline-flex items-center gap-1.5 text-sm font-medium text-on-surface-variant mb-6
+      rounded-full px-3 py-1.5 transition-colors;
+  }
+
+  .post-view__back:hover {
+    @apply text-on-surface bg-surface-container-low;
+  }
+
+  .post-view__back .material-symbols-outlined {
+    font-size: 1.125rem;
+  }
+
+  .post-view__alert {
+    @apply flex items-start gap-2 rounded-2xl px-4 py-3 text-sm my-8
+      bg-surface-container-low text-on-surface-variant;
+  }
+
+  .post-view__alert--error {
+    background-color: rgba(249, 115, 134, 0.12);
+    border: 1px solid rgba(168, 54, 75, 0.3);
+    color: theme('colors.error');
+  }
+
+  .post-view__layout {
+    @apply grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-12;
+  }
+
+  .post-view__media-wrapper {
+    @apply lg:col-span-8 flex flex-col gap-4;
+  }
+
+  .post-view__media {
+    @apply relative overflow-hidden rounded-2xl bg-surface-container;
+    aspect-ratio: 4 / 3;
+    box-shadow: 0 14px 40px -18px rgba(5, 52, 92, 0.35);
+  }
+
+  .post-view__image {
+    @apply w-full h-full object-contain;
+    display: block;
+    background: linear-gradient(180deg, #0b0f14 0%, #111827 100%);
+  }
+
+  .post-view__placeholder {
+    @apply absolute inset-0 flex flex-col items-center justify-center gap-2
+      text-on-surface-variant text-sm;
+  }
+
+  .post-view__placeholder .material-symbols-outlined {
+    font-size: 3rem;
+    opacity: 0.55;
+  }
+
+  .post-view__nav {
+    @apply absolute top-1/2 -translate-y-1/2 flex items-center justify-center
+      rounded-full backdrop-blur-sm transition-all;
+    width: 2.5rem;
+    height: 2.5rem;
+    background-color: rgba(17, 17, 17, 0.55);
+    color: #fff;
+    z-index: 3;
+    opacity: 0.85;
+  }
+
+  .post-view__nav:hover {
+    opacity: 1;
+    background-color: rgba(17, 17, 17, 0.9);
+    transform: translateY(-50%) scale(1.06);
+  }
+
+  .post-view__nav .material-symbols-outlined {
+    font-size: 1.5rem;
+  }
+
+  .post-view__nav--prev {
+    left: 0.75rem;
+  }
+
+  .post-view__nav--next {
+    right: 0.75rem;
+  }
+
+  .post-view__counter {
+    @apply absolute top-3 right-3 text-xs font-semibold px-2.5 py-1 rounded-full;
+    background-color: rgba(17, 17, 17, 0.65);
+    color: #fff;
+    letter-spacing: 0.03em;
+    z-index: 3;
+  }
+
+  .post-view__thumbs {
+    @apply flex items-center gap-2 overflow-x-auto pb-2;
+    scrollbar-width: thin;
+  }
+
+  .post-view__thumb {
+    @apply relative flex-shrink-0 overflow-hidden rounded-lg bg-surface-container transition-all;
+    width: 4.5rem;
+    height: 4.5rem;
+    border: 2px solid transparent;
+    opacity: 0.7;
+  }
+
+  .post-view__thumb:hover {
+    opacity: 1;
+  }
+
+  .post-view__thumb--active {
+    border-color: theme('colors.primary');
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+
+  .post-view__thumb img {
+    @apply w-full h-full object-cover;
+    display: block;
+  }
+
+  .post-view__info {
+    @apply lg:col-span-4 flex flex-col gap-6;
+  }
+
+  .post-view__header {
+    @apply flex flex-col gap-2;
+  }
+
+  .post-view__title {
+    @apply text-3xl md:text-4xl font-extrabold tracking-tight text-on-surface leading-tight;
+    margin: 0;
+  }
+
+  .post-view__date {
+    @apply text-xs uppercase tracking-[0.1em] font-semibold text-on-surface-variant;
+  }
+
+  .post-view__author {
+    @apply flex items-center gap-3 p-4 rounded-2xl bg-surface-container-low;
+  }
+
+  .post-view__avatar {
+    @apply flex items-center justify-center text-lg font-bold rounded-full;
+    width: 2.75rem;
+    height: 2.75rem;
+    background-color: theme('colors.primary');
+    color: theme('colors.on-primary');
+  }
+
+  .post-view__author-meta {
+    @apply flex flex-col;
+  }
+
+  .post-view__author-label {
+    @apply text-[11px] uppercase tracking-[0.1em] font-semibold text-on-surface-variant;
+  }
+
+  .post-view__author-name {
+    @apply text-base font-semibold text-on-surface;
+  }
+
+  .post-view__description {
+    @apply flex flex-col gap-2;
+  }
+
+  .post-view__section-title {
+    @apply text-xs uppercase tracking-[0.1em] font-bold text-on-surface-variant;
+    margin: 0;
+  }
+
+  .post-view__description p {
+    @apply text-base leading-relaxed text-on-surface whitespace-pre-line;
+    margin: 0;
+  }
+
+  .post-view__stats {
+    @apply grid grid-cols-2 gap-3 mt-2;
+    margin-bottom: 0;
+  }
+
+  .post-view__stat {
+    @apply flex flex-col gap-0.5 p-3 rounded-xl bg-surface-container-low;
+  }
+
+  .post-view__stat dt {
+    @apply text-[11px] uppercase tracking-[0.1em] font-semibold text-on-surface-variant;
+  }
+
+  .post-view__stat dd {
+    @apply text-lg font-bold text-on-surface;
+    margin: 0;
+  }
+}

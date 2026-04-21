@@ -23,12 +23,16 @@ init: ## Bootstrap inicial (cria Lumen + Vue dentro de apps/)
 	bash scripts/init.sh
 
 .PHONY: up
-up: ## Sobe todos os serviços em background
+up: ## Sobe todos os serviços (usa MinIO remoto definido no .env)
 	$(DC) up -d --build
 
+.PHONY: up-local
+up-local: ## Sobe todos os serviços + MinIO local (profile local-storage)
+	$(DC) --profile local-storage up -d --build
+
 .PHONY: down
-down: ## Derruba todos os serviços
-	$(DC) down
+down: ## Derruba todos os serviços (incluindo MinIO local, se estiver ativo)
+	$(DC) --profile local-storage down
 
 .PHONY: restart
 restart: ## Reinicia todos os serviços
@@ -91,8 +95,8 @@ npm: ## Roda npm no APP: make npm ARGS="install axios"
 # Limpeza
 # ------------------------------------------------------------------------------
 .PHONY: clean
-clean: ## Derruba e remove volumes (DESTRÓI dados!)
-	$(DC) down -v --remove-orphans
+clean: ## Derruba e remove volumes (DESTRÓI dados locais, incl. MinIO local!)
+	$(DC) --profile local-storage down -v --remove-orphans
 
 .PHONY: prune
 prune: ## Remove imagens/containers/volumes dangling do docker

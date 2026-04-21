@@ -50,6 +50,14 @@ export async function listPosts(page = 1, perPage = 20) {
 }
 
 /**
+ * Carrega um post específico com autor e imagens.
+ */
+export async function getPost(id: number | string): Promise<PostRow> {
+  const { data } = await http.get<{ post: PostRow }>(`/posts/${id}`)
+  return data.post
+}
+
+/**
  * Upload de uma imagem vinculada a um rascunho (draft UUID).
  */
 export async function uploadGalleryImage(

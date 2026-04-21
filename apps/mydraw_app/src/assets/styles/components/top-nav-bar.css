@@ -81,20 +81,6 @@
     background-color: rgba(196, 220, 255, 0.2);
   }
 
-  .top-nav-bar__user {
-    @apply flex items-center gap-2 text-sm text-on-surface-variant;
-  }
-
-  .top-nav-bar__logout {
-    @apply text-xs px-3 py-1 rounded-full border border-outline-variant text-on-surface-variant transition-colors;
-    background: transparent;
-    cursor: pointer;
-  }
-
-  .top-nav-bar__logout:hover {
-    @apply bg-surface-container-high;
-  }
-
   .top-nav-bar__login {
     @apply text-sm px-4 py-2 rounded-full bg-primary text-on-primary font-medium transition-opacity;
     text-decoration: none;
@@ -102,5 +88,145 @@
 
   .top-nav-bar__login:hover {
     opacity: 0.9;
+  }
+
+  /* ---------- User menu (dropdown) ---------- */
+
+  .top-nav-bar__menu {
+    @apply relative;
+  }
+
+  .top-nav-bar__user-button {
+    @apply flex items-center gap-2 pl-1 pr-2 py-1 rounded-full border border-transparent text-sm text-on-surface-variant transition-colors;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .top-nav-bar__user-button:hover {
+    @apply bg-surface-container-high border-outline-variant;
+  }
+
+  .top-nav-bar__user-button--open {
+    @apply bg-surface-container-high border-outline-variant text-on-surface;
+  }
+
+  .top-nav-bar__avatar {
+    @apply flex items-center justify-center w-7 h-7 rounded-full bg-primary text-on-primary font-semibold text-xs;
+    line-height: 1;
+  }
+
+  .top-nav-bar__avatar--lg {
+    @apply w-10 h-10 text-sm;
+  }
+
+  .top-nav-bar__user-name {
+    @apply hidden sm:inline font-medium;
+  }
+
+  .top-nav-bar__chevron {
+    @apply transition-transform;
+  }
+
+  .top-nav-bar__chevron--open {
+    transform: rotate(180deg);
+  }
+
+  .top-nav-bar__dropdown {
+    @apply absolute right-0 mt-2 w-64 p-2 rounded-xl border border-outline-variant bg-surface-container-lowest;
+    box-shadow:
+      0 12px 32px -8px rgba(5, 52, 92, 0.18),
+      0 4px 12px -4px rgba(5, 52, 92, 0.12);
+    z-index: 60;
+  }
+
+  .top-nav-bar__dropdown-header {
+    @apply flex items-center gap-3 px-2 py-3 mb-1 rounded-lg bg-surface-container-low;
+  }
+
+  .top-nav-bar__dropdown-user {
+    @apply flex flex-col min-w-0;
+  }
+
+  .top-nav-bar__dropdown-name {
+    @apply text-sm font-semibold text-on-surface truncate;
+  }
+
+  .top-nav-bar__dropdown-email {
+    @apply text-xs text-on-surface-variant truncate;
+  }
+
+  .top-nav-bar__dropdown-item {
+    @apply w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-on-surface transition-colors text-left;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
+  .top-nav-bar__dropdown-item:hover,
+  .top-nav-bar__dropdown-item:focus-visible {
+    @apply bg-surface-container-low outline-none;
+  }
+
+  .top-nav-bar__dropdown-item--toggle {
+    @apply justify-between;
+    cursor: pointer;
+  }
+
+  .top-nav-bar__dropdown-item--toggle:hover {
+    @apply bg-surface-container-low;
+  }
+
+  .top-nav-bar__dropdown-label {
+    @apply flex-1 font-medium;
+  }
+
+  .top-nav-bar__dropdown-item--danger {
+    @apply text-error;
+  }
+
+  .top-nav-bar__dropdown-item--danger:hover,
+  .top-nav-bar__dropdown-item--danger:focus-visible {
+    background-color: rgba(168, 54, 75, 0.08);
+  }
+
+  .top-nav-bar__dropdown-divider {
+    @apply my-1 mx-2 h-px bg-outline-variant;
+    opacity: 0.5;
+  }
+
+  /* ---------- Switch (tema) ---------- */
+
+  .top-nav-bar__switch {
+    @apply relative inline-flex items-center h-5 w-9 rounded-full bg-surface-container-highest transition-colors;
+    flex-shrink: 0;
+  }
+
+  .top-nav-bar__switch--on {
+    @apply bg-primary;
+  }
+
+  .top-nav-bar__switch-thumb {
+    @apply absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-surface-container-lowest transition-transform;
+    box-shadow: 0 1px 2px rgba(5, 52, 92, 0.25);
+  }
+
+  .top-nav-bar__switch--on .top-nav-bar__switch-thumb {
+    transform: translateX(1rem);
+  }
+
+  /* ---------- Transição do dropdown ---------- */
+
+  .top-nav-bar__menu-anim-enter-active,
+  .top-nav-bar__menu-anim-leave-active {
+    transition:
+      opacity 120ms ease,
+      transform 120ms ease;
+    transform-origin: top right;
+  }
+
+  .top-nav-bar__menu-anim-enter-from,
+  .top-nav-bar__menu-anim-leave-to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
   }
 }

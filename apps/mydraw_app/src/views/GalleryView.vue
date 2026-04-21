@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { listPosts, type Paginated, type PostRow } from '@/api/posts'
 import GalleryHero from '@/components/gallery/GalleryHero.vue'
 import GalleryFilters from '@/components/gallery/GalleryFilters.vue'
@@ -89,13 +90,19 @@ onMounted(() => load())
     </p>
 
     <MasonryGrid v-if="cards.length > 0">
-      <GalleryCard
+      <RouterLink
         v-for="card in cards"
         :key="card.id"
-        :title="card.title"
-        :category="card.category"
-        :images="card.images"
-      />
+        :to="{ name: 'post', params: { id: card.id } }"
+        class="gallery-card-link"
+        :aria-label="`Abrir post ${card.title}`"
+      >
+        <GalleryCard
+          :title="card.title"
+          :category="card.category"
+          :images="card.images"
+        />
+      </RouterLink>
     </MasonryGrid>
 
     <LoadingIndicator v-if="loading" label="Carregando posts..." />

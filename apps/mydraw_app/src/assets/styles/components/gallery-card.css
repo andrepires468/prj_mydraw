@@ -1,4 +1,16 @@
 @layer components {
+  .gallery-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 0.75rem;
+    outline-offset: 4px;
+  }
+
+  .gallery-card-link:focus-visible {
+    outline: 2px solid theme('colors.primary');
+  }
+
   .gallery-card {
     @apply relative overflow-hidden rounded-xl bg-surface-container-low shadow-sm;
     cursor: pointer;
@@ -13,9 +25,8 @@
   /* ------ media (imagem + controles) ---------------------------------- */
   .gallery-card__media {
     @apply relative overflow-hidden rounded-xl bg-surface-container;
-    /* Fallback para quando a imagem ainda não carregou */
-    min-height: 240px;
-    aspect-ratio: 4 / 5;
+    height: 320px;
+    max-height: 320px;
   }
 
   .gallery-card__image {

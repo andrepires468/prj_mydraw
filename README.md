@@ -9,8 +9,8 @@ Monorepo com:
 
 Infra local via Docker Compose:
 
-- **MySQL 8** — banco de dados
-- **MinIO** — object storage (S3-compatível) para os desenhos
+- **MySQL 8** — banco de dados (externo)
+- **MinIO** — object storage (S3-compatível) para os desenhos. Por padrão usa um MinIO **remoto**; um container local está disponível via profile `local-storage` (ver seção [MinIO: remoto vs. local](#minio-remoto-vs-local))
 - **Nginx** — reverse proxy para a API
 - **PHP 8.2 FPM** — runtime da API
 - **Node 20** — runtime do frontend
@@ -75,7 +75,11 @@ prj_mydraw/
 4. Suba o ambiente:
 
    ```bash
+   # Padrão: usa o MinIO REMOTO definido em MINIO_API_URL no .env
    make up
+
+   # Opcional: usa um MinIO LOCAL em container (dev offline / testes)
+   make up-local
    ```
 
 5. Acesse:
@@ -84,7 +88,7 @@ prj_mydraw/
    | --------------- | ------------------------------ |
    | Frontend (Vite) | http://localhost:5173          |
    | API (Lumen)     | http://localhost:8088          |
-   | MinIO Console   | http://localhost:9001          |
+   | MinIO Console   | http://localhost:9001 *(só com `make up-local`)* |
    | MySQL           | localhost:33306                |
 
    > As portas padrão `8080` / `3306` costumam estar ocupadas no host
@@ -117,8 +121,9 @@ prj_mydraw/
 
 ```bash
 make init        # bootstrap inicial do Lumen + Vue
-make up          # sobe todos os serviços em background
-make down        # derruba todos os serviços
+make up          # sobe serviços usando MinIO remoto (.env)
+make up-local    # sobe serviços + MinIO local (profile local-storage)
+make down        # derruba todos os serviços (incl. MinIO local)
 make logs        # segue os logs de todos os serviços
 make ps          # lista containers
 make api-sh      # abre shell no container da API
@@ -132,12 +137,65 @@ make clean       # remove volumes e containers (cuidado!)
 
 ---
 
+## MinIO: remoto vs. local
+
+O projeto consome um MinIO externo por padrão — os serviços `minio` e
+`createbuckets` do `docker-compose.yml` ficam sob o profile
+`local-storage` e só sobem quando explicitamente solicitados.
+
+### Usar o MinIO remoto (padrão)
+
+No `.env` raiz, preencha:
+
+```env
+MINIO_API_URL=https://minio.seu-dominio.com        # endpoint S3
+APP_VITE_MINIO_PUBLIC_URL=https://minio.seu-dominio.com
+MINIO_ROOT_USER=...           # access key
+MINIO_ROOT_PASSWORD=...       # secret key
+MINIO_BUCKET=mydraw-drawings
+```
+
+E suba normalmente:
+
+```bash
+make up
+```
+
+O container local de MinIO **não** será iniciado — as portas `9000` e
+`9001` ficam livres no host.
+
+### Usar o MinIO local (dev offline / testes isolados)
+
+1. No `.env`, deixe `MINIO_API_URL` vazio (cai no fallback
+   `http://minio:9000`, que é o hostname do container) e use
+   `APP_VITE_MINIO_PUBLIC_URL=http://localhost:9000`.
+2. Suba com o profile ativado:
+
+   ```bash
+   make up-local
+   # equivalente a: docker compose --profile local-storage up -d --build
+   ```
+
+3. O bucket é criado automaticamente pelo serviço `createbuckets` e o
+   console fica em http://localhost:9001 (usuário/senha =
+   `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`).
+
+### Alternar entre os dois modos
+
+```bash
+make down        # derruba tudo, incluindo MinIO local, se estiver rodando
+# ajuste o .env
+make up          # ou `make up-local`
+```
+
+---
+
 ## Fluxo de desenvolvimento
 
 - **API**: código em `apps/mydraw_api/`. O container monta essa pasta como volume, então qualquer alteração reflete imediatamente.
 - **APP**: código em `apps/mydraw_app/`. O `vite dev` roda dentro do container com `--host 0.0.0.0` e HMR exposto na porta `5173`.
-- **MinIO**: um bucket (`MINIO_BUCKET` no `.env`) é criado automaticamente pelo serviço `createbuckets` no primeiro `up`.
-- **MySQL**: os dados persistem no volume `mydraw_mysql_data`.
+- **MinIO**: por padrão o projeto fala com um MinIO **remoto** (via `MINIO_API_URL`). Se usar `make up-local`, o profile `local-storage` sobe um MinIO em container e cria o bucket (`MINIO_BUCKET`) automaticamente via `createbuckets`.
+- **MySQL**: usado externamente; o compose não sobe instância de MySQL.
 
 ---
 

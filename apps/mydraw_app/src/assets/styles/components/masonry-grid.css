@@ -1,29 +1,35 @@
 @layer components {
+  /*
+   * Grid uniforme responsivo: cada card tem altura fixa de 320px e a largura
+   * se adapta pelo número de colunas. Mantemos o nome "masonry-grid" por
+   * compatibilidade — não é mais masonry verdadeiro.
+   */
   .masonry-grid {
-    column-count: 1;
-    column-gap: 1.5rem;
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
 
   @media (min-width: 640px) {
     .masonry-grid {
-      column-count: 2;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     }
   }
 
   @media (min-width: 1024px) {
     .masonry-grid {
-      column-count: 3;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     }
   }
 
   @media (min-width: 1280px) {
     .masonry-grid {
-      column-count: 4;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     }
   }
 
   .masonry-grid__item {
-    break-inside: avoid;
-    margin-bottom: 1.5rem;
+    /* Sem margem: o gap do grid controla o espaçamento entre cards. */
+    margin-bottom: 0;
   }
 }

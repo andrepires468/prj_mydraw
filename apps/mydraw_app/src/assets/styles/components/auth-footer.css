@@ -1,0 +1,23 @@
+@layer components {
+  .auth-security {
+    @apply flex items-center justify-center gap-4 pt-4;
+  }
+
+  .auth-security__item {
+    @apply flex items-center gap-1.5;
+    opacity: 0.6;
+  }
+
+  .auth-security__icon {
+    font-size: 0.875rem;
+  }
+
+  .auth-security__label {
+    @apply text-[10px] uppercase tracking-[0.05em] font-medium text-on-surface;
+  }
+
+  .auth-security__divider {
+    @apply w-1 h-1 rounded-full;
+    background-color: rgba(145, 180, 228, 0.3);
+  }
+}

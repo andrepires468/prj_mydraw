@@ -1,0 +1,40 @@
+@layer components {
+  .post-form-field {
+    @apply flex flex-col gap-2;
+  }
+
+  .post-form-field__label {
+    @apply text-[10px] uppercase tracking-[0.15em] font-bold text-on-surface-variant block px-1;
+  }
+
+  .post-form-field__input,
+  .post-form-field__textarea {
+    @apply w-full bg-surface-container-lowest border-none rounded-xl px-4 py-3 text-on-surface text-sm transition-all;
+  }
+
+  .post-form-field__input {
+    @apply text-base font-medium;
+  }
+
+  .post-form-field__textarea {
+    @apply rounded-2xl py-3.5;
+    resize: none;
+  }
+
+  .post-form-field__input::placeholder,
+  .post-form-field__textarea::placeholder {
+    color: rgba(90, 125, 169, 0.5);
+  }
+
+  .post-form-field__input:focus,
+  .post-form-field__textarea:focus {
+    @apply outline-none;
+    box-shadow: 0 0 0 2px rgba(74, 75, 215, 0.2);
+  }
+
+  .post-form-field__input:disabled,
+  .post-form-field__textarea:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}

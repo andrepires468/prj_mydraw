@@ -31,6 +31,28 @@ export async function listDrawings(page = 1) {
   return data
 }
 
+export interface CreateDrawingInput {
+  file: File
+  title: string
+  description?: string | null
+  prompt?: string | null
+  model?: string | null
+}
+
+export async function createDrawing(input: CreateDrawingInput) {
+  const form = new FormData()
+  form.append('file', input.file)
+  form.append('title', input.title)
+  if (input.description) form.append('description', input.description)
+  if (input.prompt) form.append('prompt', input.prompt)
+  if (input.model) form.append('model', input.model)
+
+  const { data } = await http.post<{ drawing: Drawing }>('/drawings', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data.drawing
+}
+
 export async function pingApi() {
   const { data } = await http.get<{
     pong: boolean

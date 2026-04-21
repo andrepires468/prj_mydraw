@@ -1,0 +1,75 @@
+@layer components {
+  .post-metadata {
+    @apply sticky p-6 xl:p-8 rounded-[2rem] flex flex-col gap-6;
+    top: 6rem;
+    background-color: rgba(239, 244, 255, 0.5);
+  }
+
+  .post-metadata__group {
+    @apply flex flex-col gap-3;
+  }
+
+  .post-metadata__options {
+    @apply flex flex-col gap-3 pt-2;
+  }
+
+  .post-metadata__option-row {
+    @apply flex items-center justify-between text-sm px-1;
+  }
+
+  .post-metadata__option-label {
+    @apply text-on-surface-variant;
+  }
+
+  .post-metadata__option-value {
+    @apply font-bold text-primary;
+  }
+
+  .post-metadata__option-value--muted {
+    @apply text-outline font-normal;
+  }
+
+  .post-metadata__actions {
+    @apply pt-4;
+  }
+
+  .post-metadata__publish {
+    @apply w-full text-on-primary py-3.5 px-3 rounded-full font-bold uppercase tracking-wider text-[11px] transition-all duration-200 flex items-center justify-center gap-2;
+    background-image: linear-gradient(
+      to bottom right,
+      theme('colors.primary'),
+      theme('colors.primary-container')
+    );
+    box-shadow: 0 20px 25px -5px rgba(74, 75, 215, 0.2),
+      0 8px 10px -6px rgba(74, 75, 215, 0.2);
+    border: none;
+    cursor: pointer;
+  }
+
+  .post-metadata__publish:hover:not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  .post-metadata__publish:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .post-metadata__publish-spinner {
+    @apply w-4 h-4 rounded-full;
+    border: 2px solid rgba(251, 247, 255, 0.4);
+    border-top-color: theme('colors.on-primary');
+    animation: post-metadata-spin 0.8s linear infinite;
+  }
+
+  @keyframes post-metadata-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .post-metadata__terms {
+    @apply text-[10px] text-center italic px-4;
+    color: rgba(90, 125, 169, 0.7);
+  }
+}

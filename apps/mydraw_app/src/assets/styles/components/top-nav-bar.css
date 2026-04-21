@@ -1,0 +1,106 @@
+@layer components {
+  .top-nav-bar {
+    @apply sticky top-0 z-50 w-full backdrop-blur-2xl;
+    background-color: rgba(248, 249, 255, 0.7);
+  }
+
+  .top-nav-bar--dark {
+    background-color: rgba(0, 15, 33, 0.7);
+  }
+
+  .top-nav-bar__inner {
+    @apply flex justify-between items-center w-full px-6 py-4 max-w-screen-2xl mx-auto;
+  }
+
+  .top-nav-bar__left {
+    @apply flex items-center gap-8;
+  }
+
+  .top-nav-bar__brand {
+    @apply text-2xl font-bold tracking-tighter text-on-background;
+    text-decoration: none;
+  }
+
+  .top-nav-bar__nav {
+    @apply hidden md:flex gap-6 font-headline tracking-tight font-medium;
+  }
+
+  .top-nav-bar__link {
+    @apply text-on-surface-variant px-2 py-1 rounded transition-colors;
+    text-decoration: none;
+  }
+
+  .top-nav-bar__link:hover {
+    background-color: rgba(196, 220, 255, 0.2);
+  }
+
+  .top-nav-bar__link--active {
+    @apply text-primary font-bold border-b-2 border-primary rounded-none;
+  }
+
+  .top-nav-bar__link--active:hover {
+    background-color: transparent;
+  }
+
+  .top-nav-bar__right {
+    @apply flex items-center gap-4;
+  }
+
+  .top-nav-bar__search {
+    @apply hidden sm:flex items-center bg-surface-container-low px-4 py-2 rounded-full w-64 transition-all;
+  }
+
+  .top-nav-bar__search:focus-within {
+    @apply bg-surface-container-high;
+  }
+
+  .top-nav-bar__search-input {
+    @apply bg-transparent border-none text-sm ml-2 w-full;
+  }
+
+  .top-nav-bar__search-input:focus {
+    @apply ring-0 outline-none shadow-none;
+  }
+
+  .top-nav-bar__search-input::placeholder {
+    color: rgba(61, 97, 140, 0.5);
+  }
+
+  .top-nav-bar__actions {
+    @apply flex items-center gap-2;
+  }
+
+  .top-nav-bar__icon-button {
+    @apply p-2 rounded-full transition-colors text-on-surface-variant;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .top-nav-bar__icon-button:hover {
+    background-color: rgba(196, 220, 255, 0.2);
+  }
+
+  .top-nav-bar__user {
+    @apply flex items-center gap-2 text-sm text-on-surface-variant;
+  }
+
+  .top-nav-bar__logout {
+    @apply text-xs px-3 py-1 rounded-full border border-outline-variant text-on-surface-variant transition-colors;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .top-nav-bar__logout:hover {
+    @apply bg-surface-container-high;
+  }
+
+  .top-nav-bar__login {
+    @apply text-sm px-4 py-2 rounded-full bg-primary text-on-primary font-medium transition-opacity;
+    text-decoration: none;
+  }
+
+  .top-nav-bar__login:hover {
+    opacity: 0.9;
+  }
+}

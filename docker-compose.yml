@@ -20,6 +20,8 @@ services:
       APP_KEY: ${API_APP_KEY}
       APP_URL: ${API_APP_URL:-http://localhost:8080}
       JWT_SECRET: ${API_JWT_SECRET}
+      JWT_TTL: ${API_JWT_TTL:-129600}
+      JWT_REFRESH_TTL: ${API_JWT_REFRESH_TTL:-129600}
       DB_CONNECTION: ${DB_CONNECTION:-mysql}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT:-3306}
@@ -31,15 +33,15 @@ services:
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
       AWS_DEFAULT_REGION: ${MINIO_REGION:-us-east-1}
       AWS_BUCKET: ${MINIO_BUCKET}
-      AWS_ENDPOINT: http://minio:9000
+      # Endpoint S3 — default aponta para o serviço MinIO local;
+      # para usar um MinIO externo defina MINIO_API_URL no .env raiz.
+      AWS_ENDPOINT: ${MINIO_API_URL:-http://minio:9000}
       AWS_USE_PATH_STYLE_ENDPOINT: "true"
+      AWS_VERIFY_SSL: ${AWS_VERIFY_SSL:-true}
       MINIO_PUBLIC_URL: ${APP_VITE_MINIO_PUBLIC_URL:-http://localhost:9000}
       PHP_IDE_CONFIG: "serverName=mydraw_api"
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    depends_on:
-      minio:
-        condition: service_healthy
     networks:
       - mydraw
 

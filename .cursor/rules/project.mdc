@@ -1,0 +1,50 @@
+---
+description: Especificações gerais do projeto mydraw (stack, estrutura, convenções)
+alwaysApply: true
+---
+
+# mydraw
+
+Galeria de desenhos feitos com IA. Monorepo Docker Compose.
+
+## Stack
+
+- **API** `apps/mydraw_api/` — Lumen 10, PHP 8.2, `tymon/jwt-auth`, `league/flysystem-aws-s3-v3`
+- **APP** `apps/mydraw_app/` — Vue 3 + Vite 8, TS, Pinia, vue-router, Tailwind 3, Axios
+- **Infra** — MySQL 8, MinIO (S3), Nginx, Node 20 (dev)
+- **Deploy** — Easypanel
+
+## Estrutura
+
+```
+apps/
+  mydraw_api/   app/ (Controllers, Models, Middleware, Providers), routes/api.php, config/
+  mydraw_app/   src/ (api/, components/{auth,gallery,layout,common}, views/, stores/, router/, assets/styles/)
+docker/{api,app,nginx}/
+scripts/init.sh
+docker-compose.yml  Makefile  .env.example
+```
+
+## Portas locais
+
+Frontend `5173` · API `8088` · MinIO console `9001` · MySQL `33306`
+
+## Rotas API (`/api`)
+
+Públicas: `GET /ping`, `POST /auth/{register,login}`, `GET /drawings`, `GET /drawings/{id}`
+JWT: `GET /auth/me`, `POST /auth/logout`, `POST /drawings`, `DELETE /drawings/{id}`
+
+## Convenções
+
+- **API**: PSR-4 `App\`, controllers magros, middleware `auth:api` (JWT). Uploads vão para MinIO via disk `s3`.
+- **APP**: Composition API `<script setup lang="ts">`. CSS em `src/assets/styles/components/<nome>.css` importado no `main.css`. HTTP via `src/api/*.ts` usando instance Axios de `src/api/http.ts`. Estado de auth em `stores/auth.ts`.
+- **Commits**: imperativo, em português.
+- **Idioma**: responder sempre em português (BR).
+
+## Comandos (Makefile)
+
+`make up|down|logs|ps` · `make api-sh|app-sh|mysql-sh` · `make artisan ARGS=...` · `make composer ARGS=...` · `make npm ARGS=...`
+
+## Referências visuais
+
+Mockups HTML em `stitch_mydrow_minimalist_gallery/{main_gallery,admin_login,admin_dashboard,create_post}/code.html` — base do design atual.

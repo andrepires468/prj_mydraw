@@ -36,4 +36,21 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
             $router->delete('/{id}',   'DrawingController@destroy');
         });
     });
+
+    // Posts (listagem pública com imagens da Gallery)
+    $router->group(['prefix' => 'posts'], function () use ($router) {
+        $router->get('/',     'PostController@index');
+        $router->get('/{id}', 'PostController@show');
+    });
+
+    // Criação de post (draft UUID + galeria)
+    $router->group(['prefix' => 'create-post'], function () use ($router) {
+        // Diagnóstico (só respondido se APP_DEBUG=true)
+        $router->get('/storage-check', 'CreatePostController@storageCheck');
+
+        $router->group(['middleware' => 'auth.jwt'], function () use ($router) {
+            $router->post('/upload', 'CreatePostController@upload');
+            $router->post('/',       'CreatePostController@store');
+        });
+    });
 });

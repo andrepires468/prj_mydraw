@@ -1,0 +1,58 @@
+@layer components {
+  .login-page {
+    @apply min-h-screen w-full flex items-center justify-center p-6 bg-surface relative overflow-hidden;
+  }
+
+  .login-page ::selection {
+    @apply bg-primary-container text-on-primary-container;
+  }
+
+  .login-page__backdrop {
+    @apply fixed inset-0 pointer-events-none -z-10 overflow-hidden;
+  }
+
+  .login-page__blob {
+    @apply absolute rounded-full;
+    filter: blur(120px);
+  }
+
+  .login-page__blob--top {
+    @apply bg-surface-container-high;
+    top: -10%;
+    left: -10%;
+    width: 50%;
+    height: 50%;
+    opacity: 0.4;
+  }
+
+  .login-page__blob--bottom {
+    background-color: rgba(112, 115, 255, 0.2);
+    bottom: -10%;
+    right: -10%;
+    width: 40%;
+    height: 40%;
+    opacity: 0.3;
+    filter: blur(100px);
+  }
+
+  .login-page__content {
+    @apply w-full;
+    max-width: 440px;
+  }
+
+  .login-page__system-id {
+    @apply mt-12 text-center;
+  }
+
+  .login-page__system-id-text {
+    @apply text-[11px] text-on-surface-variant font-medium tracking-wide;
+  }
+
+  .login-page__system-id-highlight {
+    @apply text-primary cursor-pointer;
+  }
+
+  .login-page__system-id-highlight:hover {
+    text-decoration: underline;
+  }
+}

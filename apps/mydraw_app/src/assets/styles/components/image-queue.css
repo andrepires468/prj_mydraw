@@ -1,0 +1,66 @@
+@layer components {
+  .image-queue {
+    @apply grid grid-cols-2 sm:grid-cols-3 gap-4;
+  }
+
+  .image-queue-card {
+    @apply relative overflow-hidden rounded-xl bg-surface-container-low;
+    aspect-ratio: 4 / 5;
+    cursor: move;
+  }
+
+  .image-queue-card--dragging {
+    opacity: 0.4;
+  }
+
+  .image-queue-card__image {
+    @apply w-full h-full object-cover;
+    display: block;
+  }
+
+  .image-queue-card__overlay {
+    @apply absolute inset-0 opacity-0 transition-opacity flex items-center justify-center gap-2;
+    background-color: rgba(5, 52, 92, 0.4);
+  }
+
+  .image-queue-card:hover .image-queue-card__overlay,
+  .image-queue-card:focus-within .image-queue-card__overlay {
+    opacity: 1;
+  }
+
+  .image-queue-card__action {
+    @apply p-2 rounded-full text-white transition-transform;
+    border: none;
+    cursor: pointer;
+  }
+
+  .image-queue-card__action:hover {
+    transform: scale(1.1);
+  }
+
+  .image-queue-card__action--danger {
+    background-color: rgba(249, 115, 134, 0.8);
+  }
+
+  .image-queue-card__action--primary {
+    background-color: rgba(74, 75, 215, 0.8);
+  }
+
+  .image-queue-card__badge {
+    @apply absolute top-2 left-2 bg-primary text-on-primary text-[10px] font-bold px-2 py-0.5 rounded-full;
+  }
+
+  .image-queue-card__progress {
+    @apply absolute inset-x-0 bottom-0 h-1 bg-surface-container;
+  }
+
+  .image-queue-card__progress-bar {
+    @apply h-full bg-primary transition-all;
+  }
+
+  .image-queue-placeholder {
+    @apply rounded-xl flex items-center justify-center text-outline-variant;
+    aspect-ratio: 4 / 5;
+    border: 2px dashed rgba(145, 180, 228, 0.2);
+  }
+}

@@ -1,0 +1,14 @@
+@layer components {
+  .gallery-hero {
+    @apply flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8;
+  }
+
+  .gallery-hero__title {
+    @apply text-5xl md:text-7xl font-extrabold tracking-tighter text-on-background mb-4;
+    line-height: 1;
+  }
+
+  .gallery-hero__subtitle {
+    @apply text-on-surface-variant max-w-md font-body text-lg leading-relaxed;
+  }
+}

@@ -35,6 +35,12 @@ export async function me() {
   return data.user
 }
 
-export async function logout() {
-  await http.post('/auth/logout')
+export async function logout(token?: string) {
+  await http.post(
+    '/auth/logout',
+    null,
+    token
+      ? { headers: { Authorization: `Bearer ${token}` } }
+      : undefined
+  )
 }

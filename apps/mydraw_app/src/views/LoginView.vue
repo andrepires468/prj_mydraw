@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter, useRoute, RouterLink } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import MaterialIcon from '@/components/common/MaterialIcon.vue'
+import AuthBrand from '@/components/auth/AuthBrand.vue'
+import AuthField from '@/components/auth/AuthField.vue'
+import AuthSubmitButton from '@/components/auth/AuthSubmitButton.vue'
+import AuthSecurityFooter from '@/components/auth/AuthSecurityFooter.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -12,6 +17,11 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
+const showPassword = ref(false)
+
+function togglePassword() {
+  showPassword.value = !showPassword.value
+}
 
 async function submit() {
   if (loading.value) return
@@ -19,7 +29,8 @@ async function submit() {
   loading.value = true
   try {
     await auth.login(email.value, password.value)
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+    const redirect =
+      typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     await router.replace(redirect)
   } catch (err: unknown) {
     if (axios.isAxiosError(err)) {
@@ -45,157 +56,86 @@ async function submit() {
 </script>
 
 <template>
-  <section class="login">
-    <div class="card">
-      <h1>Entrar</h1>
-      <p class="subtitle">Acesse sua conta para publicar desenhos.</p>
+  <div class="login-page">
+    <div class="login-page__backdrop" aria-hidden="true">
+      <div class="login-page__blob login-page__blob--top" />
+      <div class="login-page__blob login-page__blob--bottom" />
+    </div>
 
-      <form class="form" @submit.prevent="submit">
-        <label class="field">
-          <span>E-mail</span>
-          <input
+    <main class="login-page__content">
+      <AuthBrand
+        title="mydrow.app"
+        subtitle="Administrative Gateway"
+        icon="admin_panel_settings"
+      />
+
+      <div class="auth-card">
+        <form class="auth-card__form" @submit.prevent="submit">
+          <AuthField
+            id="email"
             v-model="email"
+            label="Email Address"
+            icon="mail"
             type="email"
+            placeholder="admin@mydrow.app"
             autocomplete="email"
             required
-            placeholder="voce@exemplo.com"
             :disabled="loading"
           />
-        </label>
 
-        <label class="field">
-          <span>Senha</span>
-          <input
+          <AuthField
+            id="password"
             v-model="password"
-            type="password"
+            label="Password"
+            icon="lock"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="••••••••"
             autocomplete="current-password"
             required
-            minlength="4"
-            placeholder="••••••••"
+            :minlength="4"
             :disabled="loading"
-          />
-        </label>
+          >
+            <template #aside>
+              <a href="#" class="auth-field__aside">Forgot?</a>
+            </template>
+            <template #suffix>
+              <button
+                type="button"
+                class="auth-field__suffix"
+                :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+                @click="togglePassword"
+              >
+                <MaterialIcon
+                  :name="showPassword ? 'visibility_off' : 'visibility'"
+                  size="1.25rem"
+                />
+              </button>
+            </template>
+          </AuthField>
 
-        <p v-if="errorMsg" class="err">{{ errorMsg }}</p>
+          <p v-if="errorMsg" class="auth-error" role="alert">
+            <MaterialIcon name="error" filled />
+            <span>{{ errorMsg }}</span>
+          </p>
 
-        <button class="btn-primary" type="submit" :disabled="loading">
-          {{ loading ? 'Entrando…' : 'Entrar' }}
-        </button>
-      </form>
+          <div class="pt-2">
+            <AuthSubmitButton
+              label="Authorize Session"
+              loading-label="Autenticando…"
+              :loading="loading"
+            />
+          </div>
 
-      <p class="hint">
-        Ainda não tem conta?
-        <RouterLink to="/">voltar à home</RouterLink>
-      </p>
-    </div>
-  </section>
+          <AuthSecurityFooter />
+        </form>
+      </div>
+
+      <div class="login-page__system-id">
+        <p class="login-page__system-id-text">
+          SYSTEM ID: DROW-ADMIN-001 ·
+          <span class="login-page__system-id-highlight">NODE STATUS: ONLINE</span>
+        </p>
+      </div>
+    </main>
+  </div>
 </template>
-
-<style scoped>
-.login {
-  display: grid;
-  place-items: center;
-  padding: 2rem 0;
-}
-
-.card {
-  width: 100%;
-  max-width: 420px;
-  background: #141414;
-  border: 1px solid #2a2a2a;
-  border-radius: 12px;
-  padding: 2rem 1.75rem;
-}
-
-h1 {
-  margin: 0 0 0.25rem;
-  font-size: 1.75rem;
-  letter-spacing: -0.5px;
-}
-
-.subtitle {
-  margin: 0 0 1.5rem;
-  color: #888;
-  font-size: 0.95rem;
-}
-
-.form {
-  display: grid;
-  gap: 1rem;
-}
-
-.field {
-  display: grid;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-  color: #bbb;
-}
-
-.field input {
-  padding: 0.6rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #2e2e2e;
-  background: #0f0f0f;
-  color: #e3e3e3;
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color 0.15s ease;
-}
-
-.field input:focus {
-  border-color: #6ea8fe;
-}
-
-.field input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  margin-top: 0.25rem;
-  padding: 0.65rem 1rem;
-  border-radius: 6px;
-  border: none;
-  background: linear-gradient(90deg, #6ea8fe, #b388ff);
-  color: #0b0b0b;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.btn-primary:hover {
-  opacity: 0.9;
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.err {
-  margin: 0;
-  padding: 0.55rem 0.75rem;
-  border-radius: 6px;
-  background: #2a0e0e;
-  border: 1px solid #5a1f1f;
-  color: #ff9b9b;
-  font-size: 0.85rem;
-}
-
-.hint {
-  margin: 1.25rem 0 0;
-  text-align: center;
-  font-size: 0.85rem;
-  color: #777;
-}
-
-.hint a {
-  color: #6ea8fe;
-  text-decoration: none;
-}
-
-.hint a:hover {
-  text-decoration: underline;
-}
-</style>

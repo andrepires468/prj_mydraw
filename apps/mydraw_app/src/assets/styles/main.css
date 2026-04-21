@@ -1,0 +1,28 @@
+@import './base.css';
+@import './utilities/material-symbols.css';
+
+@import './components/top-nav-bar.css';
+@import './components/bottom-nav-bar.css';
+@import './components/floating-action-button.css';
+@import './components/gallery-hero.css';
+@import './components/gallery-filters.css';
+@import './components/masonry-grid.css';
+@import './components/gallery-card.css';
+@import './components/loading-indicator.css';
+
+@import './components/login-page.css';
+@import './components/auth-brand.css';
+@import './components/auth-card.css';
+@import './components/auth-field.css';
+@import './components/auth-button.css';
+@import './components/auth-footer.css';
+
+@import './components/create-post-page.css';
+@import './components/upload-dropzone.css';
+@import './components/image-queue.css';
+@import './components/post-metadata.css';
+@import './components/post-form-field.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

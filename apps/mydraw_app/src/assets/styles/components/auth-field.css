@@ -1,0 +1,68 @@
+@layer components {
+  .auth-field {
+    @apply flex flex-col gap-2;
+  }
+
+  .auth-field__label-row {
+    @apply flex justify-between items-center px-1;
+  }
+
+  .auth-field__label {
+    @apply block text-[10px] uppercase tracking-[0.1em] font-bold text-on-surface-variant ml-1;
+  }
+
+  .auth-field__aside {
+    @apply text-[10px] uppercase tracking-[0.1em] font-bold text-primary transition-colors;
+    text-decoration: none;
+  }
+
+  .auth-field__aside:hover {
+    @apply text-primary-dim;
+  }
+
+  .auth-field__input-wrapper {
+    @apply relative;
+  }
+
+  .auth-field__icon {
+    @apply absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-on-surface-variant transition-colors;
+  }
+
+  .auth-field__input-wrapper:focus-within .auth-field__icon {
+    @apply text-primary;
+  }
+
+  .auth-field__input {
+    @apply w-full bg-surface-container-low border-none rounded-2xl py-4 pl-12 pr-4 text-on-surface text-sm;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .auth-field__input--has-suffix {
+    @apply pr-12;
+  }
+
+  .auth-field__input::placeholder {
+    @apply text-outline-variant;
+  }
+
+  .auth-field__input:focus {
+    @apply bg-surface-container-high outline-none;
+    box-shadow: 0 0 0 2px rgba(112, 115, 255, 0.3);
+  }
+
+  .auth-field__input:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .auth-field__suffix {
+    @apply absolute inset-y-0 right-0 pr-4 flex items-center text-on-surface-variant transition-colors;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
+  .auth-field__suffix:hover {
+    @apply text-primary;
+  }
+}

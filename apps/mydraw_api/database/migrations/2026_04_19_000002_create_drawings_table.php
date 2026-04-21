@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedInteger('user_id');
             $table->foreign('user_id')
-                ->references('Id')->on('User')
+                ->references('Id')->on('users')
                 ->cascadeOnDelete();
             $table->string('title');
             $table->text('description')->nullable();

@@ -15,7 +15,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 {
     use Authenticatable, Authorizable, HasFactory;
 
-    protected $table = 'User';
+    protected $table = 'users';
 
     protected $primaryKey = 'Id';
 
@@ -89,5 +89,10 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     public function drawings(): HasMany
     {
         return $this->hasMany(Drawing::class, 'user_id', 'Id');
+    }
+
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class, 'user_id', 'Id');
     }
 }

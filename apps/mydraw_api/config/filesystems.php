@@ -39,8 +39,16 @@ return [
             'bucket'                  => env('AWS_BUCKET'),
             'endpoint'                => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => (bool) env('AWS_USE_PATH_STYLE_ENDPOINT', true),
-            'throw'                   => false,
+            // Dispara exceções em falha de I/O, em vez de retornar false silenciosamente
+            'throw'                   => true,
             'visibility'              => 'public',
+            // Timeout de conexão/leitura com o endpoint S3 (segundos)
+            'http' => [
+                'connect_timeout' => (int) env('AWS_CONNECT_TIMEOUT', 5),
+                'timeout'         => (int) env('AWS_TIMEOUT', 30),
+                // Quando o MinIO remoto usa TLS self-signed, defina AWS_VERIFY_SSL=false
+                'verify'          => env('AWS_VERIFY_SSL', true),
+            ],
         ],
     ],
 

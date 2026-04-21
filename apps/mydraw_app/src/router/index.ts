@@ -1,20 +1,26 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '@/views/HomeView.vue'
 import GalleryView from '@/views/GalleryView.vue'
 import LoginView from '@/views/LoginView.vue'
+import CreatePostView from '@/views/CreatePostView.vue'
+import { isJwtExpired } from '@/utils/jwt'
 
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
+      redirect: { name: 'gallery' },
     },
     {
       path: '/gallery',
       name: 'gallery',
       component: GalleryView,
+    },
+    {
+      path: '/create',
+      name: 'create-post',
+      component: CreatePostView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/login',
@@ -27,8 +33,19 @@ export const router = createRouter({
 
 router.beforeEach((to) => {
   const token = localStorage.getItem('mydraw:token')
-  if (to.meta.guestOnly && token) {
+  const hasValidSession = token !== null && !isJwtExpired(token)
+
+  if (!hasValidSession && token) {
+    // Token presente porém expirado: limpa resquícios antes de decidir.
+    localStorage.removeItem('mydraw:token')
+    localStorage.removeItem('mydraw:user')
+  }
+
+  if (to.meta.guestOnly && hasValidSession) {
     return { path: '/' }
+  }
+  if (to.meta.requiresAuth && !hasValidSession) {
+    return { path: '/login', query: { redirect: to.fullPath } }
   }
   return true
 })

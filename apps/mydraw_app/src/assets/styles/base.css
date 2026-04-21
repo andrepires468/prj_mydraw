@@ -1,0 +1,23 @@
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #app {
+    @apply min-h-screen;
+  }
+
+  body {
+    @apply bg-background text-on-surface font-body antialiased;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  a {
+    color: inherit;
+  }
+}

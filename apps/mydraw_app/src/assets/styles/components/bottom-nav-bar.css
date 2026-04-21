@@ -1,0 +1,31 @@
+@layer components {
+  .bottom-nav-bar {
+    @apply md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-end px-4 pb-6 pt-2 shadow-nav-top;
+    background-color: rgba(248, 249, 255, 0.8);
+    backdrop-filter: blur(24px);
+    border-top-left-radius: 2rem;
+    border-top-right-radius: 2rem;
+  }
+
+  .bottom-nav-bar__link {
+    @apply flex flex-col items-center justify-center p-2 transition-all text-on-surface-variant;
+    text-decoration: none;
+  }
+
+  .bottom-nav-bar__link:hover {
+    @apply text-primary;
+  }
+
+  .bottom-nav-bar__link--active {
+    @apply bg-primary text-on-primary rounded-full p-3 mb-2;
+    transform: scale(1.1);
+  }
+
+  .bottom-nav-bar__link--active .bottom-nav-bar__label {
+    display: none;
+  }
+
+  .bottom-nav-bar__label {
+    @apply text-[10px] uppercase tracking-[0.05em] font-medium font-label;
+  }
+}

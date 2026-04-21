@@ -1,0 +1,13 @@
+@layer components {
+  .fab {
+    @apply md:hidden fixed bottom-28 right-6 w-14 h-14 text-on-primary rounded-full flex items-center justify-center z-40 transition-transform;
+    background-image: linear-gradient(to bottom right, theme('colors.primary'), theme('colors.primary-container'));
+    box-shadow: 0 10px 25px rgba(5, 52, 92, 0.2);
+    border: none;
+    cursor: pointer;
+  }
+
+  .fab:active {
+    transform: scale(0.95);
+  }
+}

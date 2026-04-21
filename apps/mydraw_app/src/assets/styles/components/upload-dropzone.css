@@ -1,0 +1,50 @@
+@layer components {
+  .upload-dropzone {
+    @apply relative flex flex-col items-center justify-center rounded-3xl p-12 bg-surface-container-low transition-all duration-300;
+    border: 2px dashed rgba(145, 180, 228, 0.3);
+  }
+
+  .upload-dropzone:hover,
+  .upload-dropzone--dragover {
+    @apply bg-surface-container-high;
+  }
+
+  .upload-dropzone--dragover {
+    border-color: theme('colors.primary');
+  }
+
+  .upload-dropzone__icon-wrap {
+    @apply bg-surface-container-lowest p-6 rounded-full mb-6;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .upload-dropzone__icon-wrap .material-symbols-outlined {
+    @apply text-primary;
+    font-size: 2.25rem;
+  }
+
+  .upload-dropzone__title {
+    @apply text-xl font-semibold mb-2 text-on-surface;
+  }
+
+  .upload-dropzone__hint {
+    @apply text-on-surface-variant text-center max-w-xs mb-8;
+  }
+
+  .upload-dropzone__button {
+    @apply bg-primary text-on-primary px-8 py-3 rounded-full font-semibold transition-transform duration-200;
+    box-shadow: 0 20px 25px -5px rgba(74, 75, 215, 0.2),
+      0 8px 10px -6px rgba(74, 75, 215, 0.2);
+    border: none;
+    cursor: pointer;
+  }
+
+  .upload-dropzone__button:hover {
+    transform: scale(0.95);
+  }
+
+  .upload-dropzone__input {
+    @apply absolute inset-0 opacity-0;
+    cursor: pointer;
+  }
+}

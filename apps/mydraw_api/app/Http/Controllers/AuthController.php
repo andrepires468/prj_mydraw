@@ -18,7 +18,7 @@ class AuthController extends Controller
     {
         $this->validate($request, [
             'name'     => 'required|string|max:200',
-            'email'    => 'required|email|max:200|unique:User,Email',
+            'email'    => 'required|email|max:200|unique:users,Email',
             'password' => 'required|string|min:6|max:100',
         ]);
 
@@ -43,7 +43,7 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        // Mapeia o campo `email` do request para a coluna `Email` da tabela `User`.
+        // Mapeia o campo `email` do request para a coluna `Email` da tabela `users`.
         // A senha é validada via `User::getAuthPassword()` (coluna `Password`).
         $credentials = [
             'Email'    => $request->input('email'),

@@ -114,7 +114,7 @@ function goBack() {
     return
   }
   if (window.history.length > 1) router.back()
-  else router.push({ name: 'gallery' })
+  else router.push({ name: 'gallery-published' })
 }
 
 watch(mediaViewMode, (mode) => {

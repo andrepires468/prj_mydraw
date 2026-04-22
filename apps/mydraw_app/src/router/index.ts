@@ -11,24 +11,47 @@ export const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: { name: 'gallery' },
+      redirect: { name: 'gallery-published' },
     },
     {
       path: '/gallery',
-      name: 'gallery',
+      redirect: { name: 'gallery-published' },
+    },
+    {
+      path: '/gallery/published',
+      name: 'gallery-published',
       component: GalleryView,
     },
     {
-      path: '/gallery/post/:id(\\d+)',
-      name: 'gallery-post',
+      path: '/gallery/drafts',
+      name: 'gallery-drafts',
+      component: GalleryView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/gallery/published/post/:id(\\d+)',
+      name: 'gallery-published-post',
       component: GalleryView,
       props: true,
+    },
+    {
+      path: '/gallery/drafts/post/:id(\\d+)',
+      name: 'gallery-drafts-post',
+      component: GalleryView,
+      props: true,
+      meta: { requiresAuth: true },
     },
     {
       path: '/posts/:id(\\d+)',
       name: 'post',
       component: PostView,
       props: true,
+    },
+    {
+      path: '/posts/new/edit',
+      name: 'edit-post-new',
+      component: EditPostView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/posts/:id(\\d+)/edit',

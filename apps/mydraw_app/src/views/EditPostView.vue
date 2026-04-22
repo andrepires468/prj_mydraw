@@ -8,6 +8,7 @@ import {
   getPost,
   reorderPostImages,
   updatePost,
+  uploadGalleryImage,
   uploadPostImage,
   type GalleryRow,
   type PostRow,
@@ -21,7 +22,7 @@ import PostMetadataForm from '@/components/post/PostMetadataForm.vue'
 import type { QueuedImage } from '@/components/post/types'
 
 interface Props {
-  id: number | string
+  id?: number | string
 }
 
 const props = defineProps<Props>()
@@ -59,6 +60,13 @@ const reorderMode = ref(false)
 const orderSnapshotIds = ref<string[] | null>(null)
 const applyingReorder = ref(false)
 
+/** Enquanto há upload/fila pendente no backend — bloqueia ações laterais como o publish. */
+const imagePipelineBusy = computed(() =>
+  images.value.some(
+    (i) => i.status === 'uploading' || i.status === 'queued',
+  ),
+)
+
 const uploadAndEditorLocked = computed(
   () =>
     submitting.value ||
@@ -66,15 +74,33 @@ const uploadAndEditorLocked = computed(
     applyingReorder.value,
 )
 
+const isNewPostRoute = computed(() => route.name === 'edit-post-new')
+
+/** UUID de rascunho: primeiro upload em `/create-post/upload` cria o post na API. */
+const draftUuid = ref(crypto.randomUUID())
+
+/** Após o primeiro upload no modo novo, até o `router.replace` com id numérico. */
+const createdPostId = ref<number | null>(null)
+
+/** Quando preenchido e todas as imagens estiverem `done`, navega para `/posts/:id/edit`. */
+const pendingUrlReplacePostId = ref<number | null>(null)
+
 /** Revogar object URLs criadas para previews locais (não as retornadas pela API). */
 const locallyCreatedPreviewUrls = new Set<string>()
 
-/** ID numérico do post na rota (props + params para compatibilidade com o router). */
+/** ID numérico do post na rota (`null` em `/posts/new/edit`). */
 const postId = computed(() => {
+  if (isNewPostRoute.value) return null
   const raw = props.id ?? route.params.id
   if (raw === undefined || raw === null || raw === '') return null
   const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw)
   return Number.isFinite(n) ? n : null
+})
+
+/** ID usado nas chamadas à API (rota numérica ou post criado pelo primeiro upload). */
+const effectivePostId = computed(() => {
+  if (isNewPostRoute.value) return createdPostId.value
+  return postId.value
 })
 
 const remainingImageSlots = computed(() =>
@@ -89,14 +115,13 @@ const status = computed<'draft' | 'published'>(
 const canPublish = computed(() => {
   if (submitting.value) return false
   if (reorderMode.value) return false
-  const anyUploading = images.value.some((i) => i.status === 'uploading')
-  if (anyUploading) return false
   if (images.value.length === 0) return false
+  if (!images.value.every((i) => i.status === 'done')) return false
   return true
 })
 
 const canApplyReorder = computed(() => {
-  if (!postId.value) return false
+  if (effectivePostId.value === null) return false
   if (images.value.length === 0) return false
   return images.value.every(
     (i) => i.status === 'done' && i.galleryId !== undefined,
@@ -144,6 +169,26 @@ function galleryToQueued(row: GalleryRow): QueuedImage {
   }
 }
 
+function initNewPostSession() {
+  draftUuid.value = crypto.randomUUID()
+  createdPostId.value = null
+  pendingUrlReplacePostId.value = null
+  post.value = null
+  title.value = ''
+  description.value = ''
+  for (const img of images.value) {
+    if (img.previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(img.previewUrl)
+    }
+  }
+  images.value = []
+  locallyCreatedPreviewUrls.clear()
+  loadError.value = null
+  loading.value = false
+  errorMsg.value = null
+  successMsg.value = null
+}
+
 async function load() {
   if (postId.value === null) {
     loadError.value = 'ID de post inválido.'
@@ -175,11 +220,41 @@ async function load() {
 
 function addFiles(files: File[]) {
   if (reorderMode.value) return
-  if (!postId.value) return
   const remaining = MAX_FILES - images.value.length
   if (remaining <= 0) return
 
   const toAdd = files.slice(0, remaining)
+  const pid = effectivePostId.value
+
+  if (isNewPostRoute.value && pid === null) {
+    const draftPipelineBusy = images.value.some(
+      (i) =>
+        i.status === 'uploading' ||
+        i.status === 'queued' ||
+        (createdPostId.value === null && i.status === 'error'),
+    )
+    let startedDraftHead = false
+    for (const file of toAdd) {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      const previewUrl = URL.createObjectURL(file)
+      locallyCreatedPreviewUrls.add(previewUrl)
+      const startDraftNow = !draftPipelineBusy && !startedDraftHead
+      if (startDraftNow) startedDraftHead = true
+      const item: QueuedImage = {
+        id,
+        file,
+        previewUrl,
+        status: startDraftNow ? 'uploading' : 'queued',
+        progress: 0,
+      }
+      images.value.push(item)
+      if (startDraftNow) void uploadGalleryForFirst(id, file)
+    }
+    return
+  }
+
+  if (pid === null) return
+
   for (const file of toAdd) {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     const previewUrl = URL.createObjectURL(file)
@@ -192,14 +267,17 @@ function addFiles(files: File[]) {
       progress: 0,
     }
     images.value.push(item)
-    void uploadOne(id, file)
+    void uploadPostImageForItem(id, file, pid)
   }
 }
 
-async function uploadOne(localId: string, file: File) {
-  if (!postId.value) return
+async function uploadPostImageForItem(
+  localId: string,
+  file: File,
+  postNum: number,
+) {
   try {
-    const gallery = await uploadPostImage(postId.value, file, (p) => {
+    const gallery = await uploadPostImage(postNum, file, (p) => {
       const img = images.value.find((i) => i.id === localId)
       if (img) img.progress = p
     })
@@ -209,7 +287,6 @@ async function uploadOne(localId: string, file: File) {
       img.progress = 100
       img.galleryId = gallery.id
       img.thumbnailUrl = gallery.thumbs?.['320x320'] ?? null
-      // Substitui preview local pela URL assinada do bucket, se vier.
       if (gallery.url) {
         if (locallyCreatedPreviewUrls.has(img.previewUrl)) {
           URL.revokeObjectURL(img.previewUrl)
@@ -227,10 +304,78 @@ async function uploadOne(localId: string, file: File) {
   }
 }
 
+async function flushQueuedWithPostId(postNum: number) {
+  while (true) {
+    const queued = images.value.filter((i) => i.status === 'queued')
+    if (queued.length === 0) break
+    await Promise.all(
+      queued.map((q) => {
+        q.status = 'uploading'
+        q.progress = 0
+        return uploadPostImageForItem(q.id, q.file, postNum)
+      }),
+    )
+  }
+}
+
+async function uploadGalleryForFirst(localId: string, file: File) {
+  try {
+    const gallery = await uploadGalleryImage(draftUuid.value, file, (p) => {
+      const img = images.value.find((i) => i.id === localId)
+      if (img) img.progress = p
+    })
+    const img = images.value.find((i) => i.id === localId)
+    if (img) {
+      img.status = 'done'
+      img.progress = 100
+      img.galleryId = gallery.id
+      img.thumbnailUrl = gallery.thumbs?.['320x320'] ?? null
+      if (gallery.url) {
+        if (locallyCreatedPreviewUrls.has(img.previewUrl)) {
+          URL.revokeObjectURL(img.previewUrl)
+          locallyCreatedPreviewUrls.delete(img.previewUrl)
+        }
+        img.previewUrl = gallery.url
+      }
+    }
+    const postNum = gallery.post_id ?? createdPostId.value
+    if (postNum == null) {
+      errorMsg.value =
+        'Resposta do servidor sem post_id. Tente enviar a primeira imagem novamente.'
+      return
+    }
+    createdPostId.value = postNum
+    pendingUrlReplacePostId.value = postNum
+    await flushQueuedWithPostId(postNum)
+  } catch (err) {
+    const img = images.value.find((i) => i.id === localId)
+    if (img) {
+      img.status = 'error'
+      img.error = extractErrorMessage(err)
+    }
+  }
+}
+
+function tryPromoteNextDraftHead() {
+  if (!isNewPostRoute.value || createdPostId.value !== null) return
+  if (images.value.some((i) => i.status === 'uploading')) return
+  if (images.value.some((i) => i.status === 'error')) return
+  const next = images.value.find((i) => i.status === 'queued')
+  if (!next) return
+  next.status = 'uploading'
+  next.progress = 0
+  void uploadGalleryForFirst(next.id, next.file)
+}
+
 function requestRemoveImage(localId: string) {
   if (reorderMode.value) return
-  if (!postId.value) return
-  if (images.value.length <= 1) {
+  const idxCheck = images.value.findIndex((i) => i.id === localId)
+  const allowLastRemoveError =
+    isNewPostRoute.value &&
+    images.value.length === 1 &&
+    idxCheck >= 0 &&
+    images.value[idxCheck].status === 'error'
+  if (images.value.length <= 1 && !allowLastRemoveError) {
     errorMsg.value =
       'O post precisa manter ao menos uma imagem. Adicione outra antes de remover esta.'
     return
@@ -254,11 +399,14 @@ async function confirmRemoveImage() {
 }
 
 async function removeImageNow(localId: string) {
-  if (!postId.value) return
-  if (images.value.length <= 1) return
   const idx = images.value.findIndex((i) => i.id === localId)
   if (idx < 0) return
   if (images.value[idx].status === 'uploading') return
+  const allowLastRemoveError =
+    isNewPostRoute.value &&
+    images.value.length === 1 &&
+    images.value[idx].status === 'error'
+  if (images.value.length <= 1 && !allowLastRemoveError) return
 
   // Remoção otimista da UI; rollback em caso de falha.
   const [removed] = images.value.splice(idx, 1)
@@ -268,14 +416,16 @@ async function removeImageNow(localId: string) {
     locallyCreatedPreviewUrls.delete(removed.previewUrl)
   }
 
-  if (removed.galleryId !== undefined) {
+  if (removed.galleryId !== undefined && effectivePostId.value !== null) {
     try {
-      await deletePostImage(postId.value, removed.galleryId)
+      await deletePostImage(effectivePostId.value, removed.galleryId)
     } catch (err) {
       images.value.splice(idx, 0, removed)
       errorMsg.value = extractErrorMessage(err)
+      return
     }
   }
+  tryPromoteNextDraftHead()
 }
 
 function previewImage(localId: string) {
@@ -299,6 +449,7 @@ function reorder(from: number, to: number) {
 }
 
 function enterReorderMode() {
+  if (images.value.some((i) => i.status !== 'done')) return
   orderSnapshotIds.value = images.value.map((i) => i.id)
   reorderMode.value = true
   clearMessages()
@@ -316,14 +467,19 @@ function cancelReorderMode() {
 }
 
 async function applyReorder() {
-  if (!reorderMode.value || !postId.value || !canApplyReorder.value) return
+  if (
+    !reorderMode.value ||
+    effectivePostId.value === null ||
+    !canApplyReorder.value
+  )
+    return
   clearMessages()
   applyingReorder.value = true
   const order = images.value
     .map((i) => i.galleryId)
     .filter((id): id is number => id !== undefined)
   try {
-    await reorderPostImages(postId.value, order)
+    await reorderPostImages(effectivePostId.value, order)
     orderSnapshotIds.value = null
     reorderMode.value = false
     successMsg.value = 'Ordem das imagens atualizada.'
@@ -341,15 +497,24 @@ function clearMessages() {
 }
 
 async function saveDraft() {
-  if (submitting.value || reorderMode.value || !postId.value) return
+  if (
+    submitting.value ||
+    reorderMode.value ||
+    imagePipelineBusy.value ||
+    effectivePostId.value === null
+  )
+    return
   clearMessages()
   pendingAction.value = 'save'
   try {
-    const updated = await updatePost(postId.value, {
+    const updated = await updatePost(effectivePostId.value, {
       title: title.value.trim(),
       description: description.value.trim() || null,
     })
-    post.value = { ...post.value, ...updated }
+    post.value =
+      post.value === null
+        ? updated
+        : { ...post.value, ...updated }
     successMsg.value = 'Rascunho salvo.'
   } catch (err) {
     errorMsg.value = extractErrorMessage(err)
@@ -359,7 +524,14 @@ async function saveDraft() {
 }
 
 async function publishOrSave() {
-  if (!canPublish.value || reorderMode.value || !postId.value) return
+  if (
+    !canPublish.value ||
+    reorderMode.value ||
+    imagePipelineBusy.value ||
+    effectivePostId.value === null
+  )
+    return
+  const pid = effectivePostId.value
   clearMessages()
   pendingAction.value = 'publish'
   try {
@@ -374,14 +546,18 @@ async function publishOrSave() {
             description: description.value.trim() || null,
             status: 'published' as const,
           }
-    const updated = await updatePost(postId.value, payload)
-    post.value = { ...post.value, ...updated }
+    const updated = await updatePost(pid, payload)
+    post.value =
+      post.value === null ? updated : { ...post.value, ...updated }
     successMsg.value =
       status.value === 'published'
         ? 'Post atualizado.'
         : 'Post publicado com sucesso.'
     if (status.value === 'published') {
-      window.setTimeout(() => router.push({ name: 'post', params: { id: postId.value } }), 700)
+      window.setTimeout(
+        () => router.push({ name: 'post', params: { id: pid } }),
+        700,
+      )
     }
   } catch (err) {
     errorMsg.value = extractErrorMessage(err)
@@ -391,12 +567,23 @@ async function publishOrSave() {
 }
 
 async function unpublish() {
-  if (submitting.value || reorderMode.value || !postId.value) return
+  if (
+    submitting.value ||
+    reorderMode.value ||
+    imagePipelineBusy.value ||
+    effectivePostId.value === null
+  )
+    return
   clearMessages()
   pendingAction.value = 'unpublish'
   try {
-    const updated = await updatePost(postId.value, { status: 'draft' })
-    post.value = { ...post.value, ...updated }
+    const updated = await updatePost(effectivePostId.value, {
+      status: 'draft',
+    })
+    post.value =
+      post.value === null
+        ? updated
+        : { ...post.value, ...updated }
     successMsg.value = 'Post movido para rascunho.'
   } catch (err) {
     errorMsg.value = extractErrorMessage(err)
@@ -406,7 +593,13 @@ async function unpublish() {
 }
 
 function requestDeletePost() {
-  if (submitting.value || reorderMode.value || !postId.value) return
+  if (
+    submitting.value ||
+    reorderMode.value ||
+    imagePipelineBusy.value ||
+    effectivePostId.value === null
+  )
+    return
   deletePostConfirmOpen.value = true
 }
 
@@ -415,12 +608,12 @@ function cancelDeletePost() {
 }
 
 async function confirmDeletePost() {
-  if (submitting.value || !postId.value) return
+  if (submitting.value || effectivePostId.value === null) return
   deletePostConfirmOpen.value = false
   clearMessages()
   pendingAction.value = 'delete'
   try {
-    await deletePost(postId.value)
+    await deletePost(effectivePostId.value)
     successMsg.value = 'Post excluído.'
     window.setTimeout(() => router.push('/gallery'), 500)
   } catch (err) {
@@ -431,16 +624,34 @@ async function confirmDeletePost() {
 }
 
 watch(
-  postId,
-  (id) => {
+  () => [route.name, postId.value] as const,
+  ([name, id]) => {
+    if (name === 'edit-post-new') {
+      initNewPostSession()
+      return
+    }
     if (id === null) {
       loading.value = false
       loadError.value = 'ID de post inválido.'
       return
     }
+    loadError.value = null
     void load()
   },
   { immediate: true },
+)
+
+watch(
+  [images, pendingUrlReplacePostId, isNewPostRoute],
+  () => {
+    const pid = pendingUrlReplacePostId.value
+    if (pid === null || !isNewPostRoute.value) return
+    if (images.value.length === 0) return
+    if (!images.value.every((i) => i.status === 'done')) return
+    pendingUrlReplacePostId.value = null
+    void router.replace({ name: 'edit-post', params: { id: String(pid) } })
+  },
+  { deep: true },
 )
 
 onBeforeUnmount(() => {
@@ -455,10 +666,19 @@ onBeforeUnmount(() => {
   <main class="app-page-inner create-post-page">
     <header class="create-post-page__header">
       <h1 class="create-post-page__title">
-        {{ status === 'published' ? 'Edit Post' : 'Edit Draft' }}
+        <template v-if="isNewPostRoute">
+          Novo post
+        </template>
+        <template v-else>
+          {{ status === 'published' ? 'Edit Post' : 'Edit Draft' }}
+        </template>
       </h1>
       <p class="create-post-page__subtitle">
-        <template v-if="status === 'draft'">
+        <template v-if="isNewPostRoute">
+          Envie a primeira imagem para criar o rascunho; as demais serão anexadas
+          em seguida. Salve ou publique quando estiver pronto.
+        </template>
+        <template v-else-if="status === 'draft'">
           Continue de onde parou. Salve como rascunho ou publique quando estiver pronto.
         </template>
         <template v-else>
@@ -468,7 +688,7 @@ onBeforeUnmount(() => {
     </header>
 
     <p
-      v-if="loadError"
+      v-if="loadError && !isNewPostRoute"
       class="create-post-page__alert create-post-page__alert--error"
       role="alert"
     >
@@ -476,7 +696,7 @@ onBeforeUnmount(() => {
       <span>{{ loadError }}</span>
     </p>
 
-    <template v-else-if="loading">
+    <template v-else-if="loading && !isNewPostRoute">
       <p class="create-post-page__subtitle">Carregando post…</p>
     </template>
 
@@ -529,7 +749,9 @@ onBeforeUnmount(() => {
                 "
                 require-at-least-one-image
                 :reorder-enabled="reorderMode"
-                :card-actions-disabled="reorderMode"
+                :card-actions-disabled="
+                  reorderMode || imagePipelineBusy
+                "
                 :allow-file-import-on-cards="!reorderMode"
                 @remove="requestRemoveImage"
                 @preview="previewImage"
@@ -549,7 +771,10 @@ onBeforeUnmount(() => {
             :submitting="submitting"
             :can-publish="canPublish"
             :pending-action="pendingAction"
-            :editor-locked="reorderMode || applyingReorder"
+            :disable-secondary-actions="effectivePostId === null"
+            :editor-locked="
+              reorderMode || applyingReorder || imagePipelineBusy
+            "
             @update:title="title = $event"
             @update:description="description = $event"
             @publish="publishOrSave"
@@ -567,7 +792,11 @@ onBeforeUnmount(() => {
                   <button
                     type="button"
                     class="post-metadata__secondary"
-                    :disabled="submitting || applyingReorder"
+                    :disabled="
+                      submitting ||
+                      applyingReorder ||
+                      imagePipelineBusy
+                    "
                     @click="enterReorderMode"
                   >
                     Ordenar imagens

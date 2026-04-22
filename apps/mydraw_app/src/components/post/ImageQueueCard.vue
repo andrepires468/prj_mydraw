@@ -41,6 +41,12 @@ defineEmits<{
       {{ image.progress ?? 0 }}%
     </span>
     <span
+      v-else-if="image.status === 'queued'"
+      class="image-queue-card__badge image-queue-card__badge--queued"
+    >
+      Fila
+    </span>
+    <span
       v-else-if="image.status === 'done'"
       class="image-queue-card__badge"
     >
@@ -55,12 +61,17 @@ defineEmits<{
     </span>
 
     <div
-      v-if="image.status === 'uploading'"
+      v-if="image.status === 'uploading' || image.status === 'queued'"
       class="image-queue-card__progress"
     >
       <div
         class="image-queue-card__progress-bar"
-        :style="{ width: `${image.progress ?? 0}%` }"
+        :style="{
+          width:
+            image.status === 'queued'
+              ? '0%'
+              : `${image.progress ?? 0}%`,
+        }"
       />
     </div>
 

@@ -22,7 +22,7 @@ test.describe('Fluidez (sem overflow horizontal)', () => {
 
   test('galeria — modal do post (embedded)', async ({ page }, testInfo) => {
     const label = `modal post [${testInfo.project.name}]`
-    await page.goto('/gallery/post/1')
+    await page.goto('/gallery/published/post/1')
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 20_000 })
     await expect(page.locator('.post-view')).toBeVisible()
     await expectNoHorizontalOverflow(page, `${label} (modal aberto)`)

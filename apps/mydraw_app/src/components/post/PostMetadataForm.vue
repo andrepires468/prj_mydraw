@@ -24,6 +24,10 @@ interface Props {
   pendingAction?: 'save' | 'publish' | 'unpublish' | 'delete' | null
   /** Bloqueia título, descrição e botões (ex.: modo de reordenação da fila). */
   editorLocked?: boolean
+  /**
+   * Desativa salvar, despublicar e excluir (ex.: ainda não existe `post_id` no servidor).
+   */
+  disableSecondaryActions?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -33,6 +37,7 @@ const props = withDefaults(defineProps<Props>(), {
   status: 'draft',
   pendingAction: null,
   editorLocked: false,
+  disableSecondaryActions: false,
 })
 
 defineEmits<{
@@ -134,7 +139,7 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
         <button
           type="button"
           class="post-metadata__secondary"
-          :disabled="formDisabled"
+          :disabled="formDisabled || disableSecondaryActions"
           @click="$emit('save')"
         >
           <span v-if="isSaveBusy" class="post-metadata__publish-spinner" />
@@ -145,7 +150,7 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
           v-if="status === 'published'"
           type="button"
           class="post-metadata__secondary"
-          :disabled="formDisabled"
+          :disabled="formDisabled || disableSecondaryActions"
           @click="$emit('unpublish')"
         >
           <span>{{ pendingAction === 'unpublish' ? 'Unpublishing…' : 'Unpublish' }}</span>
@@ -154,7 +159,7 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
         <button
           type="button"
           class="post-metadata__danger"
-          :disabled="formDisabled"
+          :disabled="formDisabled || disableSecondaryActions"
           @click="$emit('destroy')"
         >
           <span v-if="isDeleteBusy" class="post-metadata__publish-spinner" />

@@ -7,11 +7,14 @@ interface Props {
   dragging?: boolean
   /** Quando true, o botão de remover não dispara ação (ex.: última imagem obrigatória). */
   removeDisabled?: boolean
+  /** Durante modo de reordenação: desativa remover e pré-visualizar. */
+  actionsDisabled?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
   dragging: false,
   removeDisabled: false,
+  actionsDisabled: false,
 })
 
 defineEmits<{
@@ -27,7 +30,7 @@ defineEmits<{
   >
     <img
       class="image-queue-card__image"
-      :src="image.previewUrl"
+      :src="image.thumbnailUrl || image.previewUrl"
       :alt="image.file.name"
     />
 
@@ -36,6 +39,12 @@ defineEmits<{
       class="image-queue-card__badge"
     >
       {{ image.progress ?? 0 }}%
+    </span>
+    <span
+      v-else-if="image.status === 'queued'"
+      class="image-queue-card__badge image-queue-card__badge--queued"
+    >
+      Fila
     </span>
     <span
       v-else-if="image.status === 'done'"
@@ -52,16 +61,24 @@ defineEmits<{
     </span>
 
     <div
-      v-if="image.status === 'uploading'"
+      v-if="image.status === 'uploading' || image.status === 'queued'"
       class="image-queue-card__progress"
     >
       <div
         class="image-queue-card__progress-bar"
-        :style="{ width: `${image.progress ?? 0}%` }"
+        :style="{
+          width:
+            image.status === 'queued'
+              ? '0%'
+              : `${image.progress ?? 0}%`,
+        }"
       />
     </div>
 
-    <div class="image-queue-card__overlay">
+    <div
+      v-if="!actionsDisabled"
+      class="image-queue-card__overlay"
+    >
       <button
         v-if="image.status !== 'uploading'"
         type="button"

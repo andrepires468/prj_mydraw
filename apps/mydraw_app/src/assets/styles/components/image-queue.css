@@ -1,6 +1,6 @@
 @layer components {
   .image-queue {
-    @apply grid grid-cols-2 sm:grid-cols-3 gap-4;
+    @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4;
   }
 
   .image-queue-card {
@@ -60,6 +60,10 @@
 
   .image-queue-card__badge {
     @apply absolute top-2 left-2 bg-primary text-on-primary text-[10px] font-bold px-2 py-0.5 rounded-full;
+  }
+
+  .image-queue-card__badge--queued {
+    @apply bg-surface-container-high text-on-surface-variant;
   }
 
   .image-queue-card__progress {

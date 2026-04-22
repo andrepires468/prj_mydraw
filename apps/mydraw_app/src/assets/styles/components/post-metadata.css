@@ -9,6 +9,37 @@
     @apply flex flex-col gap-3;
   }
 
+  .post-metadata__reorder {
+    @apply flex flex-col gap-3 pt-2 border-t border-outline/15;
+  }
+
+  .post-metadata__reorder-title {
+    @apply text-[10px] uppercase tracking-[0.12em] font-bold text-on-surface-variant;
+  }
+
+  .post-metadata__reorder-hint {
+    @apply text-xs text-outline leading-snug;
+  }
+
+  .post-metadata__reorder-actions {
+    @apply flex flex-col gap-2;
+  }
+
+  .post-metadata__reorder-apply {
+    @apply w-full py-3 px-3 rounded-full font-semibold uppercase tracking-wider text-[11px] transition-all duration-200 flex items-center justify-center gap-2;
+    @apply text-on-primary border-none cursor-pointer;
+    background: theme('colors.primary');
+  }
+
+  .post-metadata__reorder-apply:hover:not(:disabled) {
+    filter: brightness(1.06);
+  }
+
+  .post-metadata__reorder-apply:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
   .post-metadata__options {
     @apply flex flex-col gap-3 pt-2;
   }

@@ -43,8 +43,33 @@
     transform: scale(0.95);
   }
 
-  .upload-dropzone__input {
-    @apply absolute inset-0 opacity-0;
-    cursor: pointer;
+  .upload-dropzone--disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .upload-dropzone--disabled .upload-dropzone__button {
+    @apply cursor-not-allowed;
+  }
+
+  /** Barra fixa sob a navbar: menos altura, menos destaque visual. */
+  .upload-dropzone.upload-dropzone--compact {
+    @apply py-2 px-4 md:py-2.5 md:px-5 rounded-2xl;
+  }
+
+  .upload-dropzone.upload-dropzone--compact .upload-dropzone__icon {
+    @apply mb-1.5;
+    font-size: 1.5rem;
+  }
+
+  .upload-dropzone.upload-dropzone--compact .upload-dropzone__title {
+    @apply text-sm mb-0.5;
+  }
+
+  .upload-dropzone.upload-dropzone--compact .upload-dropzone__hint {
+    @apply text-xs mb-2 leading-tight max-w-md;
+  }
+
+  .upload-dropzone.upload-dropzone--compact .upload-dropzone__button {
+    @apply px-4 py-1.5 text-xs;
   }
 }

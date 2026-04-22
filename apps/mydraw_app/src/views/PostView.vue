@@ -114,7 +114,7 @@ function goBack() {
     return
   }
   if (window.history.length > 1) router.back()
-  else router.push({ name: 'gallery' })
+  else router.push({ name: 'gallery-published' })
 }
 
 watch(mediaViewMode, (mode) => {
@@ -144,7 +144,14 @@ watch(
 </script>
 
 <template>
-  <component :is="props.embedded ? 'div' : 'main'" class="post-view" :class="{ 'post-view--embedded': props.embedded }">
+  <component
+    :is="props.embedded ? 'div' : 'main'"
+    class="post-view"
+    :class="{
+      'post-view--embedded': props.embedded,
+      'app-page-inner': !props.embedded,
+    }"
+  >
     <button
       v-if="!props.embedded"
       type="button"

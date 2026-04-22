@@ -177,7 +177,7 @@ export async function reorderPostImages(
   postId: number,
   order: number[],
 ): Promise<void> {
-  await http.put(`/posts/${postId}/images/reorder`, { order })
+  await http.put(`/posts/${postId}/images/reorder`, { order }, { timeout: 120_000 })
 }
 
 export interface UpdatePostPayload {

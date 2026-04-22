@@ -9,17 +9,28 @@ interface Props {
   showPlaceholder?: boolean
   /** Se true, impede remover quando só restar uma imagem na fila. */
   requireAtLeastOneImage?: boolean
+  /** Se false, arrastar não reordena (drag desligado nos itens). */
+  reorderEnabled?: boolean
+  /** Desativa remover/pré-visualizar nos cards (ex.: modo de reordenação). */
+  cardActionsDisabled?: boolean
+  /** Se false, não importa arquivos soltos sobre os cards (mantém só o placeholder). */
+  allowFileImportOnCards?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   showPlaceholder: true,
   requireAtLeastOneImage: false,
+  reorderEnabled: false,
+  cardActionsDisabled: false,
+  allowFileImportOnCards: true,
 })
 
 const emit = defineEmits<{
   remove: [id: string]
   preview: [id: string]
   reorder: [from: number, to: number]
+  /** Arquivos soltos de fora da página (ex.: Explorer) sobre a fila */
+  importFiles: [files: File[]]
 }>()
 
 const draggingIndex = ref<number | null>(null)
@@ -32,15 +43,40 @@ function onDragOver(event: DragEvent) {
   event.preventDefault()
 }
 
-function onDrop(targetIndex: number) {
+function onDrop(event: DragEvent, targetIndex: number) {
   const from = draggingIndex.value
   draggingIndex.value = null
-  if (from === null || from === targetIndex) return
+  if (from === null) {
+    if (
+      props.allowFileImportOnCards &&
+      event.dataTransfer?.types?.includes('Files')
+    ) {
+      event.preventDefault()
+      const list = event.dataTransfer?.files
+      if (list && list.length > 0) {
+        emit('importFiles', Array.from(list))
+      }
+    }
+    return
+  }
+  if (from === targetIndex) {
+    event.preventDefault()
+    return
+  }
+  event.preventDefault()
   emit('reorder', from, targetIndex)
 }
 
 function onDragEnd() {
   draggingIndex.value = null
+}
+
+function onPlaceholderDrop(event: DragEvent) {
+  event.preventDefault()
+  const list = event.dataTransfer?.files
+  if (list && list.length > 0) {
+    emit('importFiles', Array.from(list))
+  }
 }
 </script>
 
@@ -49,18 +85,19 @@ function onDragEnd() {
     <div
       v-for="(image, index) in images"
       :key="image.id"
-      draggable="true"
-      @dragstart="onDragStart(index)"
+      :draggable="props.reorderEnabled"
+      @dragstart="props.reorderEnabled ? onDragStart(index) : undefined"
       @dragover="onDragOver"
-      @drop="onDrop(index)"
+      @drop="onDrop($event, index)"
       @dragend="onDragEnd"
     >
       <ImageQueueCard
         :image="image"
-        :dragging="draggingIndex === index"
+        :dragging="props.reorderEnabled && draggingIndex === index"
         :remove-disabled="
-          requireAtLeastOneImage && images.length <= 1
+          props.requireAtLeastOneImage && images.length <= 1
         "
+        :actions-disabled="props.cardActionsDisabled"
         @remove="emit('remove', $event)"
         @preview="emit('preview', $event)"
       />
@@ -70,6 +107,8 @@ function onDragEnd() {
       v-if="showPlaceholder"
       class="image-queue-placeholder"
       aria-hidden="true"
+      @dragover="onDragOver"
+      @drop="onPlaceholderDrop"
     >
       <MaterialIcon name="add" />
     </div>

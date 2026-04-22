@@ -238,9 +238,7 @@ class EditPostController extends Controller
         $file   = $request->file('file');
         $userId = $this->userId($user);
         $postId = (int) $post->id;
-
-        $position = (int) Gallery::query()->where('post_id', $postId)->count();
-        $disk     = Storage::disk('s3');
+        $disk   = Storage::disk('s3');
 
         $logContext = [
             'user_id' => $userId,
@@ -261,15 +259,22 @@ class EditPostController extends Controller
             $uploadedKey    = $result['key'];
             $uploadedThumbs = $result['thumbs'];
 
-            $gallery = Gallery::create([
-                'post_id'    => $postId,
-                'user_id'    => $userId,
-                'draft_uuid' => null,
-                'object_key' => $result['key'],
-                'mime_type'  => $result['mime'],
-                'size'       => $result['size'],
-                'position'   => $position,
-            ]);
+            $gallery = DB::transaction(function () use ($postId, $userId, $result) {
+                Post::query()->whereKey($postId)->lockForUpdate()->first();
+                $position = (int) Gallery::query()
+                    ->where('post_id', $postId)
+                    ->count();
+
+                return Gallery::create([
+                    'post_id'    => $postId,
+                    'user_id'    => $userId,
+                    'draft_uuid' => null,
+                    'object_key' => $result['key'],
+                    'mime_type'  => $result['mime'],
+                    'size'       => $result['size'],
+                    'position'   => $position,
+                ]);
+            });
             $touchGlobal = $post->status === Post::STATUS_PUBLISHED;
             PostListCache::bump($userId, $touchGlobal);
 
@@ -401,12 +406,29 @@ class EditPostController extends Controller
 
         try {
             DB::transaction(function () use ($order, $post): void {
-                foreach ($order as $position => $galleryId) {
-                    Gallery::query()
-                        ->where('id', $galleryId)
-                        ->where('post_id', $post->id)
-                        ->update(['position' => $position]);
+                if ($order === []) {
+                    return;
                 }
+
+                $caseFragments = [];
+                $bindings      = [];
+                foreach ($order as $position => $galleryId) {
+                    $caseFragments[] = 'WHEN ? THEN ?';
+                    $bindings[]      = $galleryId;
+                    $bindings[]      = $position;
+                }
+
+                $placeholders = implode(',', array_fill(0, count($order), '?'));
+                $bindings[] = $post->id;
+                foreach ($order as $galleryId) {
+                    $bindings[] = $galleryId;
+                }
+
+                $sql = 'UPDATE gallery SET position = CASE id '
+                    .implode(' ', $caseFragments)
+                    .' END WHERE post_id = ? AND id IN ('.$placeholders.')';
+
+                DB::update($sql, $bindings);
             });
             $touchGlobal = $post->status === Post::STATUS_PUBLISHED;
             PostListCache::bump($this->userId($user), $touchGlobal);

@@ -1,6 +1,6 @@
 @layer components {
   .post-view {
-    @apply max-w-screen-2xl mx-auto px-6 pt-8 pb-32 md:pb-24 w-full min-w-0 max-w-full;
+    @apply pt-8 pb-32 md:pb-24 w-full min-w-0;
   }
 
   .post-view--embedded {

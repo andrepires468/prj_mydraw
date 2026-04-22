@@ -1,6 +1,7 @@
 @import './base.css';
 @import './utilities/material-symbols.css';
 
+@import './layout.css';
 @import './components/top-nav-bar.css';
 @import './components/bottom-nav-bar.css';
 @import './components/floating-action-button.css';

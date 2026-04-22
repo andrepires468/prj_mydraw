@@ -1,30 +1,38 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
+import { computed } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
 
-interface NavItem {
-  to: string
-  icon: string
-  label: string
-}
+const route = useRoute()
 
-const items: NavItem[] = [
-  { to: '/gallery', icon: 'grid_view', label: 'Feed' },
-  { to: '/create', icon: 'add_circle', label: 'Create' },
-]
+/** Feed ativo em /gallery/published, /gallery/drafts e modais de post na galeria. */
+const galleryFeedActive = computed(() =>
+  [
+    'gallery-published',
+    'gallery-drafts',
+    'gallery-published-post',
+    'gallery-drafts-post',
+  ].includes(route.name as string),
+)
 </script>
 
 <template>
   <nav class="bottom-nav-bar">
     <RouterLink
-      v-for="item in items"
-      :key="item.to"
-      :to="item.to"
+      to="/gallery/published"
+      class="bottom-nav-bar__link"
+      :class="{ 'bottom-nav-bar__link--active': galleryFeedActive }"
+    >
+      <MaterialIcon name="grid_view" />
+      <span class="bottom-nav-bar__label">Feed</span>
+    </RouterLink>
+    <RouterLink
+      to="/create"
       class="bottom-nav-bar__link"
       active-class="bottom-nav-bar__link--active"
     >
-      <MaterialIcon :name="item.icon" />
-      <span class="bottom-nav-bar__label">{{ item.label }}</span>
+      <MaterialIcon name="add_circle" />
+      <span class="bottom-nav-bar__label">Create</span>
     </RouterLink>
   </nav>
 </template>

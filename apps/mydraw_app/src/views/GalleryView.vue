@@ -67,8 +67,15 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const page = ref<PostsPage | null>(null)
 const sort = ref<GallerySort>(readStoredSort())
-const status = ref<PostStatus>('published')
 const counts = ref<PostsCounts>({ published: 0, draft: 0 })
+
+/** Alinhado à rota (`/gallery/published` vs `/gallery/drafts`). */
+const galleryStatus = computed<PostStatus>(() => {
+  if (route.name === 'gallery-drafts' || route.name === 'gallery-drafts-post') {
+    return 'draft'
+  }
+  return 'published'
+})
 
 const cards = computed<PostCard[]>(() => {
   if (!page.value) return []
@@ -115,13 +122,18 @@ const isEmptyState = computed(
 )
 
 const emptyMessage = computed(() =>
-  status.value === 'draft'
+  galleryStatus.value === 'draft'
     ? 'Você ainda não tem rascunhos. Comece um novo post na barra superior.'
     : 'Ainda não há posts publicados. Seja o primeiro a criar um!',
 )
 
 const activePostId = computed<number | null>(() => {
-  if (route.name !== 'gallery-post') return null
+  if (
+    route.name !== 'gallery-published-post' &&
+    route.name !== 'gallery-drafts-post'
+  ) {
+    return null
+  }
   const rawId = route.params.id
   if (typeof rawId !== 'string') return null
   const parsed = Number(rawId)
@@ -200,12 +212,18 @@ async function load(p = 1, includeCounts = false) {
   loading.value = true
   error.value = null
   try {
-    const nextPage = await listPosts(p, 20, status.value, includeCounts, sort.value)
+    const nextPage = await listPosts(
+      p,
+      20,
+      galleryStatus.value,
+      includeCounts,
+      sort.value,
+    )
     page.value = nextPage
     if (nextPage.counts) {
       counts.value = nextPage.counts
     }
-    writeGalleryCache(status.value, sort.value, p, nextPage)
+    writeGalleryCache(galleryStatus.value, sort.value, p, nextPage)
   } catch (err: unknown) {
     error.value = err instanceof Error ? err.message : 'Erro desconhecido'
     if (!page.value) {
@@ -217,36 +235,43 @@ async function load(p = 1, includeCounts = false) {
 }
 
 function changeStatus(next: PostStatus) {
-  if (next === status.value) return
-  status.value = next
+  if (next === galleryStatus.value) return
+  router.push({
+    name: next === 'draft' ? 'gallery-drafts' : 'gallery-published',
+  })
 }
 
 function closePostModal() {
-  router.push({ name: 'gallery' })
+  router.push({
+    name:
+      route.name === 'gallery-drafts-post'
+        ? 'gallery-drafts'
+        : 'gallery-published',
+  })
 }
 
-watch(status, () => {
-  hydrateGalleryFromCache(status.value, sort.value, 1)
+watch(galleryStatus, () => {
+  hydrateGalleryFromCache(galleryStatus.value, sort.value, 1)
   void load(1, false)
 })
 
 watch(sort, () => {
   writeStoredSort(sort.value)
-  hydrateGalleryFromCache(status.value, sort.value, 1)
+  hydrateGalleryFromCache(galleryStatus.value, sort.value, 1)
   void load(1, false)
 })
 
 onMounted(() => {
-  hydrateGalleryFromCache(status.value, sort.value, 1)
+  hydrateGalleryFromCache(galleryStatus.value, sort.value, 1)
   void load(1, true)
 })
 </script>
 
 <template>
-  <main class="max-w-screen-2xl mx-auto px-6 pt-12 pb-32 md:pb-24 w-full">
+  <main class="app-page-inner pt-12 pb-32 md:pb-24 w-full">
     <div class="gallery-toolbar">
       <GalleryStatusToggle
-        :model-value="status"
+        :model-value="galleryStatus"
         :counts="counts"
         :show-draft="auth.isAuthenticated"
         @update:model-value="changeStatus"
@@ -279,7 +304,10 @@ onMounted(() => {
         :to="
           card.isDraft
             ? { name: 'edit-post', params: { id: card.id } }
-            : { name: 'gallery-post', params: { id: card.id } }
+            : {
+                name: 'gallery-published-post',
+                params: { id: card.id },
+              }
         "
         class="gallery-card-link"
         :aria-label="

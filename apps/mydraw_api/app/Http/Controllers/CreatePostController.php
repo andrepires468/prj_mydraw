@@ -9,6 +9,7 @@ use App\Services\PostStorageService;
 use App\Support\PostListCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
@@ -122,9 +123,8 @@ class CreatePostController extends Controller
             ], 409);
         }
 
-        $postId   = (int) $post->id;
-        $position = (int) Gallery::query()->where('post_id', $postId)->count();
-        $disk     = Storage::disk('s3');
+        $postId = (int) $post->id;
+        $disk   = Storage::disk('s3');
 
         $logContext = [
             'user_id'    => $userId,
@@ -146,15 +146,24 @@ class CreatePostController extends Controller
             $uploadedKey    = $result['key'];
             $uploadedThumbs = $result['thumbs'];
 
-            $gallery = Gallery::create([
-                'post_id'    => $postId,
-                'user_id'    => $userId,
-                'draft_uuid' => null,
-                'object_key' => $result['key'],
-                'mime_type'  => $result['mime'],
-                'size'       => $result['size'],
-                'position'   => $position,
-            ]);
+            // Serializa anexos concorrentes ao mesmo post para que `position`
+            // incremente corretamente (ex.: vários arquivos soltos de uma vez).
+            $gallery = DB::transaction(function () use ($postId, $userId, $result) {
+                Post::query()->whereKey($postId)->lockForUpdate()->first();
+                $position = (int) Gallery::query()
+                    ->where('post_id', $postId)
+                    ->count();
+
+                return Gallery::create([
+                    'post_id'    => $postId,
+                    'user_id'    => $userId,
+                    'draft_uuid' => null,
+                    'object_key' => $result['key'],
+                    'mime_type'  => $result['mime'],
+                    'size'       => $result['size'],
+                    'position'   => $position,
+                ]);
+            });
 
             // Upload em draft afeta apenas listagens/contagens do usuário.
             PostListCache::bump($userId, false);

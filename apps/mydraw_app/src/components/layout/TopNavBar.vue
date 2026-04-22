@@ -1,11 +1,21 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
+const route = useRoute()
 const searchQuery = ref('')
+
+const galleryNavActive = computed(() =>
+  [
+    'gallery-published',
+    'gallery-drafts',
+    'gallery-published-post',
+    'gallery-drafts-post',
+  ].includes(route.name as string),
+)
 
 const menuOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
@@ -79,15 +89,15 @@ const userInitial = computed(() => {
 
 <template>
   <header class="top-nav-bar">
-    <div class="top-nav-bar__inner">
+    <div class="app-page-inner top-nav-bar__inner">
       <div class="top-nav-bar__left">
         <RouterLink to="/" class="top-nav-bar__brand">mydrow.app</RouterLink>
 
         <nav class="top-nav-bar__nav">
           <RouterLink
-            to="/gallery"
+            to="/gallery/published"
             class="top-nav-bar__link"
-            active-class="top-nav-bar__link--active"
+            :class="{ 'top-nav-bar__link--active': galleryNavActive }"
           >
             Gallery
           </RouterLink>

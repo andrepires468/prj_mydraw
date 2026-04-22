@@ -406,12 +406,29 @@ class EditPostController extends Controller
 
         try {
             DB::transaction(function () use ($order, $post): void {
-                foreach ($order as $position => $galleryId) {
-                    Gallery::query()
-                        ->where('id', $galleryId)
-                        ->where('post_id', $post->id)
-                        ->update(['position' => $position]);
+                if ($order === []) {
+                    return;
                 }
+
+                $caseFragments = [];
+                $bindings      = [];
+                foreach ($order as $position => $galleryId) {
+                    $caseFragments[] = 'WHEN ? THEN ?';
+                    $bindings[]      = $galleryId;
+                    $bindings[]      = $position;
+                }
+
+                $placeholders = implode(',', array_fill(0, count($order), '?'));
+                $bindings[] = $post->id;
+                foreach ($order as $galleryId) {
+                    $bindings[] = $galleryId;
+                }
+
+                $sql = 'UPDATE gallery SET position = CASE id '
+                    .implode(' ', $caseFragments)
+                    .' END WHERE post_id = ? AND id IN ('.$placeholders.')';
+
+                DB::update($sql, $bindings);
             });
             $touchGlobal = $post->status === Post::STATUS_PUBLISHED;
             PostListCache::bump($this->userId($user), $touchGlobal);

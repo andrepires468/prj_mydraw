@@ -7,6 +7,8 @@ interface Props {
   multiple?: boolean
   disabled?: boolean
   maxFiles?: number
+  /** Layout reduzido (ex.: barra fixa ao rolar). */
+  compact?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -14,6 +16,7 @@ const props = withDefaults(defineProps<Props>(), {
   multiple: true,
   disabled: false,
   maxFiles: 10,
+  compact: false,
 })
 
 const emit = defineEmits<{
@@ -88,6 +91,7 @@ function emitFiles(fileList: FileList | null) {
     :class="{
       'upload-dropzone--dragover': isDragging,
       'upload-dropzone--disabled': props.disabled,
+      'upload-dropzone--compact': props.compact,
     }"
     @click="openPicker"
     @dragenter="onDragEnter"

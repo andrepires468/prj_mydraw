@@ -22,6 +22,8 @@ interface Props {
    * Indica se uma ação específica está em andamento (opcional).
    */
   pendingAction?: 'save' | 'publish' | 'unpublish' | 'delete' | null
+  /** Bloqueia título, descrição e botões (ex.: modo de reordenação da fila). */
+  editorLocked?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -30,6 +32,7 @@ const props = withDefaults(defineProps<Props>(), {
   mode: 'create',
   status: 'draft',
   pendingAction: null,
+  editorLocked: false,
 })
 
 defineEmits<{
@@ -50,6 +53,10 @@ const publishLabel = computed(() => {
   }
   return props.pendingAction === 'publish' ? 'Publishing…' : 'Publish'
 })
+
+const formDisabled = computed(
+  () => props.submitting || props.editorLocked,
+)
 
 const isPublishBusy = computed(
   () =>
@@ -73,7 +80,7 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
         class="post-form-field__input"
         placeholder="E.g. Summer Architectural Studies"
         :value="title"
-        :disabled="submitting"
+        :disabled="formDisabled"
         @input="$emit('update:title', ($event.target as HTMLInputElement).value)"
       />
     </div>
@@ -88,9 +95,13 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
         rows="6"
         placeholder="Describe the atmosphere and technique..."
         :value="description"
-        :disabled="submitting"
+        :disabled="formDisabled"
         @input="$emit('update:description', ($event.target as HTMLTextAreaElement).value)"
       />
+    </div>
+
+    <div v-if="$slots.reorder" class="post-metadata__reorder">
+      <slot name="reorder" />
     </div>
 
     <div class="post-metadata__options">
@@ -112,7 +123,7 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
       <button
         type="button"
         class="post-metadata__publish"
-        :disabled="submitting || !canPublish"
+        :disabled="formDisabled || !canPublish"
         @click="$emit('publish')"
       >
         <span v-if="isPublishBusy" class="post-metadata__publish-spinner" />
@@ -123,7 +134,7 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
         <button
           type="button"
           class="post-metadata__secondary"
-          :disabled="submitting"
+          :disabled="formDisabled"
           @click="$emit('save')"
         >
           <span v-if="isSaveBusy" class="post-metadata__publish-spinner" />
@@ -134,7 +145,7 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
           v-if="status === 'published'"
           type="button"
           class="post-metadata__secondary"
-          :disabled="submitting"
+          :disabled="formDisabled"
           @click="$emit('unpublish')"
         >
           <span>{{ pendingAction === 'unpublish' ? 'Unpublishing…' : 'Unpublish' }}</span>
@@ -143,7 +154,7 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
         <button
           type="button"
           class="post-metadata__danger"
-          :disabled="submitting"
+          :disabled="formDisabled"
           @click="$emit('destroy')"
         >
           <span v-if="isDeleteBusy" class="post-metadata__publish-spinner" />

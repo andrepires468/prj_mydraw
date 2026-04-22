@@ -1,0 +1,9 @@
+/**
+ * Largura e padding horizontal alinhados ao `.top-nav-bar__inner`
+ * (w-full max-w-screen-2xl mx-auto px-6).
+ */
+@layer components {
+  .app-page-inner {
+    @apply w-full max-w-screen-2xl mx-auto px-6;
+  }
+}

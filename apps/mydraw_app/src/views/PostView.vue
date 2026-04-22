@@ -144,7 +144,14 @@ watch(
 </script>
 
 <template>
-  <component :is="props.embedded ? 'div' : 'main'" class="post-view" :class="{ 'post-view--embedded': props.embedded }">
+  <component
+    :is="props.embedded ? 'div' : 'main'"
+    class="post-view"
+    :class="{
+      'post-view--embedded': props.embedded,
+      'app-page-inner': !props.embedded,
+    }"
+  >
     <button
       v-if="!props.embedded"
       type="button"

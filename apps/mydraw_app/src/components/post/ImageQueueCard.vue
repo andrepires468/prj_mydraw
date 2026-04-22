@@ -7,11 +7,14 @@ interface Props {
   dragging?: boolean
   /** Quando true, o botão de remover não dispara ação (ex.: última imagem obrigatória). */
   removeDisabled?: boolean
+  /** Durante modo de reordenação: desativa remover e pré-visualizar. */
+  actionsDisabled?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
   dragging: false,
   removeDisabled: false,
+  actionsDisabled: false,
 })
 
 defineEmits<{
@@ -27,7 +30,7 @@ defineEmits<{
   >
     <img
       class="image-queue-card__image"
-      :src="image.previewUrl"
+      :src="image.thumbnailUrl || image.previewUrl"
       :alt="image.file.name"
     />
 
@@ -61,7 +64,10 @@ defineEmits<{
       />
     </div>
 
-    <div class="image-queue-card__overlay">
+    <div
+      v-if="!actionsDisabled"
+      class="image-queue-card__overlay"
+    >
       <button
         v-if="image.status !== 'uploading'"
         type="button"

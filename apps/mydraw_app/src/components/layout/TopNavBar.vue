@@ -79,7 +79,7 @@ const userInitial = computed(() => {
 
 <template>
   <header class="top-nav-bar">
-    <div class="top-nav-bar__inner">
+    <div class="app-page-inner top-nav-bar__inner">
       <div class="top-nav-bar__left">
         <RouterLink to="/" class="top-nav-bar__brand">mydrow.app</RouterLink>
 

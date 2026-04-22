@@ -1,51 +1,63 @@
-import { nextTick, onBeforeUnmount, ref, watch, type Ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
 
 /**
- * Alinha com `.create-post-page__dropzone-sticky { top: 4.5rem }` (barra superior sticky).
- * Margem do observer em px para coincidir com 4.5rem a 16px.
+ * `compact` quando o wrapper sticky está colado sob a navbar (mesmo `top` que
+ * `.create-post-page__dropzone-sticky { top: 4.5rem }`).
+ * Medição por scroll/resize é mais confiável que IntersectionObserver no sentinel.
  */
-const STICKY_TOP_PX = 72
+const FALLBACK_TOP_PX = 72
 
-export function useDropzoneScrollCompact(sentinel: Ref<HTMLElement | null>) {
+export function useDropzoneScrollCompact(stickyWrapper: Ref<HTMLElement | null>) {
   const compact = ref(false)
-  let io: IntersectionObserver | null = null
 
-  function disconnect() {
-    io?.disconnect()
-    io = null
+  function update() {
+    const el = stickyWrapper.value
+    if (!el) {
+      compact.value = false
+      return
+    }
+    const topStr = getComputedStyle(el).top
+    let offsetPx = FALLBACK_TOP_PX
+    if (topStr.endsWith('px')) {
+      offsetPx = parseFloat(topStr)
+    } else if (topStr.endsWith('rem')) {
+      const rem = parseFloat(topStr)
+      const rootFont =
+        parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+      offsetPx = rem * rootFont
+    }
+    const rectTop = el.getBoundingClientRect().top
+    compact.value = rectTop <= offsetPx + 1
   }
 
-  function connect(el: HTMLElement) {
-    disconnect()
-    if (typeof IntersectionObserver === 'undefined') return
-    io = new IntersectionObserver(
-      ([entry]) => {
-        compact.value = !entry.isIntersecting
-      },
-      {
-        root: null,
-        rootMargin: `-${STICKY_TOP_PX}px 0px 0px 0px`,
-        threshold: 0,
-      },
-    )
-    io.observe(el)
+  function bindWindow() {
+    if (typeof window === 'undefined') return
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update, { passive: true })
+  }
+
+  function unbindWindow() {
+    if (typeof window === 'undefined') return
+    window.removeEventListener('scroll', update)
+    window.removeEventListener('resize', update)
   }
 
   watch(
-    sentinel,
-    async (el) => {
-      await nextTick()
-      if (el) connect(el)
-      else {
-        compact.value = false
-        disconnect()
-      }
+    stickyWrapper,
+    (el) => {
+      if (el) update()
+      else compact.value = false
     },
-    { immediate: true },
+    { flush: 'post' },
   )
 
+  onMounted(() => {
+    bindWindow()
+    update()
+  })
+
   onBeforeUnmount(() => {
-    disconnect()
+    unbindWindow()
   })
 
   return { compact }

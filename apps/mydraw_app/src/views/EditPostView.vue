@@ -15,7 +15,7 @@ import {
 import AppConfirmAlert from '@/components/common/AppConfirmAlert.vue'
 import AppModal from '@/components/common/AppModal.vue'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
-import UploadDropzone from '@/components/post/UploadDropzone.vue'
+import PostEditorUploadStack from '@/components/post/PostEditorUploadStack.vue'
 import ImageQueueGrid from '@/components/post/ImageQueueGrid.vue'
 import PostMetadataForm from '@/components/post/PostMetadataForm.vue'
 import type { QueuedImage } from '@/components/post/types'
@@ -29,7 +29,7 @@ const props = defineProps<Props>()
 const router = useRouter()
 const route = useRoute()
 
-const MAX_FILES = 30
+const MAX_FILES = 28
 
 const post = ref<PostRow | null>(null)
 const title = ref('')
@@ -55,6 +55,17 @@ const pendingAction = ref<
 >(null)
 const submitting = computed(() => pendingAction.value !== null)
 
+const reorderMode = ref(false)
+const orderSnapshotIds = ref<string[] | null>(null)
+const applyingReorder = ref(false)
+
+const uploadAndEditorLocked = computed(
+  () =>
+    submitting.value ||
+    reorderMode.value ||
+    applyingReorder.value,
+)
+
 /** Revogar object URLs criadas para previews locais (não as retornadas pela API). */
 const locallyCreatedPreviewUrls = new Set<string>()
 
@@ -77,14 +88,29 @@ const status = computed<'draft' | 'published'>(
 /** Regras para habilitar o botão principal. */
 const canPublish = computed(() => {
   if (submitting.value) return false
+  if (reorderMode.value) return false
   const anyUploading = images.value.some((i) => i.status === 'uploading')
   if (anyUploading) return false
   if (images.value.length === 0) return false
   return true
 })
 
+const canApplyReorder = computed(() => {
+  if (!postId.value) return false
+  if (images.value.length === 0) return false
+  return images.value.every(
+    (i) => i.status === 'done' && i.galleryId !== undefined,
+  )
+})
+
 function extractErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
+    if (err.code === 'ECONNABORTED') {
+      return 'Tempo da requisição esgotado. Tente novamente.'
+    }
+    if (axios.isCancel(err)) {
+      return 'Requisição cancelada.'
+    }
     const data = err.response?.data as
       | { message?: string; errors?: Record<string, string[]>; error?: string }
       | undefined
@@ -111,6 +137,7 @@ function galleryToQueued(row: GalleryRow): QueuedImage {
     // Sem acesso ao File original — usamos um placeholder mínimo para a tipagem.
     file: new File([], `gallery-${row.id}`),
     previewUrl: row.url ?? '',
+    thumbnailUrl: row.thumbs?.['320x320'] ?? null,
     status: 'done',
     progress: 100,
     galleryId: row.id,
@@ -147,6 +174,7 @@ async function load() {
 }
 
 function addFiles(files: File[]) {
+  if (reorderMode.value) return
   if (!postId.value) return
   const remaining = MAX_FILES - images.value.length
   if (remaining <= 0) return
@@ -168,20 +196,6 @@ function addFiles(files: File[]) {
   }
 }
 
-async function persistOrderIfAllSynced() {
-  if (!postId.value) return
-  if (images.value.some((i) => i.galleryId === undefined)) return
-  const order = images.value
-    .map((i) => i.galleryId)
-    .filter((id): id is number => id !== undefined)
-  if (order.length === 0) return
-  try {
-    await reorderPostImages(postId.value, order)
-  } catch {
-    /* ordem local já está correta na UI; evita bloquear o fluxo de upload */
-  }
-}
-
 async function uploadOne(localId: string, file: File) {
   if (!postId.value) return
   try {
@@ -194,6 +208,7 @@ async function uploadOne(localId: string, file: File) {
       img.status = 'done'
       img.progress = 100
       img.galleryId = gallery.id
+      img.thumbnailUrl = gallery.thumbs?.['320x320'] ?? null
       // Substitui preview local pela URL assinada do bucket, se vier.
       if (gallery.url) {
         if (locallyCreatedPreviewUrls.has(img.previewUrl)) {
@@ -203,7 +218,6 @@ async function uploadOne(localId: string, file: File) {
         img.previewUrl = gallery.url
       }
     }
-    await persistOrderIfAllSynced()
   } catch (err) {
     const img = images.value.find((i) => i.id === localId)
     if (img) {
@@ -214,6 +228,7 @@ async function uploadOne(localId: string, file: File) {
 }
 
 function requestRemoveImage(localId: string) {
+  if (reorderMode.value) return
   if (!postId.value) return
   if (images.value.length <= 1) {
     errorMsg.value =
@@ -264,6 +279,7 @@ async function removeImageNow(localId: string) {
 }
 
 function previewImage(localId: string) {
+  if (reorderMode.value) return
   const img = images.value.find((i) => i.id === localId)
   if (!img?.previewUrl) return
   previewModalNaturalSize.value = false
@@ -276,25 +292,46 @@ function closePreviewModal() {
   previewModalNaturalSize.value = false
 }
 
-async function reorder(from: number, to: number) {
+function reorder(from: number, to: number) {
+  if (!reorderMode.value) return
   const [moved] = images.value.splice(from, 1)
   images.value.splice(to, 0, moved)
+}
 
+function enterReorderMode() {
+  orderSnapshotIds.value = images.value.map((i) => i.id)
+  reorderMode.value = true
+  clearMessages()
+}
+
+function cancelReorderMode() {
+  if (orderSnapshotIds.value) {
+    const order = orderSnapshotIds.value
+    images.value.sort(
+      (a, b) => order.indexOf(a.id) - order.indexOf(b.id),
+    )
+  }
+  orderSnapshotIds.value = null
+  reorderMode.value = false
+}
+
+async function applyReorder() {
+  if (!reorderMode.value || !postId.value || !canApplyReorder.value) return
+  clearMessages()
+  applyingReorder.value = true
   const order = images.value
     .map((i) => i.galleryId)
     .filter((id): id is number => id !== undefined)
-
-  if (!postId.value || order.length === 0) return
-  if (order.length !== images.value.length) {
-    // Upload ainda sem `galleryId`: só reordena na UI; persiste quando concluir.
-    return
-  }
-
   try {
     await reorderPostImages(postId.value, order)
+    orderSnapshotIds.value = null
+    reorderMode.value = false
+    successMsg.value = 'Ordem das imagens atualizada.'
   } catch (err) {
     errorMsg.value = extractErrorMessage(err)
     await load()
+  } finally {
+    applyingReorder.value = false
   }
 }
 
@@ -304,7 +341,7 @@ function clearMessages() {
 }
 
 async function saveDraft() {
-  if (submitting.value || !postId.value) return
+  if (submitting.value || reorderMode.value || !postId.value) return
   clearMessages()
   pendingAction.value = 'save'
   try {
@@ -322,7 +359,7 @@ async function saveDraft() {
 }
 
 async function publishOrSave() {
-  if (!canPublish.value || !postId.value) return
+  if (!canPublish.value || reorderMode.value || !postId.value) return
   clearMessages()
   pendingAction.value = 'publish'
   try {
@@ -354,7 +391,7 @@ async function publishOrSave() {
 }
 
 async function unpublish() {
-  if (submitting.value || !postId.value) return
+  if (submitting.value || reorderMode.value || !postId.value) return
   clearMessages()
   pendingAction.value = 'unpublish'
   try {
@@ -369,7 +406,7 @@ async function unpublish() {
 }
 
 function requestDeletePost() {
-  if (submitting.value || !postId.value) return
+  if (submitting.value || reorderMode.value || !postId.value) return
   deletePostConfirmOpen.value = true
 }
 
@@ -415,7 +452,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="create-post-page">
+  <main class="app-page-inner create-post-page">
     <header class="create-post-page__header">
       <h1 class="create-post-page__title">
         {{ status === 'published' ? 'Edit Post' : 'Edit Draft' }}
@@ -463,33 +500,44 @@ onBeforeUnmount(() => {
 
       <div class="create-post-page__layout">
         <div class="create-post-page__editor">
-          <section>
-            <UploadDropzone
-              :max-files="remainingImageSlots"
-              :disabled="submitting || images.length >= MAX_FILES"
-              @files="addFiles"
-            />
-          </section>
+          <PostEditorUploadStack
+            :max-files="remainingImageSlots"
+            :disabled="
+              uploadAndEditorLocked || images.length >= MAX_FILES
+            "
+            @files="addFiles"
+          >
+            <section v-if="images.length > 0" class="flex flex-col gap-6">
+              <div class="create-post-page__section-header">
+                <h2 class="create-post-page__section-title">
+                  Manage Queue ({{ images.length }}
+                  {{ images.length === 1 ? 'Image' : 'Images' }})
+                </h2>
+                <p
+                  v-if="reorderMode"
+                  class="create-post-page__section-hint mt-2 max-w-xl"
+                >
+                  Arraste as miniaturas abaixo para reordenar; use o painel à
+                  direita para aplicar ou cancelar.
+                </p>
+              </div>
 
-          <section v-if="images.length > 0" class="flex flex-col gap-6">
-            <div class="create-post-page__section-header">
-              <h2 class="create-post-page__section-title">
-                Manage Queue ({{ images.length }}
-                {{ images.length === 1 ? 'Image' : 'Images' }})
-              </h2>
-              <span class="create-post-page__section-hint">Drag to reorder</span>
-            </div>
-
-            <ImageQueueGrid
-              :images="images"
-              :show-placeholder="images.length < MAX_FILES"
-              require-at-least-one-image
-              @remove="requestRemoveImage"
-              @preview="previewImage"
-              @reorder="reorder"
-              @import-files="addFiles"
-            />
-          </section>
+              <ImageQueueGrid
+                :images="images"
+                :show-placeholder="
+                  !reorderMode && images.length < MAX_FILES
+                "
+                require-at-least-one-image
+                :reorder-enabled="reorderMode"
+                :card-actions-disabled="reorderMode"
+                :allow-file-import-on-cards="!reorderMode"
+                @remove="requestRemoveImage"
+                @preview="previewImage"
+                @reorder="reorder"
+                @import-files="addFiles"
+              />
+            </section>
+          </PostEditorUploadStack>
         </div>
 
         <div class="create-post-page__aside">
@@ -501,13 +549,58 @@ onBeforeUnmount(() => {
             :submitting="submitting"
             :can-publish="canPublish"
             :pending-action="pendingAction"
+            :editor-locked="reorderMode || applyingReorder"
             @update:title="title = $event"
             @update:description="description = $event"
             @publish="publishOrSave"
             @save="saveDraft"
             @unpublish="unpublish"
             @destroy="requestDeletePost"
-          />
+          >
+            <template v-if="images.length > 0" #reorder>
+              <p class="post-metadata__reorder-title">Ordem das imagens</p>
+              <template v-if="!reorderMode">
+                <p class="post-metadata__reorder-hint">
+                  Altere a ordem de exibição na galeria.
+                </p>
+                <div class="post-metadata__reorder-actions">
+                  <button
+                    type="button"
+                    class="post-metadata__secondary"
+                    :disabled="submitting || applyingReorder"
+                    @click="enterReorderMode"
+                  >
+                    Ordenar imagens
+                  </button>
+                </div>
+              </template>
+              <template v-else>
+                <p class="post-metadata__reorder-hint">
+                  Arraste as miniaturas na fila à esquerda, depois confirme.
+                </p>
+                <div class="post-metadata__reorder-actions">
+                  <button
+                    type="button"
+                    class="post-metadata__secondary"
+                    :disabled="applyingReorder"
+                    @click="cancelReorderMode"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    class="post-metadata__reorder-apply"
+                    :disabled="!canApplyReorder || applyingReorder"
+                    @click="applyReorder"
+                  >
+                    {{
+                      applyingReorder ? 'Aplicando…' : 'Aplicar ordem'
+                    }}
+                  </button>
+                </div>
+              </template>
+            </template>
+          </PostMetadataForm>
         </div>
       </div>
     </template>

@@ -243,7 +243,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="max-w-screen-2xl mx-auto px-6 pt-12 pb-32 md:pb-24 w-full">
+  <main class="app-page-inner pt-12 pb-32 md:pb-24 w-full">
     <div class="gallery-toolbar">
       <GalleryStatusToggle
         :model-value="status"

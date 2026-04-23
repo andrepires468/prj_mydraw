@@ -161,7 +161,7 @@ cat <<EOF
    2) Acesse:
         Frontend ........... http://localhost:${APP_PORT:-5173}
         API (Lumen) ........ http://localhost:${API_PORT:-8080}
-        MinIO Console ...... http://localhost:${MINIO_CONSOLE_PORT:-9001}
+        MinIO Console ...... http://localhost:${MINIO_CONSOLE_PORT:-9101}
         MySQL .............. localhost:${MYSQL_PORT:-3306}
 
    3) Veja os logs:

@@ -38,7 +38,7 @@ services:
       AWS_ENDPOINT: ${MINIO_API_URL:-http://minio:9000}
       AWS_USE_PATH_STYLE_ENDPOINT: "true"
       AWS_VERIFY_SSL: ${AWS_VERIFY_SSL:-true}
-      MINIO_PUBLIC_URL: ${APP_VITE_MINIO_PUBLIC_URL:-http://localhost:9000}
+      MINIO_PUBLIC_URL: ${APP_VITE_MINIO_PUBLIC_URL:-http://localhost:9100}
       MINIO_BUCKET_PUBLIC: ${MINIO_BUCKET_PUBLIC:-true}
       PHP_IDE_CONFIG: "serverName=mydraw_api"
     extra_hosts:
@@ -113,7 +113,7 @@ services:
       CHOKIDAR_USEPOLLING: "true"
       VITE_API_URL: ${APP_VITE_API_URL:-http://localhost:8080}
       VITE_API_VERSION: ${APP_VITE_API_VERSION:-v1}
-      VITE_MINIO_PUBLIC_URL: ${APP_VITE_MINIO_PUBLIC_URL:-http://localhost:9000}
+      VITE_MINIO_PUBLIC_URL: ${APP_VITE_MINIO_PUBLIC_URL:-http://localhost:9100}
     command: sh -c "if [ -f package.json ]; then npm install && npm run dev -- --host 0.0.0.0 --port 5173; else echo 'mydraw_app vazio — rode make init primeiro' && sleep infinity; fi"
     networks:
       - mydraw
@@ -135,8 +135,8 @@ services:
     profiles: ["local-storage"]
     command: server /data --console-address ":9001"
     ports:
-      - "${MINIO_API_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - "${MINIO_API_PORT:-9100}:9000"
+      - "${MINIO_CONSOLE_PORT:-9101}:9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}

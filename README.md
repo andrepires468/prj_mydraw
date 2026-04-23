@@ -88,7 +88,7 @@ prj_mydraw/
    | --------------- | ------------------------------ |
    | Frontend (Vite) | http://localhost:5173          |
    | API (Lumen)     | http://localhost:8088          |
-   | MinIO Console   | http://localhost:9001 *(com profile `local-storage`)* |
+   | MinIO Console   | http://localhost:9101 *(com profile `local-storage`)* |
    | MySQL (host)    | localhost:33306 *(com profile `local-db`; usuário/senha = `DB_USERNAME` / `DB_PASSWORD` no `.env`)* |
 
    > As portas padrão `8080` / `3306` costumam estar ocupadas no host
@@ -212,14 +212,14 @@ E suba normalmente:
 make up
 ```
 
-O container local de MinIO **não** será iniciado — as portas `9000` e
-`9001` ficam livres no host.
+O container local de MinIO **não** será iniciado — as portas `9100` e
+`9101` ficam livres no host.
 
 ### Usar o MinIO local (dev offline / testes isolados)
 
 1. No `.env`, deixe `MINIO_API_URL` vazio (cai no fallback
    `http://minio:9000`, que é o hostname do container) e use
-   `APP_VITE_MINIO_PUBLIC_URL=http://localhost:9000`.
+   `APP_VITE_MINIO_PUBLIC_URL=http://localhost:9100`.
 2. Suba com o profile ativado:
 
    ```bash
@@ -228,7 +228,7 @@ O container local de MinIO **não** será iniciado — as portas `9000` e
    ```
 
 3. O bucket é criado automaticamente pelo serviço `createbuckets` e o
-   console fica em http://localhost:9001 (usuário/senha =
+   console fica em http://localhost:9101 (usuário/senha =
    `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`).
 
 ### Alternar entre os dois modos

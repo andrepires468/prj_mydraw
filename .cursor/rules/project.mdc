@@ -27,7 +27,7 @@ docker-compose.yml  Makefile  .env na raiz (.env.example) — Compose + API + `V
 
 ## Portas locais
 
-Frontend `5173` · API `8088` · MinIO console `9001` · MySQL `33306`
+Frontend `5173` · API `8088` · MinIO console `9101` · MySQL `33306`
 
 ## Rotas API (`/api`)
 

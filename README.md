@@ -9,8 +9,8 @@ Monorepo com:
 
 Infra local via Docker Compose:
 
-- **MySQL 8** — banco de dados (externo)
-- **MinIO** — object storage (S3-compatível) para os desenhos. Por padrão usa um MinIO **remoto**; um container local está disponível via profile `local-storage` (ver seção [MinIO: remoto vs. local](#minio-remoto-vs-local))
+- **MySQL 8** — opcionalmente em container (`profile local-db`; ver `.env.example`). Sem o profile, use um MySQL remoto e ajuste `DB_HOST` / `DB_PORT`.
+- **MinIO** — object storage (S3-compatível) para os desenhos. Um MinIO **remoto** ou um container local via profile `local-storage` (ver seção [MinIO: remoto vs. local](#minio-remoto-vs-local))
 - **Nginx** — reverse proxy para a API
 - **PHP 8.2 FPM** — runtime da API
 - **Node 20** — runtime do frontend
@@ -58,7 +58,7 @@ prj_mydraw/
    cd mydraw
    ```
 
-2. Copie o `.env.example` para `.env` e ajuste se necessário:
+2. Copie o `.env.example` para `.env` na **raiz do monorepo** e ajuste se necessário (única fonte para Compose, API e variáveis `VITE_*` do Vue — não há `.env` em `apps/mydraw_app`):
 
    ```bash
    cp .env.example .env
@@ -88,8 +88,8 @@ prj_mydraw/
    | --------------- | ------------------------------ |
    | Frontend (Vite) | http://localhost:5173          |
    | API (Lumen)     | http://localhost:8088          |
-   | MinIO Console   | http://localhost:9001 *(só com `make up-local`)* |
-   | MySQL           | localhost:33306                |
+   | MinIO Console   | http://localhost:9001 *(com profile `local-storage`)* |
+   | MySQL (host)    | localhost:33306 *(com profile `local-db`; usuário/senha = `DB_USERNAME` / `DB_PASSWORD` no `.env`)* |
 
    > As portas padrão `8080` / `3306` costumam estar ocupadas no host
    > (Tomcat, MySQL local, etc.), então o `.env.example` já vem com portas
@@ -128,7 +128,7 @@ make logs        # segue os logs de todos os serviços
 make ps          # lista containers
 make api-sh      # abre shell no container da API
 make app-sh      # abre shell no container do APP
-make mysql-sh    # abre o client mysql dentro do container
+make mysql-sh    # cliente mysql no container (usuário da app)
 make artisan ARGS="migrate"   # roda artisan na API
 make composer ARGS="require pkg/name"  # roda composer na API
 make npm ARGS="install axios"          # roda npm no APP
@@ -241,12 +241,25 @@ make up          # ou `make up-local`
 
 ---
 
+## MySQL: local (Docker) vs. remoto
+
+### MySQL local (desenvolvimento)
+
+1. No `.env` raiz, inclua `local-db` em `COMPOSE_PROFILES` (o `.env.example` já vem com `local-storage,local-db`).
+2. Use `DB_HOST=mysql`, `DB_PORT=3306` e defina `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` e `MYSQL_ROOT_PASSWORD` — o serviço `mysql` do compose cria usuário e base com `MYSQL_*`.
+3. Suba o stack (`make up`). Rode migrações: `make artisan ARGS="migrate"` (ou `make migrate`).
+4. **No host** (DataGrip, mysql CLI): host `127.0.0.1`, porta `MYSQL_PORT` (padrão `33306`), mesmo usuário/senha que `DB_USERNAME` / `DB_PASSWORD`.
+
+Para **não** subir o container MySQL (apenas servidor remoto), remova `local-db` de `COMPOSE_PROFILES` e configure `DB_HOST` / `DB_PORT` para o servidor remoto.
+
+---
+
 ## Fluxo de desenvolvimento
 
 - **API**: código em `apps/mydraw_api/`. O container monta essa pasta como volume, então qualquer alteração reflete imediatamente.
 - **APP**: código em `apps/mydraw_app/`. O `vite dev` roda dentro do container com `--host 0.0.0.0` e HMR exposto na porta `5173`.
-- **MinIO**: por padrão o projeto fala com um MinIO **remoto** (via `MINIO_API_URL`). Se usar `make up-local`, o profile `local-storage` sobe um MinIO em container e cria o bucket (`MINIO_BUCKET`) automaticamente via `createbuckets`.
-- **MySQL**: usado externamente; o compose não sobe instância de MySQL.
+- **MinIO**: por padrão o projeto pode usar um MinIO **remoto** (`MINIO_API_URL`) ou um MinIO em container com o profile `local-storage` e bucket criado pelo serviço `createbuckets`.
+- **MySQL**: com o profile `local-db`, o compose sobe MySQL 8 com volume persistente; a API usa o hostname `mysql` na rede Docker.
 
 ---
 

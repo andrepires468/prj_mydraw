@@ -33,15 +33,47 @@ services:
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
       AWS_DEFAULT_REGION: ${MINIO_REGION:-us-east-1}
       AWS_BUCKET: ${MINIO_BUCKET}
-      # Endpoint S3 — default aponta para o serviço MinIO local;
-      # para usar um MinIO externo defina MINIO_API_URL no .env raiz.
+      # Endpoint S3 para o PHP **dentro** da rede Docker (hostname do serviço `minio`).
+      # No `.env` raiz deixe `MINIO_API_URL` vazio para MinIO local, ou defina o HTTPS do MinIO remoto.
       AWS_ENDPOINT: ${MINIO_API_URL:-http://minio:9000}
       AWS_USE_PATH_STYLE_ENDPOINT: "true"
       AWS_VERIFY_SSL: ${AWS_VERIFY_SSL:-true}
       MINIO_PUBLIC_URL: ${APP_VITE_MINIO_PUBLIC_URL:-http://localhost:9000}
+      MINIO_BUCKET_PUBLIC: ${MINIO_BUCKET_PUBLIC:-true}
       PHP_IDE_CONFIG: "serverName=mydraw_api"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - mydraw
+
+  # ============================================================================
+  # MySQL 8 — banco local (profile `local-db`)
+  # ----------------------------------------------------------------------------
+  # `make up` sobe este serviço quando `COMPOSE_PROFILES` inclui `local-db`
+  # (ver `.env.example`). A API usa `DB_HOST=mysql` na rede Docker; no host,
+  # DataGrip e ferramentas locais: `localhost:${MYSQL_PORT:-33306}`.
+  # ============================================================================
+  mysql:
+    # Tag 8.0: PDO/php-mysql estável (evitar 8.4 no dev até alinhar auth do cliente PHP).
+    image: mysql:8.0
+    container_name: mydraw_mysql
+    restart: unless-stopped
+    profiles: ["local-db"]
+    ports:
+      - "${MYSQL_PORT:-33306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-mydraw_root}
+      MYSQL_DATABASE: ${DB_DATABASE:-mydraw}
+      MYSQL_USER: ${DB_USERNAME:-mydraw}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-mydraw}
+    volumes:
+      - mydraw_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
     networks:
       - mydraw
 
@@ -80,6 +112,7 @@ services:
     environment:
       CHOKIDAR_USEPOLLING: "true"
       VITE_API_URL: ${APP_VITE_API_URL:-http://localhost:8080}
+      VITE_API_VERSION: ${APP_VITE_API_VERSION:-v1}
       VITE_MINIO_PUBLIC_URL: ${APP_VITE_MINIO_PUBLIC_URL:-http://localhost:9000}
     command: sh -c "if [ -f package.json ]; then npm install && npm run dev -- --host 0.0.0.0 --port 5173; else echo 'mydraw_app vazio — rode make init primeiro' && sleep infinity; fi"
     networks:
@@ -140,6 +173,7 @@ services:
       - mydraw
 
 volumes:
+  mydraw_mysql_data:
   mydraw_minio_data:
   mydraw_app_node_modules:
 

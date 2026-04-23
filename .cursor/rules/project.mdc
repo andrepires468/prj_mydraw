@@ -22,7 +22,7 @@ apps/
   mydraw_app/   src/ (api/, components/{auth,gallery,layout,common}, views/, stores/, router/, assets/styles/)
 docker/{api,app,nginx}/
 scripts/init.sh
-docker-compose.yml  Makefile  .env.example
+docker-compose.yml  Makefile  .env na raiz (.env.example) — Compose + API + `VITE_*` do app (sem `.env` em `mydraw_app`). Perfis: `local-storage` (MinIO), `local-db` (MySQL).
 ```
 
 ## Portas locais

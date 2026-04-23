@@ -59,6 +59,7 @@ const submitting = computed(() => pendingAction.value !== null)
 const reorderMode = ref(false)
 const orderSnapshotIds = ref<string[] | null>(null)
 const applyingReorder = ref(false)
+const asideSummarized = ref(false)
 
 /** Enquanto há upload/fila pendente no backend — bloqueia ações laterais como o publish. */
 const imagePipelineBusy = computed(() =>
@@ -84,6 +85,8 @@ const createdPostId = ref<number | null>(null)
 
 /** Quando preenchido e todas as imagens estiverem `done`, navega para `/posts/:id/edit`. */
 const pendingUrlReplacePostId = ref<number | null>(null)
+const drainingQueuedUploads = ref(false)
+const queuedDrainRequested = ref(false)
 
 /** Revogar object URLs criadas para previews locais (não as retornadas pela API). */
 const locallyCreatedPreviewUrls = new Set<string>()
@@ -173,6 +176,8 @@ function initNewPostSession() {
   draftUuid.value = crypto.randomUUID()
   createdPostId.value = null
   pendingUrlReplacePostId.value = null
+  drainingQueuedUploads.value = false
+  queuedDrainRequested.value = false
   post.value = null
   title.value = ''
   description.value = ''
@@ -263,12 +268,12 @@ function addFiles(files: File[]) {
       id,
       file,
       previewUrl,
-      status: 'uploading',
+      status: 'queued',
       progress: 0,
     }
     images.value.push(item)
-    void uploadPostImageForItem(id, file, pid)
   }
+  void flushQueuedWithPostId(pid)
 }
 
 async function uploadPostImageForItem(
@@ -305,16 +310,23 @@ async function uploadPostImageForItem(
 }
 
 async function flushQueuedWithPostId(postNum: number) {
-  while (true) {
-    const queued = images.value.filter((i) => i.status === 'queued')
-    if (queued.length === 0) break
-    await Promise.all(
-      queued.map((q) => {
-        q.status = 'uploading'
-        q.progress = 0
-        return uploadPostImageForItem(q.id, q.file, postNum)
-      }),
-    )
+  queuedDrainRequested.value = true
+  if (drainingQueuedUploads.value) return
+
+  drainingQueuedUploads.value = true
+  try {
+    while (queuedDrainRequested.value) {
+      queuedDrainRequested.value = false
+      while (true) {
+        const next = images.value.find((i) => i.status === 'queued')
+        if (!next) break
+        next.status = 'uploading'
+        next.progress = 0
+        await uploadPostImageForItem(next.id, next.file, postNum)
+      }
+    }
+  } finally {
+    drainingQueuedUploads.value = false
   }
 }
 
@@ -663,7 +675,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="app-page-inner create-post-page">
+  <main
+    class="app-page-inner create-post-page"
+    :class="{ 'create-post-page--aside-summarized': asideSummarized }"
+  >
     <header class="create-post-page__header">
       <h1 class="create-post-page__title">
         <template v-if="isNewPostRoute">
@@ -718,7 +733,10 @@ onBeforeUnmount(() => {
         <span>{{ successMsg }}</span>
       </p>
 
-      <div class="create-post-page__layout">
+      <div
+        class="create-post-page__layout"
+        :class="{ 'create-post-page__layout--aside-summarized': asideSummarized }"
+      >
         <div class="create-post-page__editor">
           <PostEditorUploadStack
             :max-files="remainingImageSlots"
@@ -729,10 +747,24 @@ onBeforeUnmount(() => {
           >
             <section v-if="images.length > 0" class="flex flex-col gap-6">
               <div class="create-post-page__section-header">
-                <h2 class="create-post-page__section-title">
-                  Manage Queue ({{ images.length }}
-                  {{ images.length === 1 ? 'Image' : 'Images' }})
-                </h2>
+                <div class="create-post-page__section-heading-row">
+                  <h2 class="create-post-page__section-title">
+                    Manage Queue ({{ images.length }}
+                    {{ images.length === 1 ? 'Image' : 'Images' }})
+                  </h2>
+                  <button
+                    type="button"
+                    class="create-post-page__view-toggle"
+                    :aria-pressed="asideSummarized"
+                    @click="asideSummarized = !asideSummarized"
+                  >
+                    {{
+                      asideSummarized
+                        ? 'Exibir painel completo'
+                        : 'Resumir painel lateral'
+                    }}
+                  </button>
+                </div>
                 <p
                   v-if="reorderMode"
                   class="create-post-page__section-hint mt-2 max-w-xl"
@@ -768,6 +800,7 @@ onBeforeUnmount(() => {
             :status="status"
             :title="title"
             :description="description"
+            :summary-mode="asideSummarized"
             :submitting="submitting"
             :can-publish="canPublish"
             :pending-action="pendingAction"
@@ -783,13 +816,10 @@ onBeforeUnmount(() => {
             @destroy="requestDeletePost"
           >
             <template v-if="images.length > 0" #reorder>
-              <p class="post-metadata__reorder-title">Ordem das imagens</p>
-              <template v-if="!reorderMode">
-                <p class="post-metadata__reorder-hint">
-                  Altere a ordem de exibição na galeria.
-                </p>
+              <template v-if="asideSummarized">
                 <div class="post-metadata__reorder-actions">
                   <button
+                    v-if="!reorderMode"
                     type="button"
                     class="post-metadata__secondary"
                     :disabled="
@@ -801,32 +831,74 @@ onBeforeUnmount(() => {
                   >
                     Ordenar imagens
                   </button>
+                  <template v-else>
+                    <button
+                      type="button"
+                      class="post-metadata__secondary"
+                      :disabled="applyingReorder"
+                      @click="cancelReorderMode"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      class="post-metadata__reorder-apply"
+                      :disabled="!canApplyReorder || applyingReorder"
+                      @click="applyReorder"
+                    >
+                      {{
+                        applyingReorder ? 'Aplicando…' : 'Aplicar ordem'
+                      }}
+                    </button>
+                  </template>
                 </div>
               </template>
               <template v-else>
-                <p class="post-metadata__reorder-hint">
-                  Arraste as miniaturas na fila à esquerda, depois confirme.
-                </p>
-                <div class="post-metadata__reorder-actions">
-                  <button
-                    type="button"
-                    class="post-metadata__secondary"
-                    :disabled="applyingReorder"
-                    @click="cancelReorderMode"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    class="post-metadata__reorder-apply"
-                    :disabled="!canApplyReorder || applyingReorder"
-                    @click="applyReorder"
-                  >
-                    {{
-                      applyingReorder ? 'Aplicando…' : 'Aplicar ordem'
-                    }}
-                  </button>
-                </div>
+                <p class="post-metadata__reorder-title">Ordem das imagens</p>
+                <template v-if="!reorderMode">
+                  <p class="post-metadata__reorder-hint">
+                    Altere a ordem de exibição na galeria.
+                  </p>
+                  <div class="post-metadata__reorder-actions">
+                    <button
+                      type="button"
+                      class="post-metadata__secondary"
+                      :disabled="
+                        submitting ||
+                        applyingReorder ||
+                        imagePipelineBusy
+                      "
+                      @click="enterReorderMode"
+                    >
+                      Ordenar imagens
+                    </button>
+                  </div>
+                </template>
+                <template v-else>
+                  <p class="post-metadata__reorder-hint">
+                    Arraste as miniaturas na fila à esquerda, depois confirme.
+                  </p>
+                  <div class="post-metadata__reorder-actions">
+                    <button
+                      type="button"
+                      class="post-metadata__secondary"
+                      :disabled="applyingReorder"
+                      @click="cancelReorderMode"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      class="post-metadata__reorder-apply"
+                      :disabled="!canApplyReorder || applyingReorder"
+                      @click="applyReorder"
+                    >
+                      {{
+                        applyingReorder ? 'Aplicando…' : 'Aplicar ordem'
+                      }}
+                    </button>
+                  </div>
+                </template>
               </template>
             </template>
           </PostMetadataForm>
@@ -915,5 +987,82 @@ onBeforeUnmount(() => {
 .create-post-page :deep(.post-metadata__danger .post-metadata__publish-spinner) {
   border-color: rgb(183 112 194 / 25%);
   border-top-color: #b770c2;
+}
+
+.create-post-page__section-heading-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.create-post-page__view-toggle {
+  margin-left: auto;
+  flex-shrink: 0;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-soft-bg);
+  color: var(--text-color);
+  border-radius: 9999px;
+  padding: 0.55rem 1rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.create-post-page__view-toggle:hover {
+  border-color: color-mix(in srgb, var(--glass-border) 45%, var(--accent-color, #8b5cf6));
+  background: color-mix(in srgb, var(--surface-soft-bg) 84%, #8b5cf6 16%);
+}
+
+.create-post-page--aside-summarized .create-post-page__aside {
+  position: sticky;
+  top: 4.5rem;
+  z-index: 45;
+  order: -1;
+}
+
+@media (min-width: 1024px) {
+  .create-post-page--aside-summarized .create-post-page__editor,
+  .create-post-page--aside-summarized .create-post-page__aside {
+    grid-column: 1 / -1;
+  }
+}
+
+.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata) {
+  position: static;
+  top: auto;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata__reorder) {
+  padding-top: 0;
+  border-top: none;
+}
+
+.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata__reorder-actions) {
+  flex-direction: row;
+}
+
+.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata__actions) {
+  padding-top: 0;
+}
+
+.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata__publish),
+.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata__secondary),
+.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata__reorder-apply) {
+  width: auto;
+  min-width: 11rem;
+  white-space: nowrap;
 }
 </style>

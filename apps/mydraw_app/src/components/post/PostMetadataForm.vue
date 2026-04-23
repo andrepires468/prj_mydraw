@@ -6,6 +6,7 @@ type Mode = 'create' | 'edit'
 interface Props {
   title: string
   description: string
+  summaryMode?: boolean
   submitting?: boolean
   canPublish?: boolean
   /**
@@ -31,6 +32,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  summaryMode: false,
   submitting: false,
   canPublish: false,
   mode: 'create',
@@ -75,7 +77,7 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
 
 <template>
   <aside class="post-metadata">
-    <div class="post-form-field">
+    <div v-if="!summaryMode" class="post-form-field">
       <label for="post-title" class="post-form-field__label">
         Post Title
       </label>
@@ -90,7 +92,7 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
       />
     </div>
 
-    <div class="post-form-field">
+    <div v-if="!summaryMode" class="post-form-field">
       <label for="post-description" class="post-form-field__label">
         Description
       </label>
@@ -109,7 +111,7 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
       <slot name="reorder" />
     </div>
 
-    <div class="post-metadata__options">
+    <div v-if="!summaryMode" class="post-metadata__options">
       <div class="post-metadata__option-row">
         <span class="post-metadata__option-label">Visibility</span>
         <span class="post-metadata__option-value">
@@ -135,7 +137,10 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
         <span>{{ publishLabel }}</span>
       </button>
 
-      <div v-if="mode === 'edit'" class="post-metadata__secondary-actions">
+      <div
+        v-if="mode === 'edit' && !summaryMode"
+        class="post-metadata__secondary-actions"
+      >
         <button
           type="button"
           class="post-metadata__secondary"
@@ -168,10 +173,10 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
       </div>
     </div>
 
-    <p v-if="mode === 'create'" class="post-metadata__terms">
+    <p v-if="mode === 'create' && !summaryMode" class="post-metadata__terms">
       By publishing, you agree to our curator terms of service.
     </p>
-    <p v-else class="post-metadata__terms">
+    <p v-else-if="!summaryMode" class="post-metadata__terms">
       Drafts are only visible to you until you publish.
     </p>
   </aside>

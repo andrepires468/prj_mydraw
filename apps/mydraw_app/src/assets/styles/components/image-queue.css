@@ -1,11 +1,11 @@
 @layer components {
   .image-queue {
-    @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4;
+    @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4;
   }
 
   .image-queue-card {
     @apply relative overflow-hidden rounded-xl bg-surface-container-low;
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 1 / 1;
     cursor: move;
   }
 
@@ -76,7 +76,7 @@
 
   .image-queue-placeholder {
     @apply rounded-xl flex items-center justify-center text-outline-variant;
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 1 / 1;
     border: 2px dashed var(--queue-dashed-border);
   }
 }

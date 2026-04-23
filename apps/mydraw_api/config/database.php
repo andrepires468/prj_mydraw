@@ -3,6 +3,11 @@
 return [
     'default' => env('DB_CONNECTION', 'mysql'),
 
+    /*
+    | Nome da tabela em que o Laravel registra migrações aplicadas.
+    */
+    'migrations' => 'migrations',
+
     'connections' => [
         'mysql' => [
             'driver' => 'mysql',

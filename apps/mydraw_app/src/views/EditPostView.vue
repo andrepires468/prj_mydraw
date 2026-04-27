@@ -21,8 +21,33 @@ import ImageQueueGrid from '@/components/post/ImageQueueGrid.vue'
 import PostMetadataForm from '@/components/post/PostMetadataForm.vue'
 import type { QueuedImage } from '@/components/post/types'
 
+const ASIDE_SUMMARIZED_STORAGE_KEY = 'mydraw:edit-post-aside-summarized:v1'
+
+function readStoredAsideSummarized(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    const raw = window.localStorage.getItem(ASIDE_SUMMARIZED_STORAGE_KEY)
+    if (raw === '1' || raw === 'true') return true
+    if (raw === '0' || raw === 'false') return false
+  } catch {
+    /* storage indisponível */
+  }
+  return false
+}
+
+function writeAsideSummarized(value: boolean) {
+  try {
+    window.localStorage.setItem(
+      ASIDE_SUMMARIZED_STORAGE_KEY,
+      value ? '1' : '0',
+    )
+  } catch {
+    /* quota / privado */
+  }
+}
+
 interface Props {
-  id?: number | string
+  post_id?: number | string
 }
 
 const props = defineProps<Props>()
@@ -59,7 +84,11 @@ const submitting = computed(() => pendingAction.value !== null)
 const reorderMode = ref(false)
 const orderSnapshotIds = ref<string[] | null>(null)
 const applyingReorder = ref(false)
-const asideSummarized = ref(false)
+const asideSummarized = ref(readStoredAsideSummarized())
+const fileDragActive = ref(false)
+let fileDragResetTimer: number | null = null
+
+watch(asideSummarized, (v) => writeAsideSummarized(v))
 
 /** Enquanto há upload/fila pendente no backend — bloqueia ações laterais como o publish. */
 const imagePipelineBusy = computed(() =>
@@ -83,10 +112,12 @@ const draftUuid = ref(crypto.randomUUID())
 /** Após o primeiro upload no modo novo, até o `router.replace` com id numérico. */
 const createdPostId = ref<number | null>(null)
 
-/** Quando preenchido e todas as imagens estiverem `done`, navega para `/posts/:id/edit`. */
+/** Quando preenchido e todas as imagens estiverem `done`, navega para `/posts/:post_id/edit`. */
 const pendingUrlReplacePostId = ref<number | null>(null)
 const drainingQueuedUploads = ref(false)
 const queuedDrainRequested = ref(false)
+const syncingPersistedQueueOrder = ref(false)
+const queueOrderSyncRequested = ref(false)
 
 /** Revogar object URLs criadas para previews locais (não as retornadas pela API). */
 const locallyCreatedPreviewUrls = new Set<string>()
@@ -94,7 +125,7 @@ const locallyCreatedPreviewUrls = new Set<string>()
 /** ID numérico do post na rota (`null` em `/posts/new/edit`). */
 const postId = computed(() => {
   if (isNewPostRoute.value) return null
-  const raw = props.id ?? route.params.id
+  const raw = props.post_id ?? route.params.post_id
   if (raw === undefined || raw === null || raw === '') return null
   const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw)
   return Number.isFinite(n) ? n : null
@@ -130,6 +161,42 @@ const canApplyReorder = computed(() => {
     (i) => i.status === 'done' && i.galleryId !== undefined,
   )
 })
+
+function isFileDrag(event: DragEvent) {
+  return Array.from(event.dataTransfer?.types ?? []).includes('Files')
+}
+
+function clearFileDragResetTimer() {
+  if (fileDragResetTimer === null) return
+  window.clearTimeout(fileDragResetTimer)
+  fileDragResetTimer = null
+}
+
+function keepFileDragActive(event: DragEvent) {
+  if (!isFileDrag(event)) return
+  fileDragActive.value = true
+  clearFileDragResetTimer()
+  fileDragResetTimer = window.setTimeout(() => {
+    fileDragActive.value = false
+    fileDragResetTimer = null
+  }, 160)
+}
+
+function onLayoutFileDragOver(event: DragEvent) {
+  if (!isFileDrag(event)) return
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = uploadAndEditorLocked.value ? 'none' : 'copy'
+  }
+  keepFileDragActive(event)
+}
+
+function resetFileDragActive(event?: DragEvent) {
+  if (event && !isFileDrag(event)) return
+  event?.preventDefault()
+  clearFileDragResetTimer()
+  fileDragActive.value = false
+}
 
 function extractErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
@@ -178,6 +245,8 @@ function initNewPostSession() {
   pendingUrlReplacePostId.value = null
   drainingQueuedUploads.value = false
   queuedDrainRequested.value = false
+  syncingPersistedQueueOrder.value = false
+  queueOrderSyncRequested.value = false
   post.value = null
   title.value = ''
   description.value = ''
@@ -325,8 +394,46 @@ async function flushQueuedWithPostId(postNum: number) {
         await uploadPostImageForItem(next.id, next.file, postNum)
       }
     }
+    await syncPersistedOrderFromQueue(postNum)
   } finally {
     drainingQueuedUploads.value = false
+  }
+}
+
+async function syncPersistedOrderFromQueue(postNum: number) {
+  queueOrderSyncRequested.value = true
+  if (syncingPersistedQueueOrder.value) return
+
+  syncingPersistedQueueOrder.value = true
+  try {
+    while (queueOrderSyncRequested.value) {
+      queueOrderSyncRequested.value = false
+
+      if (postNum <= 0) return
+      if (reorderMode.value || applyingReorder.value) return
+      if (
+        images.value.some(
+          (i) => i.status === 'uploading' || i.status === 'queued',
+        )
+      )
+        return
+      if (images.value.some((i) => i.status === 'error')) return
+
+      const order = images.value
+        .map((i) => i.galleryId)
+        .filter((id): id is number => id !== undefined)
+
+      if (order.length < 2 || order.length !== images.value.length) return
+
+      try {
+        await reorderPostImages(postNum, order)
+      } catch (err) {
+        const reason = extractErrorMessage(err)
+        errorMsg.value = `As imagens foram enviadas, mas não foi possível sincronizar a ordem automaticamente (${reason}). Você pode ajustar em "Ordenar imagens".`
+      }
+    }
+  } finally {
+    syncingPersistedQueueOrder.value = false
   }
 }
 
@@ -661,12 +768,13 @@ watch(
     if (images.value.length === 0) return
     if (!images.value.every((i) => i.status === 'done')) return
     pendingUrlReplacePostId.value = null
-    void router.replace({ name: 'edit-post', params: { id: String(pid) } })
+    void router.replace({ name: 'edit-post', params: { post_id: String(pid) } })
   },
   { deep: true },
 )
 
 onBeforeUnmount(() => {
+  clearFileDragResetTimer()
   for (const url of locallyCreatedPreviewUrls) {
     URL.revokeObjectURL(url)
   }
@@ -735,7 +843,13 @@ onBeforeUnmount(() => {
 
       <div
         class="create-post-page__layout"
-        :class="{ 'create-post-page__layout--aside-summarized': asideSummarized }"
+        :class="{
+          'create-post-page__layout--aside-summarized': asideSummarized,
+          'create-post-page__layout--file-drag-active': fileDragActive,
+        }"
+        @dragenter.capture="keepFileDragActive"
+        @dragover.capture="onLayoutFileDragOver"
+        @drop.capture="resetFileDragActive"
       >
         <div class="create-post-page__editor">
           <PostEditorUploadStack
@@ -1024,6 +1138,17 @@ onBeforeUnmount(() => {
   top: 4.5rem;
   z-index: 45;
   order: -1;
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease,
+    visibility 0.16s ease;
+}
+
+.create-post-page__layout--file-drag-active .create-post-page__aside {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-0.5rem);
+  visibility: hidden;
 }
 
 @media (min-width: 1024px) {
@@ -1064,5 +1189,12 @@ onBeforeUnmount(() => {
   width: auto;
   min-width: 11rem;
   white-space: nowrap;
+}
+
+/* Painel resumido: editor em largura total — fila com mais colunas (5 → 7 em lg+). */
+@media (min-width: 1024px) {
+  .create-post-page--aside-summarized :deep(.image-queue) {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
 }
 </style>

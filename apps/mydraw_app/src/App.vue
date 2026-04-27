@@ -11,6 +11,13 @@ const route = useRoute()
 
 const isAuthRoute = computed(() => route.meta?.guestOnly === true)
 
+/** Evita remontar o editor ao trocar só a URI (`/posts/new/edit` → `/posts/:post_id/edit`). */
+const routerViewKey = computed(() => {
+  const n = route.name
+  if (n === 'edit-post-new' || n === 'edit-post') return 'edit-post-view'
+  return route.path
+})
+
 onMounted(() => {
   if (auth.isAuthenticated) {
     void auth.fetchMe()
@@ -22,7 +29,7 @@ onMounted(() => {
   <div class="min-h-screen flex flex-col bg-background">
     <TopNavBar v-if="!isAuthRoute" />
 
-    <RouterView :key="route.path" />
+    <RouterView :key="routerViewKey" />
 
     <template v-if="!isAuthRoute">
       <BottomNavBar />

@@ -18,6 +18,13 @@
     border-color: theme('colors.primary');
   }
 
+  .upload-dropzone--dragover .upload-dropzone__icon,
+  .upload-dropzone--dragover .upload-dropzone__title,
+  .upload-dropzone--dragover .upload-dropzone__hint,
+  .upload-dropzone--dragover .upload-dropzone__button {
+    pointer-events: none;
+  }
+
   .upload-dropzone__icon {
     @apply text-primary mb-3 block;
     font-size: 2.25rem;

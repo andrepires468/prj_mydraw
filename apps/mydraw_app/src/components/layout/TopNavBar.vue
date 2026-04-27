@@ -102,7 +102,7 @@ const userInitial = computed(() => {
             Gallery
           </RouterLink>
           <RouterLink
-            to="/create"
+            to="/posts/new/edit"
             class="top-nav-bar__link"
             active-class="top-nav-bar__link--active"
           >

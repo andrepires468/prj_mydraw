@@ -303,7 +303,7 @@ onMounted(() => {
         :key="card.id"
         :to="
           card.isDraft
-            ? { name: 'edit-post', params: { id: card.id } }
+            ? { name: 'edit-post', params: { post_id: card.id } }
             : {
                 name: 'gallery-published-post',
                 params: { id: card.id },
@@ -332,7 +332,7 @@ onMounted(() => {
       <template #actions>
         <RouterLink
           v-if="canEditActivePost"
-          :to="{ name: 'edit-post', params: { id: activePostId } }"
+          :to="{ name: 'edit-post', params: { post_id: activePostId } }"
           class="app-modal__edit-post"
         >
           Editar post

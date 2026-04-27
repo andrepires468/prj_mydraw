@@ -47,7 +47,7 @@ test.describe('Fluidez (sem overflow horizontal)', () => {
 
   test('create redireciona para login — formulário visível', async ({ page }, testInfo) => {
     const label = `redirect create→login [${testInfo.project.name}]`
-    await page.goto('/create')
+    await page.goto('/posts/new/edit')
     await expect(page).toHaveURL(/\/login/)
     await expect(page.getByRole('main')).toBeVisible()
     await scrollDocumentAndAssertFluid(page, label)

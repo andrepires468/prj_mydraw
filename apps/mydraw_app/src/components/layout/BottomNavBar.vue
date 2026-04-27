@@ -27,7 +27,7 @@ const galleryFeedActive = computed(() =>
       <span class="bottom-nav-bar__label">Feed</span>
     </RouterLink>
     <RouterLink
-      to="/create"
+      to="/posts/new/edit"
       class="bottom-nav-bar__link"
       active-class="bottom-nav-bar__link--active"
     >

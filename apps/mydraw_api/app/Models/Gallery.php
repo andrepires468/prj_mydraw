@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorageBaseUrl;
 use App\Services\PostStorageService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -134,7 +135,7 @@ class Gallery extends Model
         $bucketPublic = filter_var(env('MINIO_BUCKET_PUBLIC', false), FILTER_VALIDATE_BOOLEAN);
 
         if ($bucketPublic) {
-            $publicBase = rtrim((string) env('MINIO_PUBLIC_URL', env('AWS_ENDPOINT', '')), '/');
+            $publicBase = PublicStorageBaseUrl::base();
             $bucket     = env('AWS_BUCKET');
             if ($publicBase && $bucket) {
                 return sprintf('%s/%s/%s', $publicBase, $bucket, $key);

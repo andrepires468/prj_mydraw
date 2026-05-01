@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorageBaseUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,7 +46,7 @@ class Drawing extends Model
             return null;
         }
 
-        $publicBase = rtrim((string) env('MINIO_PUBLIC_URL', env('AWS_ENDPOINT', '')), '/');
+        $publicBase = PublicStorageBaseUrl::base();
         $bucket     = env('AWS_BUCKET');
 
         if ($publicBase && $bucket) {

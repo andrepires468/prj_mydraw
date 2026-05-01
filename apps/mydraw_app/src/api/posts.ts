@@ -68,6 +68,8 @@ export interface PostsCounts {
 
 export interface PostsPage extends Paginated<PostRow> {
   counts?: PostsCounts
+  /** Presente na listagem de posts; indica se há mais itens após esta página/chunk. */
+  has_more?: boolean
 }
 
 /**
@@ -83,16 +85,20 @@ export async function listPosts(
   status: PostStatus = 'published',
   includeCounts = false,
   sort: GallerySort = 'newest',
+  /** Deslocamento absoluto na lista ordenada (ignora `page` na API quando informado). */
+  offset?: number | null,
 ) {
-  const { data } = await http.get<PostsPage>('/posts', {
-    params: {
-      page,
-      per_page: perPage,
-      status,
-      include_counts: includeCounts ? 1 : 0,
-      sort,
-    },
-  })
+  const params: Record<string, string | number> = {
+    page,
+    per_page: perPage,
+    status,
+    include_counts: includeCounts ? 1 : 0,
+    sort,
+  }
+  if (offset != null && offset >= 0) {
+    params.offset = offset
+  }
+  const { data } = await http.get<PostsPage>('/posts', { params })
   return data
 }
 

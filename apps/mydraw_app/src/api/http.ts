@@ -1,7 +1,30 @@
 import axios, { type AxiosInstance } from 'axios'
 import { isJwtExpired } from '@/utils/jwt'
 
-const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+/**
+ * Em dev, se a página foi aberta por IP/hostname da LAN (não localhost),
+ * troca só o hostname da URL da API — mantém porta e protocolo do .env —
+ * para o browser não chamar localhost no dispositivo errado.
+ */
+function resolveApiBaseUrl(): string {
+  const fromEnv = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8088'
+  if (!import.meta.env.DEV || typeof window === 'undefined') {
+    return fromEnv
+  }
+  const pageHost = window.location.hostname
+  if (!pageHost || pageHost === 'localhost' || pageHost === '127.0.0.1') {
+    return fromEnv
+  }
+  try {
+    const u = new URL(fromEnv)
+    u.hostname = pageHost
+    return u.origin
+  } catch {
+    return fromEnv
+  }
+}
+
+const apiUrl = resolveApiBaseUrl()
 const apiVersion = import.meta.env.VITE_API_VERSION ?? 'v1'
 
 const TOKEN_KEY = 'mydraw:token'

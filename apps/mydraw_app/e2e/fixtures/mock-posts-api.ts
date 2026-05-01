@@ -52,6 +52,7 @@ const listPageFixture = {
   total: 1,
   next_page_url: null,
   prev_page_url: null,
+  has_more: false,
   counts: { published: 1, draft: 0 },
 }
 

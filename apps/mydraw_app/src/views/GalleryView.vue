@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
   listPosts,
@@ -30,7 +30,10 @@ interface PostCard {
   isDraft: boolean
 }
 
-const GALLERY_CACHE_PREFIX = 'mydraw:gallery-cache:v1'
+/** v2: primeira página em cache com 10 itens (scroll infinito). */
+const GALLERY_CACHE_PREFIX = 'mydraw:gallery-cache:v2'
+const GALLERY_PAGE_INITIAL = 10
+const GALLERY_PAGE_MORE = 12
 const GALLERY_SORT_STORAGE_KEY = 'mydraw:gallery-sort:v1'
 
 interface GalleryCachePayload {
@@ -153,21 +156,13 @@ const canEditActivePost = computed(() => {
   return row.user_id === auth.user.id
 })
 
-function getGalleryCacheKey(
-  postStatus: PostStatus,
-  sortOrder: GallerySort,
-  pageNumber: number,
-): string {
-  return `${GALLERY_CACHE_PREFIX}:${postStatus}:sort:${sortOrder}:page:${pageNumber}`
+function getGalleryCacheKey(postStatus: PostStatus, sortOrder: GallerySort): string {
+  return `${GALLERY_CACHE_PREFIX}:${postStatus}:sort:${sortOrder}:first`
 }
 
-function readGalleryCache(
-  postStatus: PostStatus,
-  sortOrder: GallerySort,
-  pageNumber: number,
-): GalleryCachePayload | null {
+function readGalleryCache(postStatus: PostStatus, sortOrder: GallerySort): GalleryCachePayload | null {
   if (typeof window === 'undefined') return null
-  const raw = window.localStorage.getItem(getGalleryCacheKey(postStatus, sortOrder, pageNumber))
+  const raw = window.localStorage.getItem(getGalleryCacheKey(postStatus, sortOrder))
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as GalleryCachePayload
@@ -178,59 +173,130 @@ function readGalleryCache(
   }
 }
 
-function writeGalleryCache(
-  postStatus: PostStatus,
-  sortOrder: GallerySort,
-  pageNumber: number,
-  nextPage: PostsPage,
-): void {
+function writeGalleryCache(postStatus: PostStatus, sortOrder: GallerySort, nextPage: PostsPage): void {
   if (typeof window === 'undefined') return
   const payload: GalleryCachePayload = {
     page: nextPage,
     counts: nextPage.counts ?? counts.value,
     updatedAt: new Date().toISOString(),
   }
-  window.localStorage.setItem(
-    getGalleryCacheKey(postStatus, sortOrder, pageNumber),
-    JSON.stringify(payload),
-  )
+  window.localStorage.setItem(getGalleryCacheKey(postStatus, sortOrder), JSON.stringify(payload))
 }
 
-function hydrateGalleryFromCache(
-  postStatus: PostStatus,
-  sortOrder: GallerySort,
-  pageNumber: number,
-): boolean {
-  const cached = readGalleryCache(postStatus, sortOrder, pageNumber)
+function listPayloadHasMore(payload: PostsPage, perPageForChunk: number): boolean {
+  if (payload.has_more === true) return true
+  if (payload.has_more === false) return false
+  return payload.data.length >= perPageForChunk && Boolean(payload.next_page_url)
+}
+
+const loadingMore = ref(false)
+const listHasMore = ref(false)
+const nextOffset = ref(0)
+const loadSentinelRef = ref<HTMLElement | null>(null)
+let loadMoreObserver: IntersectionObserver | null = null
+
+function hydrateGalleryFromCache(postStatus: PostStatus, sortOrder: GallerySort): boolean {
+  const cached = readGalleryCache(postStatus, sortOrder)
   if (!cached) return false
   page.value = cached.page
   counts.value = cached.counts
+  nextOffset.value = cached.page.data.length
+  listHasMore.value = listPayloadHasMore(cached.page, GALLERY_PAGE_INITIAL)
   return true
 }
 
-async function load(p = 1, includeCounts = false) {
+function detachLoadMoreObserver(): void {
+  loadMoreObserver?.disconnect()
+  loadMoreObserver = null
+}
+
+function attachLoadMoreObserver(): void {
+  detachLoadMoreObserver()
+  const el = loadSentinelRef.value
+  if (!el) return
+  loadMoreObserver = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return
+      void loadMore()
+    },
+    { root: null, rootMargin: '280px 0px', threshold: 0 },
+  )
+  loadMoreObserver.observe(el)
+}
+
+async function loadInitial(includeCounts = false) {
+  const snapshot =
+    page.value !== null
+      ? {
+          page: page.value,
+          hasMore: listHasMore.value,
+          offset: nextOffset.value,
+        }
+      : null
+
   loading.value = true
+  loadingMore.value = false
   error.value = null
+  listHasMore.value = false
+  nextOffset.value = 0
   try {
     const nextPage = await listPosts(
-      p,
-      20,
+      1,
+      GALLERY_PAGE_INITIAL,
       galleryStatus.value,
       includeCounts,
       sort.value,
+      null,
     )
     page.value = nextPage
     if (nextPage.counts) {
       counts.value = nextPage.counts
     }
-    writeGalleryCache(galleryStatus.value, sort.value, p, nextPage)
+    nextOffset.value = nextPage.data.length
+    listHasMore.value = listPayloadHasMore(nextPage, GALLERY_PAGE_INITIAL)
+    writeGalleryCache(galleryStatus.value, sort.value, nextPage)
   } catch (err: unknown) {
     error.value = err instanceof Error ? err.message : 'Erro desconhecido'
-    if (!page.value) {
-      counts.value = { published: 0, draft: 0 }
+    if (snapshot) {
+      page.value = snapshot.page
+      listHasMore.value = snapshot.hasMore
+      nextOffset.value = snapshot.offset
+    } else {
+      if (!page.value) {
+        counts.value = { published: 0, draft: 0 }
+      }
     }
   } finally {
     loading.value = false
+  }
+}
+
+async function loadMore() {
+  if (!listHasMore.value || loading.value || loadingMore.value || !page.value) return
+
+  loadingMore.value = true
+  error.value = null
+  try {
+    const chunk = await listPosts(
+      1,
+      GALLERY_PAGE_MORE,
+      galleryStatus.value,
+      false,
+      sort.value,
+      nextOffset.value,
+    )
+    const merged: PostsPage = {
+      ...chunk,
+      data: [...page.value.data, ...chunk.data],
+      counts: page.value.counts ?? chunk.counts,
+    }
+    page.value = merged
+    nextOffset.value = merged.data.length
+    listHasMore.value = listPayloadHasMore(chunk, GALLERY_PAGE_MORE)
+  } catch (err: unknown) {
+    error.value = err instanceof Error ? err.message : 'Erro desconhecido'
+  } finally {
+    loadingMore.value = false
   }
 }
 
@@ -251,19 +317,25 @@ function closePostModal() {
 }
 
 watch(galleryStatus, () => {
-  hydrateGalleryFromCache(galleryStatus.value, sort.value, 1)
-  void load(1, false)
+  hydrateGalleryFromCache(galleryStatus.value, sort.value)
+  void loadInitial(false)
 })
 
 watch(sort, () => {
   writeStoredSort(sort.value)
-  hydrateGalleryFromCache(galleryStatus.value, sort.value, 1)
-  void load(1, false)
+  hydrateGalleryFromCache(galleryStatus.value, sort.value)
+  void loadInitial(false)
 })
 
-onMounted(() => {
-  hydrateGalleryFromCache(galleryStatus.value, sort.value, 1)
-  void load(1, true)
+onMounted(async () => {
+  hydrateGalleryFromCache(galleryStatus.value, sort.value)
+  await loadInitial(true)
+  await nextTick()
+  attachLoadMoreObserver()
+})
+
+onUnmounted(() => {
+  detachLoadMoreObserver()
 })
 </script>
 
@@ -324,6 +396,12 @@ onMounted(() => {
       </RouterLink>
     </MasonryGrid>
 
+    <div
+      ref="loadSentinelRef"
+      class="gallery-load-sentinel h-px w-full shrink-0"
+      aria-hidden="true"
+    />
+
     <AppModal
       v-if="activePostId !== null"
       title="Visualização do post"
@@ -354,5 +432,9 @@ onMounted(() => {
     </AppModal>
 
     <LoadingIndicator v-if="loading" label="Carregando posts..." />
+    <LoadingIndicator
+      v-else-if="loadingMore"
+      label="Carregando mais posts..."
+    />
   </main>
 </template>

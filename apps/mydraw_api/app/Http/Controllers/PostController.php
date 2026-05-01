@@ -6,10 +6,12 @@ use App\Models\Gallery;
 use App\Models\Post;
 use App\Models\User;
 use App\Support\PostListCache;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 class PostController extends Controller
@@ -32,6 +34,10 @@ class PostController extends Controller
      *  - `status=draft`: requer autenticação JWT; retorna apenas os drafts
      *    do usuário autenticado (ninguém pode ver drafts de outros).
      *  - `sort=newest|oldest` (padrão `newest`): ordenação por `created_at`.
+     *  - `offset` (opcional): quando informado, ignora `page` e retorna
+     *    `per_page` itens a partir desse deslocamento (mesma ordenação).
+     *    A resposta inclui `has_more`. Sem `offset`, vale `page` + `per_page`
+     *    e `has_more` reflete `simplePaginate`.
      */
     public function index(Request $request): JsonResponse
     {
@@ -44,6 +50,8 @@ class PostController extends Controller
         $perPage = max(1, min($perPage, 50));
         $pageNumber = (int) $request->input('page', 1);
         $pageNumber = max(1, $pageNumber);
+        $hasOffsetParam = $request->query('offset') !== null && $request->query('offset') !== '';
+        $offset = $hasOffsetParam ? max(0, (int) $request->query('offset')) : null;
         $includeCounts = filter_var(
             (string) $request->input('include_counts', '0'),
             FILTER_VALIDATE_BOOLEAN
@@ -69,34 +77,30 @@ class PostController extends Controller
             $includeCounts,
             $user ? (int) $user->getKey() : null,
             PostListCache::globalVersion(),
-            PostListCache::userVersion($user ? (int) $user->getKey() : null)
+            PostListCache::userVersion($user ? (int) $user->getKey() : null),
+            $offset
         );
 
         if ($cacheTtl > 0) {
             $payload = Cache::remember(
                 $cacheKey,
                 Carbon::now()->addSeconds($cacheTtl),
-                function () use ($status, $sort, $perPage, $includeCounts, $user) {
-                    return $this->queryListPayload($status, $sort, $perPage, $includeCounts, $user);
+                function () use ($status, $sort, $perPage, $includeCounts, $user, $pageNumber, $offset) {
+                    return $this->queryListPayload($status, $sort, $perPage, $includeCounts, $user, $pageNumber, $offset);
                 }
             );
         } else {
-            $payload = $this->queryListPayload($status, $sort, $perPage, $includeCounts, $user);
+            $payload = $this->queryListPayload($status, $sort, $perPage, $includeCounts, $user, $pageNumber, $offset);
         }
 
         return response()->json($payload);
     }
 
     /**
-     * Executa a consulta paginada e monta o payload serializado.
+     * Monta o query builder da listagem (filtros, joins, eager load, ordenação).
      */
-    private function queryListPayload(
-        string $status,
-        string $sort,
-        int $perPage,
-        bool $includeCounts,
-        ?User $user
-    ): array {
+    private function buildPostListQuery(string $status, string $sort, ?User $user): Builder
+    {
         $query = Post::query()->where('status', $status);
 
         if ($status === Post::STATUS_PUBLISHED) {
@@ -122,8 +126,17 @@ class PostController extends Controller
             $query->where('user_id', (int) $user->getKey());
         }
 
-        $page = $query->simplePaginate($perPage);
-        foreach ($page->items() as $post) {
+        return $query;
+    }
+
+    /**
+     * Ajusta imagens da listagem (só thumb 320 no payload).
+     *
+     * @param  Collection<int, Post>|iterable<Post>  $posts
+     */
+    private function transformPostsForList(iterable $posts): void
+    {
+        foreach ($posts as $post) {
             if (!$post instanceof Post) {
                 continue;
             }
@@ -137,10 +150,65 @@ class PostController extends Controller
                 $image->setAttribute('url', $thumb320);
             });
         }
+    }
+
+    /**
+     * Executa a consulta paginada e monta o payload serializado.
+     *
+     * Quando `offset` é informado, ignora `page` e retorna `per_page` itens a
+     * partir desse deslocamento (útil para “10 + 12 + 12…” na galeria).
+     */
+    private function queryListPayload(
+        string $status,
+        string $sort,
+        int $perPage,
+        bool $includeCounts,
+        ?User $user,
+        int $pageNumber,
+        ?int $offset
+    ): array {
+        $query = $this->buildPostListQuery($status, $sort, $user);
+
+        if ($offset !== null) {
+            /** @var Collection<int, Post> $chunk */
+            $chunk = $query->skip($offset)->take($perPage + 1)->get();
+            $hasMore = $chunk->count() > $perPage;
+            $pageItems = $chunk->take($perPage);
+            $this->transformPostsForList($pageItems);
+
+            $counts = $includeCounts ? $this->resolveCounts($user) : null;
+
+            return $this->buildOffsetListPayload($pageItems->values()->all(), $perPage, $hasMore, $counts);
+        }
+
+        $page = $query->simplePaginate($perPage, ['*'], 'page', $pageNumber);
+        $this->transformPostsForList($page->items());
 
         $counts = $includeCounts ? $this->resolveCounts($user) : null;
 
         return $this->buildListPayload($page, $counts);
+    }
+
+    /**
+     * @param  array<int, Post>  $data
+     */
+    private function buildOffsetListPayload(array $data, int $perPage, bool $hasMore, ?array $counts): array
+    {
+        $payload = [
+            'data'          => $data,
+            'current_page'  => 1,
+            'per_page'      => $perPage,
+            'has_more'      => $hasMore,
+            'first_page_url'=> null,
+            'next_page_url' => null,
+            'path'          => null,
+            'prev_page_url' => null,
+        ];
+        if ($counts !== null) {
+            $payload['counts'] = $counts;
+        }
+
+        return $payload;
     }
 
     private function buildListCacheKey(
@@ -151,15 +219,17 @@ class PostController extends Controller
         bool $includeCounts,
         ?int $userId,
         int $globalVersion,
-        int $userVersion
+        int $userVersion,
+        ?int $offset
     ): string {
         $userPart = $userId !== null ? (string) $userId : 'guest';
+        $cursorPart = $offset !== null ? 'o'.$offset : 'p'.$page;
 
         return sprintf(
-            'posts:list:v4:%s:sort:%s:p%s:pp%s:counts%s:u%s:gv%s:uv%s',
+            'posts:list:v5:%s:sort:%s:%s:pp%s:counts%s:u%s:gv%s:uv%s',
             $status,
             $sort,
-            $page,
+            $cursorPart,
             $perPage,
             $includeCounts ? '1' : '0',
             $userPart,
@@ -217,6 +287,7 @@ class PostController extends Controller
         if ($counts !== null) {
             $payload['counts'] = $counts;
         }
+        $payload['has_more'] = $page->hasMorePages();
 
         return $payload;
     }

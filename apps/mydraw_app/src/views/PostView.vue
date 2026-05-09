@@ -69,7 +69,7 @@ const images = computed<PostMediaImage[]>(() =>
 )
 
 const authorName = computed(
-  () => post.value?.user?.name?.trim() || 'Autor desconhecido',
+  () => post.value?.user?.name?.trim() || 'Unknown author',
 )
 
 const authorInitial = computed(
@@ -80,8 +80,8 @@ const formattedDate = computed(() => {
   if (!post.value?.created_at) return ''
   const d = new Date(post.value.created_at)
   if (Number.isNaN(d.getTime())) return ''
-  return d.toLocaleDateString('pt-BR', {
-    day: '2-digit',
+  return d.toLocaleDateString('en-US', {
+    day: 'numeric',
     month: 'long',
     year: 'numeric',
   })
@@ -102,7 +102,7 @@ async function load(id: number | string) {
   try {
     post.value = await getPost(id)
   } catch (err: unknown) {
-    error.value = err instanceof Error ? err.message : 'Erro desconhecido'
+    error.value = err instanceof Error ? err.message : 'Unknown error'
   } finally {
     loading.value = false
   }
@@ -159,10 +159,10 @@ watch(
       @click="goBack"
     >
       <MaterialIcon name="arrow_back" />
-      <span>Voltar</span>
+      <span>Back</span>
     </button>
 
-    <LoadingIndicator v-if="loading" label="Carregando post..." />
+    <LoadingIndicator v-if="loading" label="Loading post..." />
 
     <p
       v-else-if="error"
@@ -170,7 +170,7 @@ watch(
       role="alert"
     >
       <MaterialIcon name="error" filled />
-      <span>Erro ao carregar post: {{ error }}.</span>
+      <span>Failed to load post: {{ error }}.</span>
     </p>
 
     <p
@@ -178,7 +178,7 @@ watch(
       class="post-view__alert"
       role="status"
     >
-      Este post ainda não possui imagens visíveis.
+      This post has no visible images yet.
     </p>
 
     <article v-else-if="post" class="post-view__layout">
@@ -204,7 +204,7 @@ watch(
         <header class="post-view__header">
           <h1 class="post-view__title">{{ post.title }}</h1>
           <time v-if="formattedDate" class="post-view__date">
-            Publicado em {{ formattedDate }}
+            Published on {{ formattedDate }}
           </time>
         </header>
 
@@ -213,19 +213,19 @@ watch(
             {{ authorInitial }}
           </div>
           <div class="post-view__author-meta">
-            <span class="post-view__author-label">Criado por</span>
+            <span class="post-view__author-label">Created by</span>
             <span class="post-view__author-name">{{ authorName }}</span>
           </div>
         </div>
 
         <section v-if="post.description" class="post-view__description">
-          <h2 class="post-view__section-title">Descrição</h2>
+          <h2 class="post-view__section-title">Description</h2>
           <p>{{ post.description }}</p>
         </section>
 
         <dl class="post-view__stats">
           <div class="post-view__stat">
-            <dt>Imagens</dt>
+            <dt>Images</dt>
             <dd>{{ images.length }}</dd>
           </div>
           <div class="post-view__stat">

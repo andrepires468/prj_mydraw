@@ -45,7 +45,7 @@ onBeforeUnmount(() => {
         class="app-modal__panel"
         role="dialog"
         aria-modal="true"
-        :aria-label="props.title || 'Visualização de post'"
+        :aria-label="props.title || 'Post preview'"
       >
         <header class="app-modal__header">
           <h2 v-if="props.title" class="app-modal__title">
@@ -56,7 +56,7 @@ onBeforeUnmount(() => {
             <button
               type="button"
               class="app-modal__icon-button"
-              aria-label="Fechar"
+              aria-label="Close"
               @click="$emit('close')"
             >
               <MaterialIcon name="close" />

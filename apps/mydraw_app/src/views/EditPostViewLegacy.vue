@@ -106,10 +106,10 @@ const canApplyReorder = computed(() => {
 function extractErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
     if (err.code === 'ECONNABORTED') {
-      return 'Tempo da requisição esgotado. Tente novamente.'
+      return 'Request timed out. Please try again.'
     }
     if (axios.isCancel(err)) {
-      return 'Requisição cancelada.'
+      return 'Request canceled.'
     }
     const data = err.response?.data as
       | { message?: string; errors?: Record<string, string[]>; error?: string }
@@ -122,13 +122,13 @@ function extractErrorMessage(err: unknown): string {
       data?.message ??
       data?.error ??
       (err.response?.status === 401
-        ? 'Sessão expirada. Faça login novamente.'
+        ? 'Session expired. Please sign in again.'
         : err.response?.status === 404
-          ? 'Post não encontrado.'
-          : 'Falha ao processar a solicitação.')
+          ? 'Post not found.'
+          : 'Failed to process the request.')
     )
   }
-  return err instanceof Error ? err.message : 'Erro desconhecido'
+  return err instanceof Error ? err.message : 'Unknown error'
 }
 
 function galleryToQueued(row: GalleryRow): QueuedImage {
@@ -146,7 +146,7 @@ function galleryToQueued(row: GalleryRow): QueuedImage {
 
 async function load() {
   if (postId.value === null) {
-    loadError.value = 'ID de post inválido.'
+    loadError.value = 'Invalid post ID.'
     loading.value = false
     return
   }
@@ -232,7 +232,7 @@ function requestRemoveImage(localId: string) {
   if (!postId.value) return
   if (images.value.length <= 1) {
     errorMsg.value =
-      'O post precisa manter ao menos uma imagem. Adicione outra antes de remover esta.'
+      'This post must keep at least one image. Add another before removing this one.'
     return
   }
   const idx = images.value.findIndex((i) => i.id === localId)
@@ -284,7 +284,7 @@ function previewImage(localId: string) {
   if (!img?.previewUrl) return
   previewModalNaturalSize.value = false
   previewModalUrl.value = img.previewUrl
-  previewModalAlt.value = img.file.name || 'Pré-visualização'
+  previewModalAlt.value = img.file.name || 'Preview'
 }
 
 function closePreviewModal() {
@@ -326,7 +326,7 @@ async function applyReorder() {
     await reorderPostImages(postId.value, order)
     orderSnapshotIds.value = null
     reorderMode.value = false
-    successMsg.value = 'Ordem das imagens atualizada.'
+    successMsg.value = 'Image order updated.'
   } catch (err) {
     errorMsg.value = extractErrorMessage(err)
     await load()
@@ -350,7 +350,7 @@ async function saveDraft() {
       description: description.value.trim() || null,
     })
     post.value = { ...post.value, ...updated }
-    successMsg.value = 'Rascunho salvo.'
+    successMsg.value = 'Draft saved.'
   } catch (err) {
     errorMsg.value = extractErrorMessage(err)
   } finally {
@@ -378,8 +378,8 @@ async function publishOrSave() {
     post.value = { ...post.value, ...updated }
     successMsg.value =
       status.value === 'published'
-        ? 'Post atualizado.'
-        : 'Post publicado com sucesso.'
+        ? 'Post updated.'
+        : 'Post published successfully.'
     if (status.value === 'published') {
       window.setTimeout(() => router.push({ name: 'post', params: { id: postId.value } }), 700)
     }
@@ -397,7 +397,7 @@ async function unpublish() {
   try {
     const updated = await updatePost(postId.value, { status: 'draft' })
     post.value = { ...post.value, ...updated }
-    successMsg.value = 'Post movido para rascunho.'
+    successMsg.value = 'Post moved to draft.'
   } catch (err) {
     errorMsg.value = extractErrorMessage(err)
   } finally {
@@ -421,7 +421,7 @@ async function confirmDeletePost() {
   pendingAction.value = 'delete'
   try {
     await deletePost(postId.value)
-    successMsg.value = 'Post excluído.'
+    successMsg.value = 'Post deleted.'
     window.setTimeout(() => router.push('/gallery'), 500)
   } catch (err) {
     errorMsg.value = extractErrorMessage(err)
@@ -435,7 +435,7 @@ watch(
   (id) => {
     if (id === null) {
       loading.value = false
-      loadError.value = 'ID de post inválido.'
+      loadError.value = 'Invalid post ID.'
       return
     }
     void load()
@@ -459,10 +459,10 @@ onBeforeUnmount(() => {
       </h1>
       <p class="create-post-page__subtitle">
         <template v-if="status === 'draft'">
-          Continue de onde parou. Salve como rascunho ou publique quando estiver pronto.
+          Pick up where you left off. Save as draft or publish when ready.
         </template>
         <template v-else>
-          Refine título, descrição e imagens. Alterações ficam públicas imediatamente.
+          Refine the title, description, and images. Changes go live immediately.
         </template>
       </p>
     </header>
@@ -477,7 +477,7 @@ onBeforeUnmount(() => {
     </p>
 
     <template v-else-if="loading">
-      <p class="create-post-page__subtitle">Carregando post…</p>
+      <p class="create-post-page__subtitle">Loading post…</p>
     </template>
 
     <template v-else>
@@ -517,8 +517,8 @@ onBeforeUnmount(() => {
                   v-if="reorderMode"
                   class="create-post-page__section-hint mt-2 max-w-xl"
                 >
-                  Arraste as miniaturas abaixo para reordenar; use o painel à
-                  direita para aplicar ou cancelar.
+                  Drag the thumbnails below to reorder; use the panel on the
+                  right to apply or cancel.
                 </p>
               </div>
 
@@ -558,10 +558,10 @@ onBeforeUnmount(() => {
             @destroy="requestDeletePost"
           >
             <template v-if="images.length > 0" #reorder>
-              <p class="post-metadata__reorder-title">Ordem das imagens</p>
+              <p class="post-metadata__reorder-title">Image order</p>
               <template v-if="!reorderMode">
                 <p class="post-metadata__reorder-hint">
-                  Altere a ordem de exibição na galeria.
+                  Change the display order in the gallery.
                 </p>
                 <div class="post-metadata__reorder-actions">
                   <button
@@ -570,13 +570,13 @@ onBeforeUnmount(() => {
                     :disabled="submitting || applyingReorder"
                     @click="enterReorderMode"
                   >
-                    Ordenar imagens
+                    Reorder images
                   </button>
                 </div>
               </template>
               <template v-else>
                 <p class="post-metadata__reorder-hint">
-                  Arraste as miniaturas na fila à esquerda, depois confirme.
+                  Drag thumbnails in the queue on the left, then confirm.
                 </p>
                 <div class="post-metadata__reorder-actions">
                   <button
@@ -585,7 +585,7 @@ onBeforeUnmount(() => {
                     :disabled="applyingReorder"
                     @click="cancelReorderMode"
                   >
-                    Cancelar
+                    Cancel
                   </button>
                   <button
                     type="button"
@@ -594,7 +594,7 @@ onBeforeUnmount(() => {
                     @click="applyReorder"
                   >
                     {{
-                      applyingReorder ? 'Aplicando…' : 'Aplicar ordem'
+                      applyingReorder ? 'Applying…' : 'Apply order'
                     }}
                   </button>
                 </div>
@@ -607,10 +607,10 @@ onBeforeUnmount(() => {
 
     <AppConfirmAlert
       v-if="removeConfirmImageId"
-      title="Remover imagem"
-      message="A imagem será excluída do post e removida da fila. Deseja continuar?"
-      cancel-label="Cancelar"
-      confirm-label="Remover"
+      title="Remove image"
+      message="This image will be removed from the post and from the queue. Continue?"
+      cancel-label="Cancel"
+      confirm-label="Remove"
       confirm-variant="danger"
       @cancel="cancelRemoveImage"
       @confirm="confirmRemoveImage"
@@ -618,10 +618,10 @@ onBeforeUnmount(() => {
 
     <AppConfirmAlert
       v-if="deletePostConfirmOpen"
-      title="Excluir post"
-      message="Este post e todas as imagens serão excluídos de forma permanente. Esta ação não pode ser desfeita."
-      cancel-label="Cancelar"
-      confirm-label="Excluir post"
+      title="Delete post"
+      message="This post and all images will be permanently deleted. This cannot be undone."
+      cancel-label="Cancel"
+      confirm-label="Delete post"
       confirm-variant="danger"
       @cancel="cancelDeletePost"
       @confirm="confirmDeletePost"
@@ -629,7 +629,7 @@ onBeforeUnmount(() => {
 
     <AppModal
       v-if="previewModalUrl"
-      title="Visualização da imagem"
+      title="Image preview"
       @close="closePreviewModal"
     >
       <template #actions>
@@ -639,13 +639,13 @@ onBeforeUnmount(() => {
           :aria-pressed="previewModalNaturalSize"
           :title="
             previewModalNaturalSize
-              ? 'Encaixar a imagem na área visível'
-              : 'Ver a imagem no tamanho real (1:1)'
+              ? 'Fit image to visible area'
+              : 'View image at actual size (1:1)'
           "
           @click="previewModalNaturalSize = !previewModalNaturalSize"
         >
           {{
-            previewModalNaturalSize ? 'Ajustar à tela' : 'Tamanho real'
+            previewModalNaturalSize ? 'Fit to screen' : 'Actual size'
           }}
         </button>
       </template>

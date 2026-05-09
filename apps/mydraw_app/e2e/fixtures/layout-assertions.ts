@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test'
 
-/** Margem em px para subpixel / barra de rolagem vertical. */
+/** Pixel margin for subpixel rounding / vertical scrollbar width. */
 const HORIZONTAL_TOLERANCE = 3
 
 export type OverflowReport = {
@@ -10,7 +10,7 @@ export type OverflowReport = {
 }
 
 /**
- * Mede overflow horizontal na raiz do documento (comum em layouts que estouram em mobile).
+ * Measures horizontal overflow at the document root (common when mobile layouts burst).
  */
 export async function measureHorizontalOverflow(page: Page): Promise<OverflowReport> {
   return page.evaluate(() => {
@@ -38,18 +38,18 @@ export async function expectNoHorizontalOverflow(
   const r = await measureHorizontalOverflow(page)
   expect(
     r.delta,
-    `${contextLabel}: largura rolável ${r.scrollWidth}px > viewport ${r.innerWidth}px (delta ${r.delta}px)`,
+    `${contextLabel}: scrollable width ${r.scrollWidth}px > viewport ${r.innerWidth}px (delta ${r.delta}px)`,
   ).toBeLessThanOrEqual(HORIZONTAL_TOLERANCE)
 }
 
 /**
- * Rola a página inteira em passos e revalida overflow (alguns bugs só aparecem após scroll).
+ * Scrolls the full page in steps and re-checks overflow (some bugs only show after scroll).
  */
 export async function scrollDocumentAndAssertFluid(
   page: Page,
   contextLabel: string,
 ): Promise<void> {
-  await expectNoHorizontalOverflow(page, `${contextLabel} (topo)`)
+  await expectNoHorizontalOverflow(page, `${contextLabel} (top)`)
 
   const steps = 5
   for (let i = 1; i <= steps; i++) {

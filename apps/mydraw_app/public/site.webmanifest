@@ -1,7 +1,7 @@
 {
   "name": "mydraw",
   "short_name": "mydraw",
-  "description": "Galeria curadoria de desenhos feitos com IA.",
+  "description": "Curated gallery of AI-assisted drawings.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8f9ff",

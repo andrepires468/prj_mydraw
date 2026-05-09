@@ -2,9 +2,9 @@ import axios, { type AxiosInstance } from 'axios'
 import { isJwtExpired } from '@/utils/jwt'
 
 /**
- * Em dev, se a página foi aberta por IP/hostname da LAN (não localhost),
- * troca só o hostname da URL da API — mantém porta e protocolo do .env —
- * para o browser não chamar localhost no dispositivo errado.
+ * In dev, when the page is opened via LAN IP/hostname (not localhost),
+ * rewrite only the API hostname—keep port/protocol from .env—so the browser
+ * does not call localhost on the wrong device.
  */
 function resolveApiBaseUrl(): string {
   const fromEnv = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8088'

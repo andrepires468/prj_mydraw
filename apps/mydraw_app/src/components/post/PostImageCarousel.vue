@@ -60,14 +60,14 @@ function goTo(index: number) {
     </template>
     <div v-else class="post-view__placeholder">
       <MaterialIcon name="broken_image" />
-      <span>Imagem indisponível</span>
+      <span>Image unavailable</span>
     </div>
 
     <template v-if="hasMultiple">
       <button
         type="button"
         class="post-view__nav post-view__nav--prev"
-        aria-label="Imagem anterior"
+        aria-label="Previous image"
         @click="prev"
       >
         <MaterialIcon name="chevron_left" />
@@ -75,7 +75,7 @@ function goTo(index: number) {
       <button
         type="button"
         class="post-view__nav post-view__nav--next"
-        aria-label="Próxima imagem"
+        aria-label="Next image"
         @click="next"
       >
         <MaterialIcon name="chevron_right" />
@@ -93,14 +93,14 @@ function goTo(index: number) {
       type="button"
       class="post-view__thumb"
       :class="{ 'post-view__thumb--active': i === current }"
-      :aria-label="`Ir para imagem ${i + 1}`"
+      :aria-label="`Go to image ${i + 1}`"
       :aria-selected="i === current"
       role="tab"
       @click="goTo(i)"
     >
       <img
         :src="img.thumbUrl"
-        :alt="`Miniatura ${i + 1}`"
+        :alt="`Thumbnail ${i + 1}`"
         loading="lazy"
         @error="onError(img.id)"
       />

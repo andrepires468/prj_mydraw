@@ -29,6 +29,9 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         });
     });
 
+    // Perfil público do editor (admin)
+    $router->get('/editor/profile', 'EditorProfileController@show');
+
     // Galeria de desenhos
     $router->group(['prefix' => 'drawings'], function () use ($router) {
         // Públicas

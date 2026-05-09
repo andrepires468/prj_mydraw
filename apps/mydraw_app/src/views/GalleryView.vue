@@ -8,8 +8,14 @@ import {
   type PostsCounts,
   type PostRow,
 } from '@/api/posts'
+import { fetchEditorProfile, type EditorProfile } from '@/api/editorProfile'
+import {
+  isEditorProfileCacheFresh,
+  readEditorProfileCache,
+  writeEditorProfileCache,
+} from '@/utils/editorProfileCache'
+import GalleryEditorProfile from '@/components/gallery/GalleryEditorProfile.vue'
 import { useAuthStore } from '@/stores/auth'
-import GalleryHero from '@/components/gallery/GalleryHero.vue'
 import GalleryFilters from '@/components/gallery/GalleryFilters.vue'
 import GalleryStatusToggle from '@/components/gallery/GalleryStatusToggle.vue'
 import MasonryGrid from '@/components/gallery/MasonryGrid.vue'
@@ -65,6 +71,31 @@ function writeStoredSort(value: GallerySort): void {
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+
+const editorProfile = ref<EditorProfile | null>(null)
+
+function hydrateEditorProfileFromCache(): void {
+  const stored = readEditorProfileCache()
+  if (stored) {
+    editorProfile.value = stored.profile
+  }
+}
+
+async function refreshEditorProfileIfStale(): Promise<void> {
+  const stored = readEditorProfileCache()
+  if (stored && isEditorProfileCacheFresh(stored.fetchedAt)) {
+    return
+  }
+  try {
+    const profile = await fetchEditorProfile()
+    editorProfile.value = profile
+    writeEditorProfileCache(profile)
+  } catch {
+    if (!editorProfile.value && stored) {
+      editorProfile.value = stored.profile
+    }
+  }
+}
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -328,6 +359,8 @@ watch(sort, () => {
 })
 
 onMounted(async () => {
+  hydrateEditorProfileFromCache()
+  void refreshEditorProfileIfStale()
   hydrateGalleryFromCache(galleryStatus.value, sort.value)
   await loadInitial(true)
   await nextTick()
@@ -366,8 +399,8 @@ onUnmounted(() => {
     </p>
 
     <MasonryGrid class="mb-8">
-      <article class="gallery-hero-card">
-        <GalleryHero />
+      <article class="gallery-editor-card">
+        <GalleryEditorProfile :profile="editorProfile" />
       </article>
 
       <RouterLink

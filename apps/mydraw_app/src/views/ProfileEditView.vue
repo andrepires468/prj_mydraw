@@ -3,10 +3,12 @@ import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import * as authApi from '@/api/auth'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import AuthBrand from '@/components/auth/AuthBrand.vue'
 import AuthField from '@/components/auth/AuthField.vue'
 import AuthSubmitButton from '@/components/auth/AuthSubmitButton.vue'
+import AppConfirmAlert from '@/components/common/AppConfirmAlert.vue'
 import {
   NICKNAME_MAX_LEN,
   NICKNAME_MIN_LEN,
@@ -29,6 +31,8 @@ const errorMsg = ref<string | null>(null)
 const avatarFailed = ref(false)
 const googleMountEl = ref<HTMLElement | null>(null)
 const googleLinkLoading = ref(false)
+const unlinkConfirmOpen = ref(false)
+const unlinkLoading = ref(false)
 
 /** Mesmo valor que `APP_VITE_GOOGLE_CLIENT_ID` no `.env` da raiz (reinicie o dev server / container `app`). */
 const googleConfigured = computed(() => isGoogleSignInConfigured())
@@ -80,6 +84,60 @@ async function mountGoogleLinkButton() {
   if (!ready || !googleMountEl.value) return
   setGoogleCredentialHandler(onGoogleLinkCredential)
   renderGoogleSignInButton(googleMountEl.value)
+}
+
+function openUnlinkConfirm() {
+  if (unlinkLoading.value) return
+  unlinkConfirmOpen.value = true
+}
+
+function cancelUnlinkConfirm() {
+  unlinkConfirmOpen.value = false
+}
+
+async function confirmUnlinkGoogle() {
+  if (unlinkLoading.value) return
+  unlinkLoading.value = true
+  errorMsg.value = null
+  try {
+    const meUser = await authApi.unlinkGoogleAccount()
+    auth.setUser(meUser)
+    unlinkConfirmOpen.value = false
+    await nextTick()
+    await mountGoogleLinkButton()
+  } catch (err: unknown) {
+    unlinkConfirmOpen.value = false
+    if (axios.isAxiosError(err)) {
+      const data = err.response?.data as
+        | {
+            message?: string | string[]
+            errors?: Record<string, string[]>
+          }
+        | undefined
+      const firstFieldError = data?.errors
+        ? Object.values(data.errors)[0]?.[0]
+        : undefined
+      const raw = data?.message
+      const messageStr =
+        typeof raw === 'string'
+          ? raw
+          : Array.isArray(raw)
+            ? raw[0]
+            : undefined
+      errorMsg.value =
+        firstFieldError ??
+        messageStr ??
+        'Could not unlink Google account.'
+    } else {
+      errorMsg.value = err instanceof Error ? err.message : 'Unknown error.'
+    }
+    await nextTick()
+    document
+      .querySelector('.profile-edit-page .auth-error')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  } finally {
+    unlinkLoading.value = false
+  }
 }
 
 async function onGoogleLinkCredential(credential: string) {
@@ -251,7 +309,21 @@ async function submit() {
           <div v-if="auth.user" class="profile-edit-page__google">
             <p class="profile-edit-page__google-title">Google account</p>
 
-            <template v-if="!googleConfigured">
+            <template v-if="auth.user.google_linked">
+              <p class="profile-edit-page__google-status">
+                Linked with Google
+              </p>
+              <button
+                type="button"
+                class="profile-edit-page__google-unlink"
+                :disabled="unlinkLoading"
+                @click="openUnlinkConfirm"
+              >
+                {{ unlinkLoading ? 'Unlinking…' : 'Unlink Google' }}
+              </button>
+            </template>
+
+            <template v-else-if="!googleConfigured">
               <p class="profile-edit-page__google-hint">
                 Linking is disabled until the app has a Google Web Client ID.
                 Set the same value in
@@ -260,12 +332,6 @@ async function submit() {
                 in the repo root <code class="text-xs">.env</code>, then restart
                 the app container or dev server so
                 <code class="text-xs">VITE_GOOGLE_CLIENT_ID</code> is applied.
-              </p>
-            </template>
-
-            <template v-else-if="auth.user.google_linked">
-              <p class="profile-edit-page__google-status">
-                Linked with Google
               </p>
             </template>
 
@@ -297,5 +363,16 @@ async function submit() {
         </form>
       </div>
     </main>
+
+    <AppConfirmAlert
+      v-if="unlinkConfirmOpen"
+      title="Unlink Google?"
+      message="You will sign in with email and password until you link Google again. Your profile photo in the app is unchanged."
+      cancel-label="Cancel"
+      confirm-label="Unlink"
+      confirm-variant="danger"
+      @cancel="cancelUnlinkConfirm"
+      @confirm="confirmUnlinkGoogle"
+    />
   </div>
 </template>

@@ -68,7 +68,9 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     public function getGoogleLinkedAttribute(): bool
     {
-        return filled($this->attributes['GoogleId'] ?? null);
+        $attrs = $this->attributes;
+
+        return filled($attrs['GoogleId'] ?? $attrs['googleid'] ?? null);
     }
 
     public function getAvatarUrlAttribute(): ?string

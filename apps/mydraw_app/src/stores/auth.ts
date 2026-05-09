@@ -106,6 +106,12 @@ export const useAuthStore = defineStore('auth', () => {
     return meUser
   }
 
+  async function unlinkGoogleAccount() {
+    const meUser = await authApi.unlinkGoogleAccount()
+    setUser(meUser)
+    return meUser
+  }
+
   async function logout() {
     // Remove a sessão localmente primeiro para a UI refletir o logout
     // imediatamente; só então dispara a invalidação no servidor com o
@@ -123,12 +129,14 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     user,
     isAuthenticated,
+    setUser,
     login,
     register,
     fetchMe,
     updateProfile,
     loginWithGoogle,
     linkGoogleAccount,
+    unlinkGoogleAccount,
     logout,
     clearSession,
   }

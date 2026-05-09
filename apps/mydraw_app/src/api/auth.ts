@@ -68,3 +68,10 @@ export async function linkGoogleAccount(credential: string) {
   )
   return data.user
 }
+
+export async function unlinkGoogleAccount() {
+  const { data } = await http.post<{ user: AuthUser }>(
+    '/auth/google/unlink',
+  )
+  return data.user
+}

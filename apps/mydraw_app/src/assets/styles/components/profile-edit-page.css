@@ -91,4 +91,20 @@
   .profile-edit-page__google-hint {
     @apply text-xs text-on-surface-variant mb-3 leading-snug;
   }
+
+  .profile-edit-page__google-unlink {
+    @apply mt-3 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium transition-colors;
+    border: 1px solid var(--outline-variant);
+    color: var(--error);
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .profile-edit-page__google-unlink:hover:not(:disabled) {
+    background-color: var(--surface-container-high);
+  }
+
+  .profile-edit-page__google-unlink:disabled {
+    @apply opacity-60 cursor-not-allowed;
+  }
 }

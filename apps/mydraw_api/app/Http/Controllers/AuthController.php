@@ -9,6 +9,7 @@ use App\Services\GoogleIdTokenVerifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -222,6 +223,42 @@ class AuthController extends Controller
         $user->refresh();
 
         return response()->json(['user' => $user]);
+    }
+
+    /**
+     * POST /api/auth/google/unlink — remove o vínculo Google (mantém senha e sessão).
+     *
+     * Usa SQL com identificadores entre backticks e alias no SELECT: em alguns stacks
+     * PDO/MySQL devolve nomes de colunas em minúsculas e o modelo pode não expor `GoogleId`
+     * em `$attributes` como esperado.
+     */
+    public function googleUnlink(): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $userId = $user->getKey();
+
+        $row = DB::selectOne(
+            'SELECT `GoogleId` AS gid FROM `users` WHERE `Id` = ? LIMIT 1',
+            [$userId]
+        );
+
+        $googleId = isset($row->gid) ? (string) $row->gid : '';
+
+        if ($googleId === '') {
+            return response()->json([
+                'message' => 'Google account is not linked.',
+            ], 422);
+        }
+
+        DB::update(
+            'UPDATE `users` SET `GoogleId` = NULL WHERE `Id` = ?',
+            [$userId]
+        );
+
+        return response()->json([
+            'user' => User::query()->findOrFail($userId),
+        ]);
     }
 
     /**

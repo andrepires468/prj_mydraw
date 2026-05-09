@@ -22,8 +22,9 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->group(['middleware' => 'auth.jwt'], function () use ($router) {
             $router->get('/me',            'AuthController@me');
             $router->put('/profile',      'AuthController@updateProfile');
-            $router->post('/google/link', 'AuthController@googleLink');
-            $router->post('/logout',      'AuthController@logout');
+            $router->post('/google/link',   'AuthController@googleLink');
+            $router->post('/google/unlink', 'AuthController@googleUnlink');
+            $router->post('/logout',        'AuthController@logout');
         });
     });
 

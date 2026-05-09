@@ -77,7 +77,6 @@ Definidas em `PostStorageService::THUMB_SIZES` / qualidade em `THUMB_QUALITY`:
 - [Docker](https://docs.docker.com/get-docker/) 24+
 - [Docker Compose](https://docs.docker.com/compose/) v2+
 - Git
-- `make` (opcional)
 
 ---
 
@@ -95,7 +94,6 @@ prj_mydraw/
 ├── scripts/
 │   └── init.sh
 ├── docker-compose.yml
-├── Makefile
 ├── .env.example
 └── README.md
 ```
@@ -120,18 +118,19 @@ prj_mydraw/
 3. Bootstrap (se ainda não existir o scaffold em `apps/`):
 
    ```bash
-   make init
+   bash scripts/init.sh
    ```
 
 4. **Google Sign-In (opcional):** preencha o mesmo Web Client ID em `GOOGLE_CLIENT_ID` (API) e `APP_VITE_GOOGLE_CLIENT_ID` (frontend); reinicie API e app.
 
-5. Suba o ambiente:
+5. Suba o ambiente (os perfis vêm de `COMPOSE_PROFILES` no `.env`):
 
    ```bash
-   make up
-   # MinIO local + MySQL local (perfis no .env):
-   # make up-local
+   docker compose up -d --build
    ```
+
+   Para ativar só o perfil MinIO local na linha de comando:  
+   `docker compose --profile local-storage up -d --build`
 
 6. Acesse:
 
@@ -167,21 +166,34 @@ Rotas públicas incluem galeria publicada, visualização de post e login; criar
 
 ---
 
-## Comandos úteis (Makefile)
+## Comandos úteis (Docker Compose)
+
+Na raiz do monorepo (onde está `docker-compose.yml`):
 
 ```bash
-make init
-make up / make up-local
-make down
-make logs
-make ps
-make api-sh / app-sh / mysql-sh
-make artisan ARGS="migrate"
-make composer ARGS="require pkg/name"
-make npm ARGS="install"
-make npm ARGS="run test:e2e"
-make clean   # cuidado: volumes
+bash scripts/init.sh                                    # bootstrap Lumen + Vue em apps/
+
+docker compose up -d --build                            # sobe stack (perfis do .env)
+docker compose --profile local-storage up -d --build    # força perfil MinIO local
+
+docker compose --profile local-storage --profile local-db down
+docker compose ps
+docker compose logs -f --tail=200
+
+docker compose exec api bash      # shell na API (ou `sh` se não houver bash)
+docker compose exec app sh
+docker compose exec -it mysql bash
+
+docker compose exec api php artisan migrate
+docker compose exec api composer require nome/pacote
+docker compose exec app npm install
+docker compose exec app npm run test:e2e                # E2E dentro do container (requer browsers instalados)
+
+# Remove volumes locais (MinIO/MySQL) — apaga dados:
+docker compose --profile local-storage --profile local-db down -v --remove-orphans
 ```
+
+Para Playwright no **host**, prefira `cd apps/mydraw_app && npm run test:e2e` (ver secção E2E abaixo).
 
 ---
 

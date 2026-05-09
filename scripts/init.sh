@@ -156,15 +156,15 @@ cat <<EOF
  Próximos passos:
 
    1) Suba o ambiente:
-        make up
+        docker compose up -d --build
 
    2) Acesse:
         Frontend ........... http://localhost:${APP_PORT:-5173}
-        API (Lumen) ........ http://localhost:${API_PORT:-8080}
+        API (Lumen) ........ http://localhost:${API_PORT:-8088}
         MinIO Console ...... http://localhost:${MINIO_CONSOLE_PORT:-9101}
         MySQL .............. localhost:${MYSQL_PORT:-3306}
 
    3) Veja os logs:
-        make logs
+        docker compose logs -f --tail=200
 ==============================================================================
 EOF

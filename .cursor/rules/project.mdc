@@ -22,7 +22,7 @@ apps/
   mydraw_app/   src/ (api/, components/{auth,gallery,layout,common}, views/, stores/, router/, assets/styles/)
 docker/{api,app,nginx}/
 scripts/init.sh
-docker-compose.yml  Makefile  .env na raiz (.env.example) — Compose + API + `VITE_*` do app (sem `.env` em `mydraw_app`). Perfis: `local-storage` (MinIO), `local-db` (MySQL).
+docker-compose.yml e `.env` na raiz (`.env.example`) — Compose + API + `VITE_*` do app (sem `.env` em `mydraw_app`). Perfis: `local-storage` (MinIO), `local-db` (MySQL).
 ```
 
 ## Portas locais
@@ -45,9 +45,9 @@ JWT: `GET /auth/me`, `POST /auth/logout`, `POST /drawings`, `DELETE /drawings/{i
 - **Commits**: imperativo, em português.
 - **Idioma**: responder sempre em português (BR).
 
-## Comandos (Makefile)
+## Comandos (Docker Compose)
 
-`make up|down|logs|ps` · `make api-sh|app-sh|mysql-sh` · `make artisan ARGS=...` · `make composer ARGS=...` · `make npm ARGS=...`
+Ex.: `docker compose up -d --build` · `docker compose logs -f` · `docker compose exec api php artisan …` · `docker compose exec app npm …` — ver `README.md`.
 
 ## Referências visuais
 

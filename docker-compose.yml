@@ -50,7 +50,7 @@ services:
   # ============================================================================
   # MySQL 8 — banco local (profile `local-db`)
   # ----------------------------------------------------------------------------
-  # `make up` sobe este serviço quando `COMPOSE_PROFILES` inclui `local-db`
+  # Sobe quando `COMPOSE_PROFILES` inclui `local-db`
   # (ver `.env.example`). A API usa `DB_HOST=mysql` na rede Docker; no host,
   # DataGrip e ferramentas locais: `localhost:${MYSQL_PORT:-33306}`.
   # ============================================================================
@@ -116,7 +116,7 @@ services:
       VITE_API_VERSION: ${APP_VITE_API_VERSION:-v1}
       VITE_MINIO_PUBLIC_URL: ${APP_VITE_MINIO_PUBLIC_URL:-http://localhost:9100}
       VITE_GOOGLE_CLIENT_ID: ${APP_VITE_GOOGLE_CLIENT_ID:-}
-    command: sh -c "if [ -f package.json ]; then npm install && npm run dev -- --host 0.0.0.0 --port 5173; else echo 'mydraw_app vazio — rode make init primeiro' && sleep infinity; fi"
+    command: sh -c "if [ -f package.json ]; then npm install && npm run dev -- --host 0.0.0.0 --port 5173; else echo 'mydraw_app vazio — rode bash scripts/init.sh antes' && sleep infinity; fi"
     networks:
       - mydraw
 
@@ -126,9 +126,7 @@ services:
   # Só sobe quando o profile `local-storage` é ativado. Em produção/staging a
   # API aponta para um MinIO externo via `MINIO_API_URL` no `.env` raiz.
   #
-  # Para subir o MinIO local use:
-  #   docker compose --profile local-storage up -d
-  # (ou `make up-local`).
+  # Para subir o MinIO local: docker compose --profile local-storage up -d --build
   # ============================================================================
   minio:
     image: minio/minio:latest

@@ -12,4 +12,4 @@ ENV CHOKIDAR_USEPOLLING=true \
 
 EXPOSE 5173
 
-CMD ["sh", "-c", "if [ -f package.json ]; then npm install && npm run dev -- --host 0.0.0.0 --port 5173; else echo 'mydraw_app vazio — rode make init primeiro' && sleep infinity; fi"]
+CMD ["sh", "-c", "if [ -f package.json ]; then npm install && npm run dev -- --host 0.0.0.0 --port 5173; else echo 'mydraw_app vazio — rode bash scripts/init.sh antes' && sleep infinity; fi"]

@@ -24,6 +24,9 @@ docker/data/
 docker/logs/
 .docker-volumes/
 
+# Backups do MinIO local (scripts/backup-storage.sh)
+backup/
+
 # ==============================================================================
 # PHP / Lumen (apps/mydraw_api)
 # ==============================================================================

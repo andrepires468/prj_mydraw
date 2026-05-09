@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
@@ -13,6 +13,12 @@ import {
   isValidNickname,
   sanitizeNicknameKeystrokes,
 } from '@/utils/nickname'
+import {
+  isGoogleSignInConfigured,
+  renderGoogleSignInButton,
+  setGoogleCredentialHandler,
+  whenGoogleLibraryReady,
+} from '@/utils/googleIdentity'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -20,6 +26,12 @@ const router = useRouter()
 const nickname = ref('')
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
+const avatarFailed = ref(false)
+const googleMountEl = ref<HTMLElement | null>(null)
+const googleLinkLoading = ref(false)
+
+/** Mesmo valor que `APP_VITE_GOOGLE_CLIENT_ID` no `.env` da raiz (reinicie o dev server / container `app`). */
+const googleConfigured = computed(() => isGoogleSignInConfigured())
 
 function syncFromUser() {
   const raw = auth.user?.name ?? ''
@@ -39,7 +51,86 @@ onMounted(async () => {
     return
   }
   syncFromUser()
+  await nextTick()
+  await mountGoogleLinkButton()
 })
+
+watch(
+  () => [
+    googleConfigured.value,
+    auth.user?.google_linked,
+    auth.user?.email,
+  ],
+  async () => {
+    await nextTick()
+    await mountGoogleLinkButton()
+  },
+)
+
+async function mountGoogleLinkButton() {
+  if (
+    !googleConfigured.value ||
+    !auth.user?.email ||
+    auth.user.google_linked ||
+    !googleMountEl.value
+  ) {
+    return
+  }
+  const ready = await whenGoogleLibraryReady()
+  if (!ready || !googleMountEl.value) return
+  setGoogleCredentialHandler(onGoogleLinkCredential)
+  renderGoogleSignInButton(googleMountEl.value)
+}
+
+async function onGoogleLinkCredential(credential: string) {
+  if (googleLinkLoading.value || loading.value) return
+  googleLinkLoading.value = true
+  errorMsg.value = null
+  try {
+    await auth.linkGoogleAccount(credential)
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      const data = err.response?.data as
+        | { message?: string; errors?: Record<string, string[]> }
+        | undefined
+      const firstFieldError = data?.errors
+        ? Object.values(data.errors)[0]?.[0]
+        : undefined
+      errorMsg.value =
+        firstFieldError ??
+        data?.message ??
+        'Could not link Google account.'
+    } else {
+      errorMsg.value = err instanceof Error ? err.message : 'Unknown error.'
+    }
+  } finally {
+    googleLinkLoading.value = false
+  }
+}
+
+onBeforeUnmount(() => {
+  setGoogleCredentialHandler(undefined)
+})
+
+const userInitial = computed(() => {
+  const name =
+    auth.user?.name?.trim() ||
+    nickname.value.trim()
+  return name ? name.charAt(0).toUpperCase() : '?'
+})
+
+const showProfileAvatar = computed(
+  () =>
+    Boolean(auth.user?.avatar_url) &&
+    !avatarFailed.value,
+)
+
+watch(
+  () => auth.user?.avatar_url,
+  () => {
+    avatarFailed.value = false
+  },
+)
 
 function onNicknameInput(value: string) {
   nickname.value = sanitizeNicknameKeystrokes(value).slice(0, NICKNAME_MAX_LEN)
@@ -107,6 +198,27 @@ async function submit() {
 
       <div class="auth-card">
         <form class="auth-card__form" @submit.prevent="submit">
+          <div class="profile-edit-page__identity">
+            <div class="profile-edit-page__avatar" aria-hidden="true">
+              <img
+                v-if="showProfileAvatar"
+                :src="auth.user!.avatar_url!"
+                alt=""
+                class="profile-edit-page__avatar-img"
+                @error="avatarFailed = true"
+              />
+              <span v-else class="profile-edit-page__avatar-fallback">{{
+                userInitial
+              }}</span>
+            </div>
+            <div class="profile-edit-page__identity-text">
+              <span class="text-sm font-medium text-on-surface">Photo</span>
+              <span class="text-xs text-on-surface-variant leading-snug">
+                From Google when linked; otherwise your initial.
+              </span>
+            </div>
+          </div>
+
           <AuthField
             id="profile-nickname"
             :model-value="nickname"
@@ -134,6 +246,40 @@ async function submit() {
           <div v-if="auth.user?.email" class="profile-edit-page__email">
             <span class="profile-edit-page__email-label">Email</span>
             {{ auth.user.email }}
+          </div>
+
+          <div v-if="auth.user" class="profile-edit-page__google">
+            <p class="profile-edit-page__google-title">Google account</p>
+
+            <template v-if="!googleConfigured">
+              <p class="profile-edit-page__google-hint">
+                Linking is disabled until the app has a Google Web Client ID.
+                Set the same value in
+                <code class="text-xs">GOOGLE_CLIENT_ID</code> (API) and
+                <code class="text-xs">APP_VITE_GOOGLE_CLIENT_ID</code> (frontend)
+                in the repo root <code class="text-xs">.env</code>, then restart
+                the app container or dev server so
+                <code class="text-xs">VITE_GOOGLE_CLIENT_ID</code> is applied.
+              </p>
+            </template>
+
+            <template v-else-if="auth.user.google_linked">
+              <p class="profile-edit-page__google-status">
+                Linked with Google
+              </p>
+            </template>
+
+            <template v-else>
+              <p class="profile-edit-page__google-hint">
+                Link Google using the same email as above. After linking you can
+                sign in with Google.
+              </p>
+              <div
+                ref="googleMountEl"
+                class="google-sign-in-mount"
+                :aria-busy="googleLinkLoading"
+              />
+            </template>
           </div>
 
           <p v-if="errorMsg" class="auth-error mt-4" role="alert">

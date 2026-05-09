@@ -15,6 +15,7 @@
 @import './components/loading-indicator.css';
 
 @import './components/login-page.css';
+@import './components/google-sign-in.css';
 @import './components/profile-edit-page.css';
 @import './components/auth-brand.css';
 @import './components/auth-card.css';

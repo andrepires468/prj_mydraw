@@ -93,6 +93,19 @@ export const useAuthStore = defineStore('auth', () => {
     return meUser
   }
 
+  async function loginWithGoogle(credential: string) {
+    const response = await authApi.loginWithGoogle(credential)
+    setToken(response.access_token)
+    setUser(response.user)
+    return response
+  }
+
+  async function linkGoogleAccount(credential: string) {
+    const meUser = await authApi.linkGoogleAccount(credential)
+    setUser(meUser)
+    return meUser
+  }
+
   async function logout() {
     // Remove a sessão localmente primeiro para a UI refletir o logout
     // imediatamente; só então dispara a invalidação no servidor com o
@@ -114,6 +127,8 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     fetchMe,
     updateProfile,
+    loginWithGoogle,
+    linkGoogleAccount,
     logout,
     clearSession,
   }

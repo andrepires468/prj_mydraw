@@ -53,4 +53,42 @@
   .profile-edit-page__email-label {
     @apply block text-xs font-medium uppercase tracking-wide text-on-surface-variant mb-1;
   }
+
+  .profile-edit-page__identity {
+    @apply flex items-center gap-4 mb-6;
+  }
+
+  .profile-edit-page__avatar {
+    @apply w-16 h-16 rounded-full overflow-hidden shrink-0 bg-primary text-on-primary flex items-center justify-center font-semibold text-xl;
+  }
+
+  .profile-edit-page__avatar-img {
+    @apply w-full h-full object-cover;
+  }
+
+  .profile-edit-page__avatar-fallback {
+    @apply flex items-center justify-center w-full h-full;
+  }
+
+  .profile-edit-page__identity-text {
+    @apply flex flex-col min-w-0 gap-0.5;
+  }
+
+  .profile-edit-page__google {
+    @apply mt-6 rounded-2xl px-4 py-4 text-sm;
+    background-color: var(--surface-container-low);
+    color: var(--on-surface-variant);
+  }
+
+  .profile-edit-page__google-title {
+    @apply text-xs font-medium uppercase tracking-wide text-on-surface-variant mb-2;
+  }
+
+  .profile-edit-page__google-status {
+    @apply text-sm text-on-surface mb-3;
+  }
+
+  .profile-edit-page__google-hint {
+    @apply text-xs text-on-surface-variant mb-3 leading-snug;
+  }
 }

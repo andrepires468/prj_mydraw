@@ -40,6 +40,7 @@ services:
       AWS_VERIFY_SSL: ${AWS_VERIFY_SSL:-true}
       MINIO_PUBLIC_URL: ${APP_VITE_MINIO_PUBLIC_URL:-http://localhost:9100}
       MINIO_BUCKET_PUBLIC: ${MINIO_BUCKET_PUBLIC:-true}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       PHP_IDE_CONFIG: "serverName=mydraw_api"
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -114,6 +115,7 @@ services:
       VITE_API_URL: ${APP_VITE_API_URL:-http://localhost:8080}
       VITE_API_VERSION: ${APP_VITE_API_VERSION:-v1}
       VITE_MINIO_PUBLIC_URL: ${APP_VITE_MINIO_PUBLIC_URL:-http://localhost:9100}
+      VITE_GOOGLE_CLIENT_ID: ${APP_VITE_GOOGLE_CLIENT_ID:-}
     command: sh -c "if [ -f package.json ]; then npm install && npm run dev -- --host 0.0.0.0 --port 5173; else echo 'mydraw_app vazio — rode make init primeiro' && sleep infinity; fi"
     networks:
       - mydraw

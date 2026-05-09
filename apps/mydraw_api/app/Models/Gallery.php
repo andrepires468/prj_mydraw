@@ -2,14 +2,11 @@
 
 namespace App\Models;
 
-use App\Support\PublicStorageBaseUrl;
+use App\Support\StorageObjectUrl;
 use App\Services\PostStorageService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
-use Throwable;
 
 class Gallery extends Model
 {
@@ -120,36 +117,10 @@ class Gallery extends Model
     /**
      * Converte uma `object_key` em URL acessível pelo frontend.
      *
-     *  - Se `MINIO_BUCKET_PUBLIC=true`, retorna a URL direta em
-     *    `MINIO_PUBLIC_URL/bucket/key` (útil quando o bucket está com policy
-     *    pública).
-     *  - Caso contrário, devolve uma presigned URL temporária (TTL em
-     *    `MINIO_URL_TTL_MINUTES`, padrão 60 min).
+     * @see StorageObjectUrl::urlForKey
      */
     private function resolveObjectUrl(?string $key): ?string
     {
-        if (!$key) {
-            return null;
-        }
-
-        $bucketPublic = filter_var(env('MINIO_BUCKET_PUBLIC', false), FILTER_VALIDATE_BOOLEAN);
-
-        if ($bucketPublic) {
-            $publicBase = PublicStorageBaseUrl::base();
-            $bucket     = env('AWS_BUCKET');
-            if ($publicBase && $bucket) {
-                return sprintf('%s/%s/%s', $publicBase, $bucket, $key);
-            }
-        }
-
-        try {
-            $ttl = (int) env('MINIO_URL_TTL_MINUTES', 60);
-            return Storage::disk('s3')->temporaryUrl(
-                $key,
-                Carbon::now()->addMinutes($ttl)
-            );
-        } catch (Throwable $e) {
-            return null;
-        }
+        return StorageObjectUrl::urlForKey($key);
     }
 }

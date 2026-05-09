@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\GoogleIdentityEmail;
+use App\Services\GoogleAvatarSyncService;
+use App\Services\GoogleIdTokenVerifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +14,12 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    public function __construct(
+        private readonly GoogleIdTokenVerifier $googleIdTokenVerifier,
+        private readonly GoogleAvatarSyncService $googleAvatarSyncService,
+    ) {
+    }
+
     /**
      * POST /api/auth/register
      */
@@ -100,6 +109,151 @@ class AuthController extends Controller
         Auth::logout();
 
         return response()->json(['message' => 'Sessão encerrada.']);
+    }
+
+    /**
+     * POST /api/auth/google — login via Google ID Token (GIS credential).
+     */
+    public function googleLogin(Request $request): JsonResponse
+    {
+        $clientId = (string) env('GOOGLE_CLIENT_ID', '');
+        if ($clientId === '') {
+            return response()->json([
+                'message' => 'Google sign-in is not configured.',
+            ], 503);
+        }
+
+        $this->validate($request, [
+            'credential' => 'required|string',
+        ]);
+
+        $claims = $this->googleIdTokenVerifier->verify(
+            (string) $request->input('credential'),
+            $clientId
+        );
+
+        $sub = (string) $claims->sub;
+
+        $userByGoogle = User::where('GoogleId', $sub)->first();
+        if ($userByGoogle) {
+            $user = $userByGoogle;
+        } else {
+            $user = $this->findUserByEmailForGoogle((string) $claims->email);
+            if (!$user) {
+                throw ValidationException::withMessages([
+                    'credential' => ['No account found for this Google user. Register first.'],
+                ])->status(422);
+            }
+
+            $existingGoogleId = $user->attributes['GoogleId'] ?? null;
+            if (filled($existingGoogleId) && $existingGoogleId !== $sub) {
+                return response()->json([
+                    'message' => 'This email is already linked to a different Google account.',
+                ], 409);
+            }
+
+            if (!filled($existingGoogleId)) {
+                $user->GoogleId = $sub;
+                $user->save();
+            }
+        }
+
+        $user->refresh();
+        $this->googleAvatarSyncService->syncFromPayload($user, $claims);
+        $user->refresh();
+
+        $token = Auth::login($user);
+
+        return $this->tokenResponse($token, $user);
+    }
+
+    /**
+     * POST /api/auth/google/link — vincula Google ao usuário autenticado (email deve coincidir).
+     */
+    public function googleLink(Request $request): JsonResponse
+    {
+        $clientId = (string) env('GOOGLE_CLIENT_ID', '');
+        if ($clientId === '') {
+            return response()->json([
+                'message' => 'Google linking is not configured.',
+            ], 503);
+        }
+
+        $this->validate($request, [
+            'credential' => 'required|string',
+        ]);
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        $claims = $this->googleIdTokenVerifier->verify(
+            (string) $request->input('credential'),
+            $clientId
+        );
+
+        // Email direto da BD (evita cache / estado intermédio do modelo).
+        $dbEmailRaw = (string) (User::query()
+            ->whereKey($user->getKey())
+            ->value('Email') ?? '');
+
+        $tokenEmail   = GoogleIdentityEmail::canonicalForIdentityMatch((string) $claims->email);
+        $profileEmail = GoogleIdentityEmail::canonicalForIdentityMatch($dbEmailRaw);
+
+        if ($tokenEmail !== $profileEmail) {
+            throw ValidationException::withMessages([
+                'credential' => ['This Google account email does not match your profile email.'],
+            ])->status(422);
+        }
+
+        $sub = (string) $claims->sub;
+
+        $ownerOther = User::where('GoogleId', $sub)->where('Id', '!=', $user->Id)->first();
+        if ($ownerOther) {
+            return response()->json([
+                'message' => 'This Google account is already linked to another user.',
+            ], 409);
+        }
+
+        $user->GoogleId = $sub;
+        $user->save();
+
+        $user->refresh();
+        $this->googleAvatarSyncService->syncFromPayload($user, $claims);
+        $user->refresh();
+
+        return response()->json(['user' => $user]);
+    }
+
+    /**
+     * Localiza utilizador pelo mesmo critério que o vínculo Google (incl. equivalência Gmail).
+     */
+    private function findUserByEmailForGoogle(string $googleClaimEmail): ?User
+    {
+        $simple = GoogleIdentityEmail::normalizeBasic($googleClaimEmail);
+
+        $user = User::whereRaw('LOWER(TRIM(Email)) = ?', [$simple])->first();
+        if ($user !== null) {
+            return $user;
+        }
+
+        $canonical = GoogleIdentityEmail::canonicalForIdentityMatch($simple);
+        if (!str_ends_with($canonical, '@gmail.com')) {
+            return null;
+        }
+
+        return User::query()
+            ->where(function ($q) {
+                $q->whereRaw('LOWER(Email) LIKE ?', ['%@gmail.com'])
+                    ->orWhereRaw('LOWER(Email) LIKE ?', ['%@googlemail.com']);
+            })
+            ->get()
+            ->first(function (User $u) use ($canonical) {
+                $db = GoogleIdentityEmail::normalizeBasic(
+                    (string) ($u->attributes['Email'] ?? ''),
+                );
+
+                return GoogleIdentityEmail::canonicalForIdentityMatch($db) === $canonical;
+            });
     }
 
     private function tokenResponse(string $token, $user, int $status = 200): JsonResponse

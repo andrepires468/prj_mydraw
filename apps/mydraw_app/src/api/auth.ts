@@ -4,6 +4,8 @@ export interface AuthUser {
   id: number
   name: string
   email: string
+  google_linked?: boolean
+  avatar_url?: string | null
 }
 
 export interface AuthResponse {
@@ -50,4 +52,19 @@ export async function logout(token?: string) {
       ? { headers: { Authorization: `Bearer ${token}` } }
       : undefined
   )
+}
+
+export async function loginWithGoogle(credential: string) {
+  const { data } = await http.post<AuthResponse>('/auth/google', {
+    credential,
+  })
+  return data
+}
+
+export async function linkGoogleAccount(credential: string) {
+  const { data } = await http.post<{ user: AuthUser }>(
+    '/auth/google/link',
+    { credential },
+  )
+  return data.user
 }

@@ -108,12 +108,20 @@
   }
 
   .top-nav-bar__avatar {
-    @apply flex items-center justify-center w-7 h-7 rounded-full bg-primary text-on-primary font-semibold text-xs;
+    @apply flex items-center justify-center w-7 h-7 rounded-full bg-primary text-on-primary font-semibold text-xs overflow-hidden shrink-0;
     line-height: 1;
   }
 
   .top-nav-bar__avatar--lg {
     @apply w-10 h-10 text-sm;
+  }
+
+  .top-nav-bar__avatar-img {
+    @apply w-full h-full object-cover rounded-full;
+  }
+
+  .top-nav-bar__avatar-fallback {
+    @apply flex items-center justify-center w-full h-full;
   }
 
   .top-nav-bar__user-name {

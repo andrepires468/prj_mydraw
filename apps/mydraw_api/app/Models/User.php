@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\StorageObjectUrl;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
@@ -25,6 +26,8 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'Name',
         'Email',
         'Password',
+        'GoogleId',
+        'AvatarKey',
     ];
 
     /**
@@ -36,12 +39,16 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'Name',
         'Email',
         'Password',
+        'GoogleId',
+        'AvatarKey',
     ];
 
     protected $appends = [
         'id',
         'name',
         'email',
+        'google_linked',
+        'avatar_url',
     ];
 
     public function getIdAttribute(): int
@@ -57,6 +64,16 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     public function getEmailAttribute(): ?string
     {
         return $this->attributes['Email'] ?? null;
+    }
+
+    public function getGoogleLinkedAttribute(): bool
+    {
+        return filled($this->attributes['GoogleId'] ?? null);
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return StorageObjectUrl::urlForKey($this->attributes['AvatarKey'] ?? null);
     }
 
     /**

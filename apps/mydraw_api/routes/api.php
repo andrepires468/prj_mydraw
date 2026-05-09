@@ -17,11 +17,13 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
     $router->group(['prefix' => 'auth'], function () use ($router) {
         $router->post('/register', 'AuthController@register');
         $router->post('/login',    'AuthController@login');
+        $router->post('/google',   'AuthController@googleLogin');
 
         $router->group(['middleware' => 'auth.jwt'], function () use ($router) {
-            $router->get('/me',      'AuthController@me');
-            $router->put('/profile', 'AuthController@updateProfile');
-            $router->post('/logout', 'AuthController@logout');
+            $router->get('/me',            'AuthController@me');
+            $router->put('/profile',      'AuthController@updateProfile');
+            $router->post('/google/link', 'AuthController@googleLink');
+            $router->post('/logout',      'AuthController@logout');
         });
     });
 

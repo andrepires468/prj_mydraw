@@ -1,0 +1,19 @@
+@layer components {
+  .google-sign-in-mount {
+    @apply flex justify-center min-h-[40px] w-full;
+  }
+
+  .google-sign-in-mount > div {
+    @apply flex justify-center;
+  }
+
+  .auth-divider {
+    @apply relative flex items-center gap-3 py-4 text-xs font-medium text-on-surface-variant uppercase tracking-wide;
+  }
+
+  .auth-divider::before,
+  .auth-divider::after {
+    content: '';
+    @apply flex-1 h-px bg-outline-variant;
+  }
+}

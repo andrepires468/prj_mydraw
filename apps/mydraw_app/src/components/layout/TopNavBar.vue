@@ -81,6 +81,19 @@ function handleLogout() {
   auth.logout()
 }
 
+const avatarFailed = ref(false)
+
+watch(
+  () => auth.user?.avatar_url,
+  () => {
+    avatarFailed.value = false
+  },
+)
+
+const showAvatarImage = computed(
+  () => Boolean(auth.user?.avatar_url) && !avatarFailed.value,
+)
+
 const userInitial = computed(() => {
   const name = auth.user?.name?.trim() ?? ''
   return name ? name.charAt(0).toUpperCase() : '?'
@@ -142,7 +155,16 @@ const userInitial = computed(() => {
                 @click="toggleMenu"
               >
                 <span class="top-nav-bar__avatar" aria-hidden="true">
-                  {{ userInitial }}
+                  <img
+                    v-if="showAvatarImage"
+                    :src="auth.user.avatar_url!"
+                    alt=""
+                    class="top-nav-bar__avatar-img"
+                    @error="avatarFailed = true"
+                  />
+                  <span v-else class="top-nav-bar__avatar-fallback">{{
+                    userInitial
+                  }}</span>
                 </span>
                 <span class="top-nav-bar__user-name">
                   {{ auth.user.name }}
@@ -162,8 +184,20 @@ const userInitial = computed(() => {
                   role="menu"
                 >
                   <div class="top-nav-bar__dropdown-header">
-                    <span class="top-nav-bar__avatar top-nav-bar__avatar--lg" aria-hidden="true">
-                      {{ userInitial }}
+                    <span
+                      class="top-nav-bar__avatar top-nav-bar__avatar--lg"
+                      aria-hidden="true"
+                    >
+                      <img
+                        v-if="showAvatarImage"
+                        :src="auth.user.avatar_url!"
+                        alt=""
+                        class="top-nav-bar__avatar-img"
+                        @error="avatarFailed = true"
+                      />
+                      <span v-else class="top-nav-bar__avatar-fallback">{{
+                        userInitial
+                      }}</span>
                     </span>
                     <div class="top-nav-bar__dropdown-user">
                       <span class="top-nav-bar__dropdown-name">

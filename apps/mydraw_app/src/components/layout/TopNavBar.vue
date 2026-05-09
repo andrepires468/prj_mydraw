@@ -115,6 +115,7 @@ const userInitial = computed(() => {
             Gallery
           </RouterLink>
           <RouterLink
+            v-if="auth.isAuthenticated"
             to="/posts/new/edit"
             class="top-nav-bar__link"
             active-class="top-nav-bar__link--active"

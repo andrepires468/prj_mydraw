@@ -44,6 +44,14 @@ export async function updateProfile(name: string) {
   return data.user
 }
 
+export async function changePassword(payload: {
+  current_password: string
+  password: string
+  password_confirmation: string
+}) {
+  await http.put<{ message?: string }>('/auth/password', payload)
+}
+
 export async function logout(token?: string) {
   await http.post(
     '/auth/logout',

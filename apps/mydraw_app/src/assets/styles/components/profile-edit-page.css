@@ -54,6 +54,25 @@
     @apply block text-xs font-medium uppercase tracking-wide text-on-surface-variant mb-1;
   }
 
+  .profile-edit-page__password-row {
+    @apply mt-4;
+  }
+
+  .profile-edit-page__password-link {
+    @apply text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded px-0.5 py-0.5 -mx-0.5 -my-0.5;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding-inline: 0;
+  }
+
+  .profile-edit-page__back {
+    @apply mb-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg px-1 py-1 -mx-1 -my-1;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
   .profile-edit-page__identity {
     @apply flex items-center gap-4 mb-6;
   }

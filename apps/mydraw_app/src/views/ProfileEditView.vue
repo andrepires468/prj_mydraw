@@ -34,8 +34,82 @@ const googleLinkLoading = ref(false)
 const unlinkConfirmOpen = ref(false)
 const unlinkLoading = ref(false)
 
+const sectionMode = ref<'profile' | 'password'>('profile')
+const currentPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+const passwordErrorMsg = ref<string | null>(null)
+const passwordLoading = ref(false)
+const showCurrPw = ref(false)
+const showNewPw = ref(false)
+const showConfPw = ref(false)
+
 /** Mesmo valor que `APP_VITE_GOOGLE_CLIENT_ID` no `.env` da raiz (reinicie o dev server / container `app`). */
 const googleConfigured = computed(() => isGoogleSignInConfigured())
+
+function openPasswordSection() {
+  errorMsg.value = null
+  passwordErrorMsg.value = null
+  sectionMode.value = 'password'
+}
+
+function goBackToProfile() {
+  passwordErrorMsg.value = null
+  currentPassword.value = ''
+  newPassword.value = ''
+  confirmPassword.value = ''
+  sectionMode.value = 'profile'
+}
+
+async function submitPasswordChange() {
+  if (passwordLoading.value) return
+  passwordErrorMsg.value = null
+  if (newPassword.value !== confirmPassword.value) {
+    passwordErrorMsg.value = 'New password and confirmation do not match.'
+    return
+  }
+  passwordLoading.value = true
+  try {
+    await authApi.changePassword({
+      current_password: currentPassword.value,
+      password: newPassword.value,
+      password_confirmation: confirmPassword.value,
+    })
+    goBackToProfile()
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      const data = err.response?.data as
+        | {
+            message?: string | string[]
+            errors?: Record<string, string[]>
+          }
+        | undefined
+      const firstFieldError = data?.errors
+        ? Object.values(data.errors)[0]?.[0]
+        : undefined
+      const raw = data?.message
+      const messageStr =
+        typeof raw === 'string'
+          ? raw
+          : Array.isArray(raw)
+            ? raw[0]
+            : undefined
+      passwordErrorMsg.value =
+        firstFieldError ??
+        messageStr ??
+        'Could not update password.'
+    } else {
+      passwordErrorMsg.value =
+        err instanceof Error ? err.message : 'Unknown error.'
+    }
+    await nextTick()
+    document
+      .querySelector('.profile-edit-page__password-panel .auth-error')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  } finally {
+    passwordLoading.value = false
+  }
+}
 
 function syncFromUser() {
   const raw = auth.user?.name ?? ''
@@ -247,7 +321,7 @@ async function submit() {
       <div class="profile-edit-page__blob profile-edit-page__blob--bottom" />
     </div>
 
-    <main class="profile-edit-page__content">
+    <main v-if="sectionMode === 'profile'" class="profile-edit-page__content">
       <AuthBrand
         title="Edit profile"
         subtitle="Display name (nickname)"
@@ -306,6 +380,16 @@ async function submit() {
             {{ auth.user.email }}
           </div>
 
+          <div class="profile-edit-page__password-row">
+            <button
+              type="button"
+              class="profile-edit-page__password-link"
+              @click="openPasswordSection"
+            >
+              Change password
+            </button>
+          </div>
+
           <div v-if="auth.user" class="profile-edit-page__google">
             <p class="profile-edit-page__google-title">Google account</p>
 
@@ -358,6 +442,133 @@ async function submit() {
               label="Save"
               loading-label="Saving…"
               :loading="loading"
+            />
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <main
+      v-else
+      class="profile-edit-page__content profile-edit-page__password-panel"
+    >
+      <AuthBrand
+        title="Change password"
+        subtitle="Enter your current password and choose a new one."
+        icon="lock"
+      />
+
+      <div class="auth-card">
+        <button
+          type="button"
+          class="profile-edit-page__back"
+          @click="goBackToProfile"
+        >
+          <MaterialIcon name="arrow_back" size="1.25rem" />
+          Back to profile
+        </button>
+
+        <form class="auth-card__form" @submit.prevent="submitPasswordChange">
+          <AuthField
+            id="pwd-current"
+            :model-value="currentPassword"
+            label="Current password"
+            icon="lock"
+            :type="showCurrPw ? 'text' : 'password'"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+            :disabled="passwordLoading"
+            :minlength="6"
+            @update:model-value="currentPassword = $event"
+          >
+            <template #suffix>
+              <button
+                type="button"
+                class="auth-field__suffix"
+                :aria-label="showCurrPw ? 'Hide password' : 'Show password'"
+                @click="showCurrPw = !showCurrPw"
+              >
+                <MaterialIcon
+                  :name="showCurrPw ? 'visibility_off' : 'visibility'"
+                  size="1.25rem"
+                />
+              </button>
+            </template>
+          </AuthField>
+
+          <AuthField
+            id="pwd-new"
+            :model-value="newPassword"
+            label="New password"
+            icon="lock"
+            :type="showNewPw ? 'text' : 'password'"
+            placeholder="••••••••"
+            autocomplete="new-password"
+            required
+            :disabled="passwordLoading"
+            :minlength="6"
+            :maxlength="100"
+            @update:model-value="newPassword = $event"
+          >
+            <template #suffix>
+              <button
+                type="button"
+                class="auth-field__suffix"
+                :aria-label="showNewPw ? 'Hide password' : 'Show password'"
+                @click="showNewPw = !showNewPw"
+              >
+                <MaterialIcon
+                  :name="showNewPw ? 'visibility_off' : 'visibility'"
+                  size="1.25rem"
+                />
+              </button>
+            </template>
+          </AuthField>
+
+          <AuthField
+            id="pwd-confirm"
+            :model-value="confirmPassword"
+            label="Confirm new password"
+            icon="lock"
+            :type="showConfPw ? 'text' : 'password'"
+            placeholder="••••••••"
+            autocomplete="new-password"
+            required
+            :disabled="passwordLoading"
+            :minlength="6"
+            :maxlength="100"
+            @update:model-value="confirmPassword = $event"
+          >
+            <template #suffix>
+              <button
+                type="button"
+                class="auth-field__suffix"
+                :aria-label="showConfPw ? 'Hide password' : 'Show password'"
+                @click="showConfPw = !showConfPw"
+              >
+                <MaterialIcon
+                  :name="showConfPw ? 'visibility_off' : 'visibility'"
+                  size="1.25rem"
+                />
+              </button>
+            </template>
+          </AuthField>
+
+          <p class="profile-edit-page__hint">
+            At least 6 characters (max 100).
+          </p>
+
+          <p v-if="passwordErrorMsg" class="auth-error mt-4" role="alert">
+            <MaterialIcon name="error" size="1.125rem" />
+            <span>{{ passwordErrorMsg }}</span>
+          </p>
+
+          <div class="pt-2">
+            <AuthSubmitButton
+              label="Update password"
+              loading-label="Updating…"
+              :loading="passwordLoading"
             />
           </div>
         </form>

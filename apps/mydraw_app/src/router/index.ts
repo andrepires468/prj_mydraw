@@ -12,53 +12,54 @@ export const router = createRouter({
     {
       path: '/',
       redirect: { name: 'gallery-published' },
+      meta: { public: true },
     },
     {
       path: '/gallery',
       redirect: { name: 'gallery-published' },
+      meta: { public: true },
     },
     {
       path: '/gallery/published',
       name: 'gallery-published',
       component: GalleryView,
+      meta: { public: true },
     },
     {
       path: '/gallery/drafts',
       name: 'gallery-drafts',
       component: GalleryView,
-      meta: { requiresAuth: true },
     },
     {
       path: '/gallery/published/post/:id(\\d+)',
       name: 'gallery-published-post',
       component: GalleryView,
       props: true,
+      meta: { public: true },
     },
     {
       path: '/gallery/drafts/post/:id(\\d+)',
       name: 'gallery-drafts-post',
       component: GalleryView,
       props: true,
-      meta: { requiresAuth: true },
     },
     {
       path: '/posts/:id(\\d+)',
       name: 'post',
       component: PostView,
       props: true,
+      meta: { public: true },
     },
     {
       path: '/posts/new/edit',
       name: 'edit-post-new',
       component: EditPostView,
-      meta: { requiresAuth: true },
     },
     {
       path: '/posts/:post_id(\\d+)/edit',
       name: 'edit-post',
       component: EditPostView,
       props: true,
-      meta: { requiresAuth: true },
     },
     {
       path: '/create',
@@ -68,13 +69,12 @@ export const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView,
-      meta: { guestOnly: true },
+      meta: { public: true, guestOnly: true },
     },
     {
       path: '/profile',
       name: 'profile-edit',
       component: ProfileEditView,
-      meta: { requiresAuth: true },
     },
   ],
 })
@@ -92,8 +92,12 @@ router.beforeEach((to) => {
   if (to.meta.guestOnly && hasValidSession) {
     return { path: '/' }
   }
-  if (to.meta.requiresAuth && !hasValidSession) {
-    return { path: '/login', query: { redirect: to.fullPath } }
+
+  /** Rotas visitáveis sem login: login, galeria publicada, post isolado `/posts/:id`, post na URL da galeria. */
+  const isPublic = to.matched.some((record) => record.meta.public === true)
+
+  if (!isPublic && !hasValidSession) {
+    return { name: 'login', query: { redirect: to.fullPath } }
   }
   return true
 })

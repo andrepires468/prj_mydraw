@@ -103,6 +103,31 @@ class AuthController extends Controller
     }
 
     /**
+     * PUT /api/auth/password — altera senha (sessão atual).
+     */
+    public function updatePassword(Request $request): JsonResponse
+    {
+        $this->validate($request, [
+            'current_password' => 'required|string',
+            'password'         => 'required|string|min:6|max:100|confirmed',
+        ]);
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (!Hash::check((string) $request->input('current_password'), $user->getAuthPassword())) {
+            throw ValidationException::withMessages([
+                'current_password' => ['Current password is incorrect.'],
+            ]);
+        }
+
+        $user->Password = Hash::make((string) $request->input('password'));
+        $user->save();
+
+        return response()->json(['message' => 'Password updated successfully.']);
+    }
+
+    /**
      * POST /api/auth/logout
      */
     public function logout(): JsonResponse

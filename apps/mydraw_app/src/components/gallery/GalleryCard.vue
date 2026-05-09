@@ -74,7 +74,7 @@ function goTo(index: number) {
       </template>
       <div v-else class="gallery-card__placeholder">
         <MaterialIcon name="broken_image" />
-        <span>Imagem indisponível</span>
+        <span>Image unavailable</span>
       </div>
 
       <template v-if="hasMultiple">
@@ -88,7 +88,7 @@ function goTo(index: number) {
         <button
           type="button"
           class="gallery-card__nav gallery-card__nav--prev"
-          aria-label="Imagem anterior"
+          aria-label="Previous image"
           @click.stop.prevent="prev"
         >
           <MaterialIcon name="chevron_left" />
@@ -96,7 +96,7 @@ function goTo(index: number) {
         <button
           type="button"
           class="gallery-card__nav gallery-card__nav--next"
-          aria-label="Próxima imagem"
+          aria-label="Next image"
           @click.stop.prevent="next"
         >
           <MaterialIcon name="chevron_right" />
@@ -113,7 +113,7 @@ function goTo(index: number) {
             type="button"
             class="gallery-card__dot"
             :class="{ 'gallery-card__dot--active': i === current }"
-            :aria-label="`Ir para imagem ${i + 1}`"
+            :aria-label="`Go to image ${i + 1}`"
             :aria-selected="i === current"
             role="tab"
             @click.stop.prevent="goTo(i)"

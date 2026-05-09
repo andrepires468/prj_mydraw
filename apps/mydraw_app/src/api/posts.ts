@@ -4,12 +4,11 @@ import type { GallerySort } from '@/components/gallery/types'
 export type PostStatus = 'draft' | 'published'
 
 /**
- * URLs das thumbnails geradas durante o upload. As chaves correspondem aos
- * "rótulos" das resoluções máximas aplicadas (a imagem real pode ter
- * dimensões menores, já que a proporção original é preservada).
+ * URLs for thumbnails generated on upload. Keys match the max-resolution
+ * labels applied (the stored image may be smaller if aspect ratio is preserved).
  *
- * Um valor `null` indica que a thumb correspondente não foi gerada ou não
- * está presente no bucket (ex.: imagens antigas anteriores ao recurso).
+ * `null` means that thumbnail was not generated or is missing in the bucket
+ * (e.g. legacy images from before the feature existed).
  */
 export interface GalleryThumbs {
   '320x320': string | null
@@ -68,16 +67,15 @@ export interface PostsCounts {
 
 export interface PostsPage extends Paginated<PostRow> {
   counts?: PostsCounts
-  /** Presente na listagem de posts; indica se há mais itens após esta página/chunk. */
+  /** Present in post listings; whether more items exist after this page/chunk. */
   has_more?: boolean
 }
 
 /**
- * Lista posts paginados com suas imagens (Gallery) já populadas.
+ * Paginated posts with gallery images eager-loaded.
  *
- * - `status=published` (padrão): listagem pública global.
- * - `status=draft`: requer usuário autenticado; retorna os rascunhos do
- *   próprio usuário. A API devolve 401 se o token estiver ausente.
+ * - `status=published` (default): global public feed.
+ * - `status=draft`: requires auth; returns the current user's drafts (401 if no token).
  */
 export async function listPosts(
   page = 1,
@@ -85,7 +83,7 @@ export async function listPosts(
   status: PostStatus = 'published',
   includeCounts = false,
   sort: GallerySort = 'newest',
-  /** Deslocamento absoluto na lista ordenada (ignora `page` na API quando informado). */
+  /** Absolute offset in the sorted list (API may ignore `page` when set). */
   offset?: number | null,
 ) {
   const params: Record<string, string | number> = {
@@ -102,17 +100,13 @@ export async function listPosts(
   return data
 }
 
-/**
- * Carrega um post específico com autor e imagens.
- */
+/** Loads a single post with author and images. */
 export async function getPost(id: number | string): Promise<PostRow> {
   const { data } = await http.get<{ post: PostRow }>(`/posts/${id}`)
   return data.post
 }
 
-/**
- * Upload de uma imagem vinculada a um rascunho (draft UUID).
- */
+/** Upload an image for a draft identified by UUID. */
 export async function uploadGalleryImage(
   draftUuid: string,
   file: File,
@@ -127,8 +121,7 @@ export async function uploadGalleryImage(
     form,
     {
       headers: { 'Content-Type': 'multipart/form-data' },
-      // Upload para MinIO remoto pode demorar; o timeout global de 15s do
-      // cliente HTTP causa cancelamento prematuro. 2 minutos por arquivo.
+      // Remote MinIO upload can be slow; default 15s client timeout is too low.
       timeout: 120_000,
       onUploadProgress: (evt) => {
         if (!onProgress || !evt.total) return
@@ -139,9 +132,7 @@ export async function uploadGalleryImage(
   return data.gallery
 }
 
-/**
- * Upload de nova imagem para um post já existente (rascunho ou publicado).
- */
+/** Upload a new image to an existing post (draft or published). */
 export async function uploadPostImage(
   postId: number,
   file: File,
@@ -165,9 +156,7 @@ export async function uploadPostImage(
   return data.gallery
 }
 
-/**
- * Remove uma imagem específica de um post (banco + storage).
- */
+/** Remove one image from a post (DB + storage). */
 export async function deletePostImage(
   postId: number,
   galleryId: number,
@@ -176,8 +165,8 @@ export async function deletePostImage(
 }
 
 /**
- * Persiste a ordem das imagens do post (`gallery.position`).
- * `order` deve conter cada `gallery.id` do post exatamente uma vez, na ordem desejada.
+ * Persist image order (`gallery.position`).
+ * `order` must list each `gallery.id` for the post exactly once.
  */
 export async function reorderPostImages(
   postId: number,
@@ -193,10 +182,10 @@ export interface UpdatePostPayload {
 }
 
 /**
- * Atualiza metadados do post (título, descrição, status).
- *  - Para publicar: passe `status: 'published'`.
- *  - Para voltar a rascunho: passe `status: 'draft'`.
- *  - Para apenas editar metadados: envie somente `title`/`description`.
+ * Update post metadata (title, description, status).
+ *  - Publish: `status: 'published'`.
+ *  - Move back to draft: `status: 'draft'`.
+ *  - Metadata only: send `title` / `description` only.
  */
 export async function updatePost(
   postId: number,
@@ -210,20 +199,17 @@ export async function updatePost(
   return data.post
 }
 
-/**
- * Exclui um post e todas as imagens/arquivos associados.
- */
+/** Delete a post and all associated images/files. */
 export async function deletePost(postId: number): Promise<void> {
   await http.delete(`/posts/${postId}`, { timeout: 60_000 })
 }
 
 /**
- * Finaliza o post: cria Post e move todas as imagens do draft
- * (original + thumbs) para o caminho definitivo no storage.
+ * Finalize post creation: creates the Post row and moves draft images
+ * (original + thumbs) to their final storage paths.
  *
- * O timeout global de 15s do Axios é insuficiente porque o backend executa
- * N × (copy + delete) no MinIO para cada imagem e suas thumbnails; por isso
- * definimos um timeout maior específico para esta chamada.
+ * Uses an extended timeout because the backend may run N×(copy+delete) on MinIO
+ * per image and thumbnails; the default 15s Axios limit is not enough.
  */
 export async function createPost(
   draftUuid: string,

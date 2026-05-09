@@ -8,7 +8,7 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
   icon: 'add',
-  ariaLabel: 'Criar novo',
+  ariaLabel: 'Create new',
 })
 
 defineEmits<{ click: [] }>()

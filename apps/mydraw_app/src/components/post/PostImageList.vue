@@ -34,7 +34,7 @@ function onError(id: number | string) {
       />
       <div v-else class="post-view__placeholder">
         <MaterialIcon name="broken_image" />
-        <span>Imagem indisponível</span>
+        <span>Image unavailable</span>
       </div>
     </article>
   </div>

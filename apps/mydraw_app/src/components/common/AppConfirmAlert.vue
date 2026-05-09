@@ -11,8 +11,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  cancelLabel: 'Cancelar',
-  confirmLabel: 'Confirmar',
+  cancelLabel: 'Cancel',
+  confirmLabel: 'Confirm',
   confirmVariant: 'primary',
 })
 

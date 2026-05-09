@@ -14,7 +14,7 @@ defineEmits<{
 </script>
 
 <template>
-  <div class="post-view__media-mode" role="tablist" aria-label="Modo de visualização das imagens">
+  <div class="post-view__media-mode" role="tablist" aria-label="Image view mode">
     <button
       type="button"
       class="post-view__media-mode-btn"
@@ -24,7 +24,7 @@ defineEmits<{
       @click="$emit('update:modelValue', 'carousel')"
     >
       <MaterialIcon name="view_carousel" size="1rem" />
-      <span>Carrossel</span>
+      <span>Carousel</span>
     </button>
     <button
       type="button"
@@ -35,7 +35,7 @@ defineEmits<{
       @click="$emit('update:modelValue', 'list')"
     >
       <MaterialIcon name="view_agenda" size="1rem" />
-      <span>Lista</span>
+      <span>List</span>
     </button>
   </div>
 </template>

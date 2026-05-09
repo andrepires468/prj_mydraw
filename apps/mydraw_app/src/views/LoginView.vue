@@ -44,10 +44,10 @@ async function submit() {
         firstFieldError ??
         data?.message ??
         (err.response?.status === 401
-          ? 'Credenciais inválidas.'
-          : 'Falha ao autenticar.')
+          ? 'Invalid credentials.'
+          : 'Authentication failed.')
     } else {
-      errorMsg.value = err instanceof Error ? err.message : 'Erro desconhecido'
+      errorMsg.value = err instanceof Error ? err.message : 'Unknown error'
     }
   } finally {
     loading.value = false
@@ -102,7 +102,7 @@ async function submit() {
               <button
                 type="button"
                 class="auth-field__suffix"
-                :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+                :aria-label="showPassword ? 'Hide password' : 'Show password'"
                 @click="togglePassword"
               >
                 <MaterialIcon
@@ -121,7 +121,7 @@ async function submit() {
           <div class="pt-2">
             <AuthSubmitButton
               label="Authorize Session"
-              loading-label="Autenticando…"
+              loading-label="Signing in…"
               :loading="loading"
             />
           </div>

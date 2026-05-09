@@ -107,7 +107,7 @@ const cards = computed<PostCard[]>(() => {
 
     if (images.length === 0) continue
 
-    const fallbackTitle = post.status === 'draft' ? '(rascunho sem título)' : 'Post'
+    const fallbackTitle = post.status === 'draft' ? '(untitled draft)' : 'Post'
 
     result.push({
       id: post.id,
@@ -126,8 +126,8 @@ const isEmptyState = computed(
 
 const emptyMessage = computed(() =>
   galleryStatus.value === 'draft'
-    ? 'Você ainda não tem rascunhos. Comece um novo post na barra superior.'
-    : 'Ainda não há posts publicados. Seja o primeiro a criar um!',
+    ? "You don't have any drafts yet. Start a new post from the top bar."
+    : 'No published posts yet. Be the first to create one!',
 )
 
 const activePostId = computed<number | null>(() => {
@@ -256,7 +256,7 @@ async function loadInitial(includeCounts = false) {
     listHasMore.value = listPayloadHasMore(nextPage, GALLERY_PAGE_INITIAL)
     writeGalleryCache(galleryStatus.value, sort.value, nextPage)
   } catch (err: unknown) {
-    error.value = err instanceof Error ? err.message : 'Erro desconhecido'
+    error.value = err instanceof Error ? err.message : 'Unknown error'
     if (snapshot) {
       page.value = snapshot.page
       listHasMore.value = snapshot.hasMore
@@ -294,7 +294,7 @@ async function loadMore() {
     nextOffset.value = merged.data.length
     listHasMore.value = listPayloadHasMore(chunk, GALLERY_PAGE_MORE)
   } catch (err: unknown) {
-    error.value = err instanceof Error ? err.message : 'Erro desconhecido'
+    error.value = err instanceof Error ? err.message : 'Unknown error'
   } finally {
     loadingMore.value = false
   }
@@ -355,7 +355,7 @@ onUnmounted(() => {
       v-if="error"
       class="mb-6 text-sm text-on-error bg-error/10 border border-error/30 rounded-lg px-4 py-3"
     >
-      Erro ao carregar posts: {{ error }}.
+      Failed to load posts: {{ error }}.
     </p>
 
     <p
@@ -384,8 +384,8 @@ onUnmounted(() => {
         class="gallery-card-link"
         :aria-label="
           card.isDraft
-            ? `Editar rascunho ${card.title}`
-            : `Abrir post ${card.title}`
+            ? `Edit draft ${card.title}`
+            : `Open post ${card.title}`
         "
       >
         <GalleryCard
@@ -404,7 +404,7 @@ onUnmounted(() => {
 
     <AppModal
       v-if="activePostId !== null"
-      title="Visualização do post"
+      title="Post preview"
       @close="closePostModal"
     >
       <template #actions>
@@ -413,13 +413,13 @@ onUnmounted(() => {
           :to="{ name: 'edit-post', params: { post_id: activePostId } }"
           class="app-modal__edit-post"
         >
-          Editar post
+          Edit post
         </RouterLink>
         <RouterLink
           :to="{ name: 'post', params: { id: activePostId } }"
           class="app-modal__open-window"
         >
-          Abrir na janela
+          Open in full page
         </RouterLink>
       </template>
 
@@ -431,10 +431,10 @@ onUnmounted(() => {
       />
     </AppModal>
 
-    <LoadingIndicator v-if="loading" label="Carregando posts..." />
+    <LoadingIndicator v-if="loading" label="Loading posts..." />
     <LoadingIndicator
       v-else-if="loadingMore"
-      label="Carregando mais posts..."
+      label="Loading more posts..."
     />
   </main>
 </template>

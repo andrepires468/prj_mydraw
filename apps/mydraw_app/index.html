@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>mydraw — galeria de desenhos IA</title>
+    <title>mydraw — AI drawing gallery</title>
     <meta
       name="description"
-      content="Galeria curadoria de desenhos feitos com IA."
+      content="Curated gallery of AI-assisted drawings."
     />
     <meta name="theme-color" content="#4a4bd7" />
 
@@ -25,9 +25,8 @@
       rel="stylesheet"
     />
     <script>
-      // Aplica o tema salvo antes do Vue carregar, evitando flash de cor
-      // ao recarregar a página (FOUC). O toggle em TopNavBar.vue mantém
-      // a mesma chave no localStorage.
+      // Apply saved theme before Vue loads to avoid color flash on reload (FOUC).
+      // TopNavBar.vue uses the same localStorage key.
       (function () {
         try {
           var stored = localStorage.getItem('mydraw:theme');
@@ -40,7 +39,7 @@
           root.classList.toggle('dark', isDark);
           root.style.colorScheme = isDark ? 'dark' : 'light';
         } catch (_) {
-          /* ignora erros de acesso ao storage */
+          /* ignore storage access errors */
         }
       })();
     </script>

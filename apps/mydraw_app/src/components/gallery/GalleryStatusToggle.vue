@@ -6,8 +6,7 @@ interface Props {
   modelValue: PostStatus
   counts: PostsCounts
   /**
-   * Quando `false`, o botão "Draft" fica oculto — útil para visitantes
-   * anônimos que não possuem rascunhos.
+   * When `false`, the Draft tab is hidden (e.g. anonymous visitors with no drafts).
    */
   showDraft?: boolean
 }
@@ -35,7 +34,7 @@ function formatCount(value: number): string {
   <div
     class="gallery-filters__tabs"
     role="tablist"
-    aria-label="Filtro por status do post"
+    aria-label="Filter posts by status"
   >
     <button
       type="button"

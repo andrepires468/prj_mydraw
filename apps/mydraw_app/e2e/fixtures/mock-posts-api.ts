@@ -28,18 +28,18 @@ const postFixture = {
   id: 1,
   user_id: 1,
   title:
-    'Título deliberadamente longo para validar quebra de linha e fluidez em telas estreitas',
+    'Deliberately long title to validate line wrapping and fluid layout on narrow screens',
   description:
-    'Descrição com texto contínuo e palavra-superlonga-para-teste-de-overflow-abcdefghijklmnopqrstuvwxyz0123456789. ' +
-    'Repetição para preencher blocos de metadados.\n'.repeat(4).trim(),
+    'Description with continuous text and superlong-overflow-test-word-abcdefghijklmnopqrstuvwxyz0123456789. ' +
+    'Repeated to fill metadata blocks.\n'.repeat(4).trim(),
   status: 'published' as const,
   draft_uuid: null,
-  author_name: 'Nome de autor extremamente longo para stressar o layout do cartão',
+  author_name: 'Extremely long author name to stress-test card layout',
   created_at: '2026-01-15T10:30:00.000000Z',
   updated_at: '2026-01-15T10:30:00.000000Z',
   user: {
     id: 1,
-    name: 'Nome de autor extremamente longo para stressar o layout do cartão',
+    name: 'Extremely long author name to stress-test card layout',
   },
   images: [galleryRow(1, 1), galleryRow(2, 1)],
 }
@@ -57,8 +57,7 @@ const listPageFixture = {
 }
 
 /**
- * Intercepta chamadas à API de posts para o app não depender do Lumen/MinIO
- * durante os testes de layout (fluidez).
+ * Intercepts posts API calls so layout tests do not require Lumen/MinIO.
  */
 export async function installPostsApiMocks(page: Page): Promise<void> {
   await page.route('**/api/v1/posts**', async (route) => {

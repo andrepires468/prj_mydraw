@@ -185,7 +185,7 @@ const userInitial = computed(() => {
                     @click="closeMenu"
                   >
                     <MaterialIcon name="person" size="1.25rem" />
-                    <span class="top-nav-bar__dropdown-label">Perfil</span>
+                    <span class="top-nav-bar__dropdown-label">Profile</span>
                   </button>
 
                   <button
@@ -200,7 +200,7 @@ const userInitial = computed(() => {
                       size="1.25rem"
                     />
                     <span class="top-nav-bar__dropdown-label">
-                      Tema {{ isDark ? 'escuro' : 'claro' }}
+                      {{ isDark ? 'Dark' : 'Light' }} theme
                     </span>
                     <span
                       class="top-nav-bar__switch"
@@ -220,7 +220,7 @@ const userInitial = computed(() => {
                     @click="handleLogout"
                   >
                     <MaterialIcon name="logout" size="1.25rem" />
-                    <span class="top-nav-bar__dropdown-label">Sair</span>
+                    <span class="top-nav-bar__dropdown-label">Sign out</span>
                   </button>
                 </div>
               </transition>
@@ -228,7 +228,7 @@ const userInitial = computed(() => {
           </template>
 
           <RouterLink v-else to="/login" class="top-nav-bar__login">
-            Entrar
+            Sign in
           </RouterLink>
         </div>
       </div>

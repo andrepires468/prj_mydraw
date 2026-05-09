@@ -44,7 +44,7 @@ defineEmits<{
       v-else-if="image.status === 'queued'"
       class="image-queue-card__badge image-queue-card__badge--queued"
     >
-      Fila
+      Queue
     </span>
     <span
       v-else-if="image.status === 'done'"
@@ -87,8 +87,8 @@ defineEmits<{
         :disabled="removeDisabled"
         :aria-label="
           removeDisabled
-            ? 'Não é possível remover a única imagem do post'
-            : 'Remover imagem'
+            ? 'Cannot remove the only image on this post'
+            : 'Remove image'
         "
         @click="$emit('remove', image.id)"
       >
@@ -97,7 +97,7 @@ defineEmits<{
       <button
         type="button"
         class="image-queue-card__action image-queue-card__action--primary"
-        aria-label="Ver em tela cheia"
+        aria-label="View fullscreen"
         @click="$emit('preview', image.id)"
       >
         <MaterialIcon name="open_in_full" />

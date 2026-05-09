@@ -66,8 +66,9 @@ Definidas em `PostStorageService::THUMB_SIZES` / qualidade em `THUMB_QUALITY`:
 
 ## Desempenho
 
-- **Listagem de posts** (`GET /api/v1/posts`): resposta cacheada por poucos segundos (`POSTS_LIST_CACHE_TTL_SECONDS`, padrão **15**). A chave de cache inclui versões globais e por usuário (`PostListCache`): qualquer publicação, edição ou upload **invalida** o cache via *bump* de versão, evitando dados stale sem abandonar o ganho de throughput.
-- **Frontend**: uso de thumbs **180×180** / **320×320** nas grades reduz banda e tempo de decode em relação ao original; rotas públicas limitam o que precisa autenticação.
+- **API — listagem de posts** (`GET /api/v1/posts`): resposta cacheada por poucos segundos (`POSTS_LIST_CACHE_TTL_SECONDS`, padrão **15**). A chave de cache inclui versões globais e por usuário (`PostListCache`): qualquer publicação, edição ou upload **invalida** o cache via *bump* de versão, evitando dados stale sem abandonar o ganho de throughput.
+- **App (frontend) — cache em `localStorage`**: a galeria (`GalleryView.vue`) guarda a **primeira página** da listagem por combinação de aba (publicado/rascunho) e ordenação (`mydraw:gallery-cache:v2:…`), para **hidratar** a UI ao reabrir o site enquanto uma nova requisição atualiza os dados. Preferências como ordenação da galeria e tema também persistem no browser.
+- **Imagens no app**: uso de thumbs **180×180** / **320×320** nas grades reduz banda e tempo de decode em relação ao original; rotas públicas limitam o que precisa autenticação.
 - **E2E**: testes Playwright podem mockar a API — não exigem MinIO ligado para validar layout e fluxos básicos.
 
 ---

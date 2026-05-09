@@ -41,6 +41,7 @@ services:
       MINIO_PUBLIC_URL: ${APP_VITE_MINIO_PUBLIC_URL:-http://localhost:9100}
       MINIO_BUCKET_PUBLIC: ${MINIO_BUCKET_PUBLIC:-true}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      POSTS_LIST_CACHE_TTL_SECONDS: ${POSTS_LIST_CACHE_TTL_SECONDS:-15}
       PHP_IDE_CONFIG: "serverName=mydraw_api"
     extra_hosts:
       - "host.docker.internal:host-gateway"

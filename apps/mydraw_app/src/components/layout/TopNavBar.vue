@@ -115,7 +115,7 @@ const userInitial = computed(() => {
             Gallery
           </RouterLink>
           <RouterLink
-            v-if="auth.isAuthenticated"
+            v-if="auth.isAdmin"
             to="/posts/new/edit"
             class="top-nav-bar__link"
             active-class="top-nav-bar__link--active"
@@ -138,6 +138,7 @@ const userInitial = computed(() => {
 
         <div class="top-nav-bar__actions">
           <button
+            v-if="auth.isAdmin"
             type="button"
             class="top-nav-bar__icon-button"
             aria-label="Admin panel"

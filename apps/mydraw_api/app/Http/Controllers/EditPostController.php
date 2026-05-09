@@ -44,6 +44,15 @@ class EditPostController extends Controller
         return (int) $user->getKey();
     }
 
+    private function ensureAdmin(User $user): ?JsonResponse
+    {
+        if (!$user->is_admin) {
+            return response()->json(['error' => 'forbidden'], 403);
+        }
+
+        return null;
+    }
+
     /**
      * Localiza um post pertencente ao usuário autenticado; retorna null
      * caso não exista ou pertença a outro usuário.
@@ -78,6 +87,9 @@ class EditPostController extends Controller
         $user = $this->authUser($request);
         if (!$user) {
             return response()->json(['error' => 'unauthorized'], 401);
+        }
+        if ($response = $this->ensureAdmin($user)) {
+            return $response;
         }
 
         $post = $this->findOwnedPost($request, $id, $user);
@@ -163,6 +175,9 @@ class EditPostController extends Controller
         if (!$user) {
             return response()->json(['error' => 'unauthorized'], 401);
         }
+        if ($response = $this->ensureAdmin($user)) {
+            return $response;
+        }
 
         $post = $this->findOwnedPost($request, $id, $user);
         if (!$post) {
@@ -223,6 +238,9 @@ class EditPostController extends Controller
         $user = $this->authUser($request);
         if (!$user) {
             return response()->json(['error' => 'unauthorized'], 401);
+        }
+        if ($response = $this->ensureAdmin($user)) {
+            return $response;
         }
 
         $post = $this->findOwnedPost($request, $id, $user);
@@ -312,6 +330,9 @@ class EditPostController extends Controller
         if (!$user) {
             return response()->json(['error' => 'unauthorized'], 401);
         }
+        if ($response = $this->ensureAdmin($user)) {
+            return $response;
+        }
 
         $post = $this->findOwnedPost($request, $id, $user);
         if (!$post) {
@@ -371,6 +392,9 @@ class EditPostController extends Controller
         $user = $this->authUser($request);
         if (!$user) {
             return response()->json(['error' => 'unauthorized'], 401);
+        }
+        if ($response = $this->ensureAdmin($user)) {
+            return $response;
         }
 
         $post = $this->findOwnedPost($request, $id, $user);

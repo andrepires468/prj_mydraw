@@ -27,6 +27,11 @@ class PostController extends Controller
         return $user instanceof User ? $user : null;
     }
 
+    private function isAdmin(?User $user): bool
+    {
+        return $user instanceof User && $user->is_admin;
+    }
+
     /**
      * GET /api/v1/posts?status=published|draft — listagem paginada.
      *
@@ -65,6 +70,9 @@ class PostController extends Controller
 
         if ($status === Post::STATUS_DRAFT && !$user) {
             return response()->json(['error' => 'unauthorized'], 401);
+        }
+        if ($status === Post::STATUS_DRAFT && !$this->isAdmin($user)) {
+            return response()->json(['error' => 'forbidden'], 403);
         }
 
         $sort = $this->resolveSort($request);
@@ -106,6 +114,7 @@ class PostController extends Controller
         if ($status === Post::STATUS_PUBLISHED) {
             $query
                 ->leftJoin('users', 'users.Id', '=', 'posts.user_id')
+                ->where('users.IsAdmin', true)
                 ->select('posts.*')
                 ->selectRaw('users.Name as author_name');
         }
@@ -122,7 +131,7 @@ class PostController extends Controller
             },
         ]);
 
-        if ($status === Post::STATUS_DRAFT && $user) {
+        if ($status === Post::STATUS_DRAFT && $this->isAdmin($user)) {
             $query->where('user_id', (int) $user->getKey());
         }
 
@@ -226,7 +235,7 @@ class PostController extends Controller
         $cursorPart = $offset !== null ? 'o'.$offset : 'p'.$page;
 
         return sprintf(
-            'posts:list:v5:%s:sort:%s:%s:pp%s:counts%s:u%s:gv%s:uv%s',
+            'posts:list:v6:%s:sort:%s:%s:pp%s:counts%s:u%s:gv%s:uv%s',
             $status,
             $sort,
             $cursorPart,
@@ -254,14 +263,16 @@ class PostController extends Controller
     private function resolveCounts(?User $user): array
     {
         $draft = 0;
-        if ($user) {
+        if ($this->isAdmin($user)) {
             $userId = (int) $user->getKey();
             $row = Post::query()
+                ->leftJoin('users', 'users.Id', '=', 'posts.user_id')
                 ->selectRaw(
                     'SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS published_count,
                      SUM(CASE WHEN status = ? AND user_id = ? THEN 1 ELSE 0 END) AS draft_count',
                     [Post::STATUS_PUBLISHED, Post::STATUS_DRAFT, $userId]
                 )
+                ->where('users.IsAdmin', true)
                 ->first();
 
             return [
@@ -272,7 +283,9 @@ class PostController extends Controller
 
         return [
             'published' => (int) Post::query()
+                ->leftJoin('users', 'users.Id', '=', 'posts.user_id')
                 ->where('status', Post::STATUS_PUBLISHED)
+                ->where('users.IsAdmin', true)
                 ->count(),
             'draft'     => 0,
         ];
@@ -302,7 +315,7 @@ class PostController extends Controller
     {
         $post = Post::query()
             ->with([
-                'user:Id,Name',
+                'user:Id,Name,IsAdmin',
                 'images' => function ($q) {
                     $q->orderBy('position')->orderBy('id');
                 },
@@ -310,6 +323,10 @@ class PostController extends Controller
             ->find($id);
 
         if (!$post) {
+            return response()->json(['error' => 'not_found'], 404);
+        }
+
+        if (!$this->isAdmin($post->user)) {
             return response()->json(['error' => 'not_found'], 404);
         }
 

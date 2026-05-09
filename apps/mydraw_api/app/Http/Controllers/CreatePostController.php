@@ -73,6 +73,15 @@ class CreatePostController extends Controller
         return (int) $user->getKey();
     }
 
+    private function ensureAdmin(User $user): ?JsonResponse
+    {
+        if (!$user->is_admin) {
+            return response()->json(['error' => 'forbidden'], 403);
+        }
+
+        return null;
+    }
+
     /**
      * POST /api/v1/create-post/upload — multipart: file, draft_uuid.
      *
@@ -90,6 +99,9 @@ class CreatePostController extends Controller
         $user = $this->authUser($request);
         if (!$user) {
             return response()->json(['error' => 'unauthorized'], 401);
+        }
+        if ($response = $this->ensureAdmin($user)) {
+            return $response;
         }
 
         $this->validate($request, [
@@ -221,6 +233,9 @@ class CreatePostController extends Controller
         $user = $this->authUser($request);
         if (!$user) {
             return response()->json(['error' => 'unauthorized'], 401);
+        }
+        if ($response = $this->ensureAdmin($user)) {
+            return $response;
         }
 
         $this->validate($request, [

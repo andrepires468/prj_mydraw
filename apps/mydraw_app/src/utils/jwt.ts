@@ -16,7 +16,7 @@ function base64UrlDecode(input: string): string {
         .join('')
     )
   }
-  return Buffer.from(base64, 'base64').toString('utf-8')
+  throw new Error('Base64 decoding is not available.')
 }
 
 export function decodeJwt(token: string): JwtPayload | null {

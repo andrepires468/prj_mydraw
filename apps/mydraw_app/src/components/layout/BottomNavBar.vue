@@ -2,8 +2,10 @@
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const auth = useAuthStore()
 
 /** Feed ativo em /gallery/published, /gallery/drafts e modais de post na galeria. */
 const galleryFeedActive = computed(() =>
@@ -27,6 +29,7 @@ const galleryFeedActive = computed(() =>
       <span class="bottom-nav-bar__label">Feed</span>
     </RouterLink>
     <RouterLink
+      v-if="auth.isAdmin"
       to="/posts/new/edit"
       class="bottom-nav-bar__link"
       active-class="bottom-nav-bar__link--active"

@@ -6,6 +6,17 @@ import EditPostView from '@/views/EditPostView.vue'
 import PostView from '@/views/PostView.vue'
 import { isJwtExpired } from '@/utils/jwt'
 
+function storedUserIsAdmin(): boolean {
+  try {
+    const raw = localStorage.getItem('mydraw:user')
+    if (!raw) return false
+    const user = JSON.parse(raw) as { is_admin?: unknown }
+    return user.is_admin === true
+  } catch {
+    return false
+  }
+}
+
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -29,6 +40,7 @@ export const router = createRouter({
       path: '/gallery/drafts',
       name: 'gallery-drafts',
       component: GalleryView,
+      meta: { adminOnly: true },
     },
     {
       path: '/gallery/published/post/:id(\\d+)',
@@ -42,6 +54,7 @@ export const router = createRouter({
       name: 'gallery-drafts-post',
       component: GalleryView,
       props: true,
+      meta: { adminOnly: true },
     },
     {
       path: '/posts/:id(\\d+)',
@@ -54,16 +67,19 @@ export const router = createRouter({
       path: '/posts/new/edit',
       name: 'edit-post-new',
       component: EditPostView,
+      meta: { adminOnly: true },
     },
     {
       path: '/posts/:post_id(\\d+)/edit',
       name: 'edit-post',
       component: EditPostView,
       props: true,
+      meta: { adminOnly: true },
     },
     {
       path: '/create',
       redirect: { name: 'edit-post-new' },
+      meta: { adminOnly: true },
     },
     {
       path: '/login',
@@ -98,6 +114,9 @@ router.beforeEach((to) => {
 
   if (!isPublic && !hasValidSession) {
     return { name: 'login', query: { redirect: to.fullPath } }
+  }
+  if (to.matched.some((record) => record.meta.adminOnly === true) && !storedUserIsAdmin()) {
+    return { name: 'gallery-published' }
   }
   return true
 })

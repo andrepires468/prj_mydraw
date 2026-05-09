@@ -150,7 +150,7 @@ const selectedPostFromList = computed<PostRow | null>(() => {
 })
 
 const canEditActivePost = computed(() => {
-  if (!auth.isAuthenticated || activePostId.value === null || !auth.user) return false
+  if (!auth.isAdmin || activePostId.value === null || !auth.user) return false
   const row = selectedPostFromList.value
   if (!row) return false
   return row.user_id === auth.user.id
@@ -345,7 +345,7 @@ onUnmounted(() => {
       <GalleryStatusToggle
         :model-value="galleryStatus"
         :counts="counts"
-        :show-draft="auth.isAuthenticated"
+        :show-draft="auth.isAdmin"
         @update:model-value="changeStatus"
       />
       <GalleryFilters :sort="sort" @update:sort="sort = $event" />

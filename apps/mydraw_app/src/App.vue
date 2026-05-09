@@ -33,7 +33,10 @@ onMounted(() => {
 
     <template v-if="!isAuthRoute">
       <BottomNavBar />
-      <FloatingActionButton aria-label="Create new drawing" />
+      <FloatingActionButton
+        v-if="auth.isAdmin"
+        aria-label="Create new drawing"
+      />
     </template>
   </div>
 </template>

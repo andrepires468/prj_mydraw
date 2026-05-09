@@ -34,6 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(
     () => token.value !== null && !isJwtExpired(token.value)
   )
+  const isAdmin = computed(() => user.value?.is_admin === true)
 
   function setToken(value: string | null) {
     token.value = value
@@ -129,6 +130,7 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     user,
     isAuthenticated,
+    isAdmin,
     setUser,
     login,
     register,

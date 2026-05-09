@@ -32,11 +32,18 @@ class AuthController extends Controller
             'password' => 'required|string|min:6|max:100',
         ]);
 
-        $user = User::create([
-            'Name'     => $request->input('name'),
-            'Email'    => $request->input('email'),
-            'Password' => Hash::make($request->input('password')),
-        ]);
+        $user = DB::transaction(function () use ($request): User {
+            $hasAdmin = User::query()
+                ->where('IsAdmin', true)
+                ->exists();
+
+            return User::create([
+                'Name'     => $request->input('name'),
+                'Email'    => $request->input('email'),
+                'Password' => Hash::make($request->input('password')),
+                'IsAdmin'  => $hasAdmin ? null : true,
+            ]);
+        });
 
         $token = Auth::login($user);
 

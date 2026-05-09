@@ -28,6 +28,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'Password',
         'GoogleId',
         'AvatarKey',
+        'IsAdmin',
     ];
 
     /**
@@ -41,12 +42,14 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'Password',
         'GoogleId',
         'AvatarKey',
+        'IsAdmin',
     ];
 
     protected $appends = [
         'id',
         'name',
         'email',
+        'is_admin',
         'google_linked',
         'avatar_url',
     ];
@@ -64,6 +67,11 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     public function getEmailAttribute(): ?string
     {
         return $this->attributes['Email'] ?? null;
+    }
+
+    public function getIsAdminAttribute(): bool
+    {
+        return (bool) ($this->attributes['IsAdmin'] ?? false);
     }
 
     public function getGoogleLinkedAttribute(): bool

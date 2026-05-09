@@ -178,15 +178,15 @@ const userInitial = computed(() => {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
+                  <RouterLink
+                    to="/profile"
                     class="top-nav-bar__dropdown-item"
                     role="menuitem"
                     @click="closeMenu"
                   >
                     <MaterialIcon name="person" size="1.25rem" />
                     <span class="top-nav-bar__dropdown-label">Profile</span>
-                  </button>
+                  </RouterLink>
 
                   <button
                     type="button"

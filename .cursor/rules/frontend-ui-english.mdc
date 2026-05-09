@@ -1,0 +1,13 @@
+---
+description: UI copy and user-facing frontend text must be in English
+globs: apps/mydraw_app/**/*
+alwaysApply: false
+---
+
+# Frontend UI language (English)
+
+When creating or editing anything under `apps/mydraw_app/`:
+
+- Use **English** for all user-visible strings: labels, placeholders, buttons, hints, empty states, errors shown in the UI, `aria-label` / `aria-description`, and comments inside Vue templates that mirror copy.
+- Keep **Portuguese** for assistant replies and git commit messages per project rules; this rule applies only to **front-end source** in `mydraw_app`.
+- If the API returns localized messages, prefer mapping or generic English fallbacks in the client when you control the message path.

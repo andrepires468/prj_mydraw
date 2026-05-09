@@ -35,6 +35,13 @@ export async function me() {
   return data.user
 }
 
+export async function updateProfile(name: string) {
+  const { data } = await http.put<{ user: AuthUser }>('/auth/profile', {
+    name,
+  })
+  return data.user
+}
+
 export async function logout(token?: string) {
   await http.post(
     '/auth/logout',

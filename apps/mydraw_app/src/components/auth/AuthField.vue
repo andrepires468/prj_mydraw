@@ -13,6 +13,7 @@ interface Props {
   required?: boolean
   disabled?: boolean
   minlength?: number
+  maxlength?: number
 }
 
 withDefaults(defineProps<Props>(), {
@@ -22,6 +23,7 @@ withDefaults(defineProps<Props>(), {
   required: false,
   disabled: false,
   minlength: undefined,
+  maxlength: undefined,
 })
 
 defineEmits<{
@@ -55,6 +57,7 @@ const hasSuffix = computed(() => !!slots.suffix)
         :required="required"
         :disabled="disabled"
         :minlength="minlength"
+        :maxlength="maxlength"
         class="auth-field__input"
         :class="{ 'auth-field__input--has-suffix': hasSuffix }"
         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"

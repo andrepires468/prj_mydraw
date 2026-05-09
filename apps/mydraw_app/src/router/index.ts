@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import GalleryView from '@/views/GalleryView.vue'
 import LoginView from '@/views/LoginView.vue'
+import ProfileEditView from '@/views/ProfileEditView.vue'
 import EditPostView from '@/views/EditPostView.vue'
 import PostView from '@/views/PostView.vue'
 import { isJwtExpired } from '@/utils/jwt'
@@ -68,6 +69,12 @@ export const router = createRouter({
       name: 'login',
       component: LoginView,
       meta: { guestOnly: true },
+    },
+    {
+      path: '/profile',
+      name: 'profile-edit',
+      component: ProfileEditView,
+      meta: { requiresAuth: true },
     },
   ],
 })

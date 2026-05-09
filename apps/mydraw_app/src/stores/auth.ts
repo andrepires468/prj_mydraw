@@ -87,6 +87,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function updateProfile(name: string) {
+    const meUser = await authApi.updateProfile(name)
+    setUser(meUser)
+    return meUser
+  }
+
   async function logout() {
     // Remove a sessão localmente primeiro para a UI refletir o logout
     // imediatamente; só então dispara a invalidação no servidor com o
@@ -107,6 +113,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     register,
     fetchMe,
+    updateProfile,
     logout,
     clearSession,
   }

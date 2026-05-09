@@ -68,6 +68,31 @@ class AuthController extends Controller
     }
 
     /**
+     * PUT /api/auth/profile — atualiza nome (nickname: sem acentos nem espaços).
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $this->validate($request, [
+            'name' => [
+                'required',
+                'string',
+                'min:2',
+                'max:50',
+                'regex:/^[a-zA-Z0-9_-]+$/',
+            ],
+        ], [
+            'name.regex' => 'O nome deve ser um nickname: apenas letras (sem acento), números, _ e -.',
+        ]);
+
+        /** @var User $user */
+        $user = Auth::user();
+        $user->Name = $request->input('name');
+        $user->save();
+
+        return response()->json(['user' => $user->fresh()]);
+    }
+
+    /**
      * POST /api/auth/logout
      */
     public function logout(): JsonResponse

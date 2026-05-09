@@ -1,0 +1,56 @@
+@layer components {
+  .profile-edit-page {
+    @apply min-h-screen w-full flex items-center justify-center p-6 pb-24 md:pb-6 bg-surface relative overflow-hidden;
+  }
+
+  .profile-edit-page ::selection {
+    @apply bg-primary-container text-on-primary-container;
+  }
+
+  .profile-edit-page__backdrop {
+    @apply fixed inset-0 pointer-events-none -z-10 overflow-hidden;
+  }
+
+  .profile-edit-page__blob {
+    @apply absolute rounded-full;
+    filter: blur(120px);
+  }
+
+  .profile-edit-page__blob--top {
+    @apply bg-surface-container-high;
+    top: -10%;
+    left: -10%;
+    width: 50%;
+    height: 50%;
+    opacity: 0.4;
+  }
+
+  .profile-edit-page__blob--bottom {
+    background-color: var(--login-blur-primary);
+    bottom: -10%;
+    right: -10%;
+    width: 40%;
+    height: 40%;
+    opacity: 0.3;
+    filter: blur(100px);
+  }
+
+  .profile-edit-page__content {
+    @apply w-full;
+    max-width: 440px;
+  }
+
+  .profile-edit-page__hint {
+    @apply mt-2 text-sm text-on-surface-variant leading-snug;
+  }
+
+  .profile-edit-page__email {
+    @apply mt-6 rounded-2xl px-4 py-3 text-sm;
+    background-color: var(--surface-container-low);
+    color: var(--on-surface-variant);
+  }
+
+  .profile-edit-page__email-label {
+    @apply block text-xs font-medium uppercase tracking-wide text-on-surface-variant mb-1;
+  }
+}

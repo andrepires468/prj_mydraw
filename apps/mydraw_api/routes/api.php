@@ -20,6 +20,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
 
         $router->group(['middleware' => 'auth.jwt'], function () use ($router) {
             $router->get('/me',      'AuthController@me');
+            $router->put('/profile', 'AuthController@updateProfile');
             $router->post('/logout', 'AuthController@logout');
         });
     });

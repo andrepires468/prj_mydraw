@@ -37,7 +37,7 @@ JWT: `GET /auth/me`, `POST /auth/logout`, `POST /drawings`, `DELETE /drawings/{i
 ## Convenções
 
 - **API**: PSR-4 `App\`, controllers magros, middleware `auth:api` (JWT). Uploads vão para MinIO via disk `s3`.
-- **APP**: Composition API `<script setup lang="ts">`. CSS em `src/assets/styles/components/<nome>.css` importado no `main.css`. HTTP via `src/api/*.ts` usando instance Axios de `src/api/http.ts`. Estado de auth em `stores/auth.ts`.
+- **APP**: Composition API `<script setup lang="ts">`. CSS em `src/assets/styles/components/<nome>.css` importado no `main.css`. HTTP via `src/api/*.ts` usando instance Axios de `src/api/http.ts`. Estado de auth em `stores/auth.ts`. **Textos de interface (UI) no app em inglês** — ver regra `frontend-ui-english.mdc`.
 - **Backend**: antes de alterar listagem/leitura de posts/galeria, revisar e preservar o fluxo de cache existente (`PostListCache` e invalidação relacionada).
 - **Frontend**: ao mexer em cards/galeria/criação/edição, avaliar opções de thumbnail na pré-visualização (qualidade, proporção, fallback e custo de carregamento).
 - **Layout/Themes**: em qualquer ajuste visual, validar e manter paridade entre temas light/dark (cores, contraste, estados e componentes afetados).

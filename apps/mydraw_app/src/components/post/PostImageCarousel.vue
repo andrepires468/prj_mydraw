@@ -6,23 +6,47 @@ import type { PostMediaImage } from './post-media'
 interface Props {
   images: PostMediaImage[]
   altText: string
+  /** Optional external control of the active index (use with v-model:currentIndex). */
+  currentIndex?: number
+  /** Visual variant; 'fullscreen' removes the fixed aspect-ratio for presentation contexts. */
+  variant?: 'default' | 'fullscreen'
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  currentIndex: undefined,
+  variant: 'default',
+})
 
-const current = ref(0)
+const emit = defineEmits<{
+  'update:currentIndex': [value: number]
+}>()
+
+const internalIndex = ref(0)
 const failedIds = ref<Set<number | string>>(new Set())
+
+const current = computed<number>({
+  get: () =>
+    props.currentIndex !== undefined ? props.currentIndex : internalIndex.value,
+  set: (value: number) => {
+    internalIndex.value = value
+    emit('update:currentIndex', value)
+  },
+})
 
 const activeImage = computed(() => props.images[current.value] ?? null)
 const activeFailed = computed(
   () => !!activeImage.value && failedIds.value.has(activeImage.value.id),
 )
 const hasMultiple = computed(() => props.images.length > 1)
+const isFullscreen = computed(() => props.variant === 'fullscreen')
 
 watch(
   () => props.images,
   () => {
-    current.value = 0
+    internalIndex.value = 0
+    if (props.currentIndex !== undefined) {
+      emit('update:currentIndex', 0)
+    }
     failedIds.value = new Set()
   },
 )
@@ -48,20 +72,24 @@ function goTo(index: number) {
 </script>
 
 <template>
-  <div class="post-view__media">
-    <template v-if="activeImage && !activeFailed">
+  <div
+    class="post-view__media"
+    :class="{ 'post-view__media--fullscreen': isFullscreen }"
+  >
+    <Transition name="post-view__image-fade" mode="out-in">
       <img
+        v-if="activeImage && !activeFailed"
         :key="activeImage.id"
         class="post-view__image"
         :src="activeImage.url"
         :alt="altText"
         @error="onError(activeImage.id)"
       />
-    </template>
-    <div v-else class="post-view__placeholder">
-      <MaterialIcon name="broken_image" />
-      <span>Image unavailable</span>
-    </div>
+      <div v-else class="post-view__placeholder">
+        <MaterialIcon name="broken_image" />
+        <span>Image unavailable</span>
+      </div>
+    </Transition>
 
     <template v-if="hasMultiple">
       <button

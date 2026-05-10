@@ -1,0 +1,122 @@
+@layer components {
+  .post-presentation {
+    @apply fixed inset-0 z-[120] flex flex-col items-stretch;
+    background: rgb(8 10 14 / 0.78);
+    backdrop-filter: blur(25px) saturate(120%);
+    -webkit-backdrop-filter: blur(25px) saturate(120%);
+  }
+
+  .post-presentation__top-bar {
+    @apply absolute top-0 left-0 right-0 z-[2] flex items-center justify-center;
+    @apply px-4 py-4 md:px-6 md:py-5;
+    pointer-events: none;
+  }
+
+  .post-presentation__controls {
+    @apply inline-flex items-center gap-2 md:gap-3 p-1.5 rounded-full;
+    background: color-mix(in srgb, var(--color-surface) 78%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-outline-variant) 22%, transparent);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.25);
+    pointer-events: auto;
+  }
+
+  .post-presentation__play-btn {
+    @apply inline-flex items-center justify-center rounded-full w-9 h-9 transition-colors;
+    @apply text-on-primary bg-primary;
+    box-shadow: var(--shadow-primary-button);
+  }
+
+  .post-presentation__play-btn:hover {
+    @apply bg-primary-container text-on-primary-container;
+  }
+
+  .post-presentation__play-btn--paused {
+    @apply text-on-surface bg-surface-container-high;
+    box-shadow: none;
+  }
+
+  .post-presentation__play-btn--paused:hover {
+    @apply bg-surface-container-highest;
+  }
+
+  .post-presentation__interval {
+    @apply inline-flex items-center gap-1 pl-1 pr-1;
+  }
+
+  .post-presentation__interval-label {
+    @apply hidden sm:inline text-[11px] uppercase tracking-[0.1em] font-semibold;
+    @apply text-on-surface-variant pr-1;
+  }
+
+  .post-presentation__interval-btn {
+    @apply inline-flex items-center justify-center px-2.5 py-1 rounded-full;
+    @apply text-xs font-semibold text-on-surface-variant transition-colors;
+    min-width: 2.25rem;
+  }
+
+  .post-presentation__interval-btn:hover {
+    @apply text-on-surface bg-surface-container;
+  }
+
+  .post-presentation__interval-btn--active {
+    @apply text-on-primary bg-primary;
+    box-shadow: var(--shadow-primary-button);
+  }
+
+  .post-presentation__close {
+    @apply absolute top-3 right-3 md:top-4 md:right-4 z-[3];
+    @apply inline-flex items-center justify-center rounded-full w-9 h-9 transition-colors;
+    color: rgb(255 255 255 / 0.85);
+    background: rgb(0 0 0 / 0.35);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgb(255 255 255 / 0.08);
+  }
+
+  .post-presentation__close:hover {
+    color: #fff;
+    background: rgb(0 0 0 / 0.55);
+  }
+
+  .post-presentation__stage {
+    @apply flex-1 min-h-0 flex flex-col items-stretch;
+    @apply px-4 md:px-8 pt-20 md:pt-24 pb-4 md:pb-6 gap-3 md:gap-4;
+  }
+
+  .post-presentation__stage .post-view__media {
+    @apply flex-1 min-h-0;
+  }
+
+  .post-presentation__stage .post-view__image {
+    max-height: 100%;
+  }
+
+  .post-presentation__stage .post-view__thumbs {
+    @apply justify-center pb-0;
+  }
+
+  .post-presentation__stage .post-view__thumb {
+    width: 4rem;
+    height: 4rem;
+    background: color-mix(in srgb, var(--color-surface-container) 60%, transparent);
+  }
+
+  .post-presentation__stage .post-view__nav {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .post-presentation__stage .post-view__nav .material-symbols-outlined {
+    font-size: 1.75rem;
+  }
+
+  .post-presentation__fade-enter-active,
+  .post-presentation__fade-leave-active {
+    transition: opacity 280ms ease;
+  }
+
+  .post-presentation__fade-enter-from,
+  .post-presentation__fade-leave-to {
+    opacity: 0;
+  }
+}

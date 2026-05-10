@@ -51,8 +51,27 @@
     @apply lg:col-span-8 flex flex-col gap-4 min-w-0 max-w-full;
   }
 
+  .post-view__media-toolbar {
+    @apply flex flex-wrap items-center gap-2 self-start;
+  }
+
   .post-view__media-mode {
     @apply inline-flex items-center gap-1 p-1 rounded-full bg-surface-container-low self-start;
+  }
+
+  .post-view__present-btn {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold;
+    @apply text-on-surface-variant bg-surface-container-low transition-colors;
+    border: 1px solid color-mix(in srgb, var(--color-outline-variant) 35%, transparent);
+  }
+
+  .post-view__present-btn:hover {
+    @apply text-on-surface bg-surface-container;
+    border-color: color-mix(in srgb, var(--color-outline-variant) 60%, transparent);
+  }
+
+  .post-view__present-btn .material-symbols-outlined {
+    font-size: 1rem;
   }
 
   .post-view__media-mode-btn {
@@ -124,10 +143,38 @@
     box-shadow: var(--shadow-media);
   }
 
+  .post-view__media--fullscreen {
+    @apply rounded-none;
+    aspect-ratio: auto;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    box-shadow: none;
+  }
+
   .post-view__image {
     @apply w-full h-full object-contain;
     display: block;
     background: var(--media-empty-gradient);
+  }
+
+  .post-view__media--fullscreen .post-view__image {
+    background: transparent;
+  }
+
+  .post-view__image-fade-enter-active,
+  .post-view__image-fade-leave-active {
+    transition: opacity 350ms ease, transform 450ms ease;
+  }
+
+  .post-view__image-fade-enter-from {
+    opacity: 0;
+    transform: scale(1.015);
+  }
+
+  .post-view__image-fade-leave-to {
+    opacity: 0;
+    transform: scale(0.985);
   }
 
   .post-view__placeholder {

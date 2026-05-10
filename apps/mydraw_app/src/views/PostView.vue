@@ -7,6 +7,7 @@ import LoadingIndicator from '@/components/gallery/LoadingIndicator.vue'
 import PostViewModeToggle from '@/components/post/PostViewModeToggle.vue'
 import PostImageCarousel from '@/components/post/PostImageCarousel.vue'
 import PostImageList from '@/components/post/PostImageList.vue'
+import PostPresentationModal from '@/components/post/PostPresentationModal.vue'
 import type { PostMediaImage, PostMediaViewMode } from '@/components/post/post-media'
 
 const MEDIA_VIEW_MODE_STORAGE_KEY = 'mydraw:post-view:media-mode'
@@ -49,6 +50,15 @@ const post = ref<PostRow | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const mediaViewMode = ref<PostMediaViewMode>(readSavedMediaViewMode())
+const presentationOpen = ref(false)
+
+function openPresentation() {
+  presentationOpen.value = true
+}
+
+function closePresentation() {
+  presentationOpen.value = false
+}
 
 const sortedGalleryRows = computed<GalleryRow[]>(() =>
   (post.value?.images ?? [])
@@ -219,10 +229,18 @@ watch(
       :class="{ 'post-view__layout--list-only': mediaViewMode === 'list' }"
     >
       <section class="post-view__media-wrapper">
-        <PostViewModeToggle
-          v-if="images.length > 1"
-          v-model="mediaViewMode"
-        />
+        <div v-if="images.length > 1" class="post-view__media-toolbar">
+          <PostViewModeToggle v-model="mediaViewMode" />
+          <button
+            type="button"
+            class="post-view__present-btn"
+            aria-label="Start slideshow presentation"
+            @click="openPresentation"
+          >
+            <MaterialIcon name="slideshow" size="1rem" />
+            <span>Presentation</span>
+          </button>
+        </div>
 
         <PostImageCarousel
           v-if="mediaViewMode === 'carousel'"
@@ -289,5 +307,12 @@ watch(
         </dl>
       </aside>
     </article>
+
+    <PostPresentationModal
+      v-if="presentationOpen && post && images.length > 0"
+      :images="images"
+      :alt-text="post.description ?? post.title"
+      @close="closePresentation"
+    />
   </component>
 </template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getPost, type PostRow } from '@/api/posts'
+import { getPost, type GalleryRow, type PostRow } from '@/api/posts'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import LoadingIndicator from '@/components/gallery/LoadingIndicator.vue'
 import PostViewModeToggle from '@/components/post/PostViewModeToggle.vue'
@@ -50,13 +50,17 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const mediaViewMode = ref<PostMediaViewMode>(readSavedMediaViewMode())
 
-const images = computed<PostMediaImage[]>(() =>
+const sortedGalleryRows = computed<GalleryRow[]>(() =>
   (post.value?.images ?? [])
     .slice()
     .sort(
       (a, b) =>
         (a.position ?? 0) - (b.position ?? 0) || a.id - b.id,
-    )
+    ),
+)
+
+const images = computed<PostMediaImage[]>(() =>
+  sortedGalleryRows.value
     .map((img): PostMediaImage | null => {
       if (!img.url) return null
       return {
@@ -66,6 +70,14 @@ const images = computed<PostMediaImage[]>(() =>
       }
     })
     .filter((img): img is PostMediaImage => img !== null),
+)
+
+/** Gallery rows aligned with `images` (visible URLs only), for list-mode metadata. */
+const galleryRowsAlignedWithImages = computed<(GalleryRow | null)[]>(() =>
+  images.value.map((img) => {
+    const row = sortedGalleryRows.value.find((r) => r.id === img.id)
+    return row ?? null
+  }),
 )
 
 const authorName = computed(
@@ -181,7 +193,11 @@ watch(
       This post has no visible images yet.
     </p>
 
-    <article v-else-if="post" class="post-view__layout">
+    <article
+      v-else-if="post"
+      class="post-view__layout"
+      :class="{ 'post-view__layout--list-only': mediaViewMode === 'list' }"
+    >
       <section class="post-view__media-wrapper">
         <PostViewModeToggle
           v-if="images.length > 1"
@@ -196,11 +212,15 @@ watch(
         <PostImageList
           v-else
           :images="images"
+          :gallery-rows="galleryRowsAlignedWithImages"
           :alt-text="post.description ?? post.title"
         />
       </section>
 
-      <aside class="post-view__info">
+      <aside
+        v-if="mediaViewMode === 'carousel'"
+        class="post-view__info"
+      >
         <header class="post-view__header">
           <h1 class="post-view__title">{{ post.title }}</h1>
           <time v-if="formattedDate" class="post-view__date">

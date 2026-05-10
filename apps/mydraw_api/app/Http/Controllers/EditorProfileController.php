@@ -2,31 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Services\EditorProfileService;
+use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 class EditorProfileController extends Controller
 {
-    /**
-     * GET /api/v1/editor/profile — perfil público do usuário administrador (editor do site).
-     */
+    public function __construct(private readonly EditorProfileService $editorProfileService)
+    {
+    }
+
     public function show(): JsonResponse
     {
-        $admin = User::query()
-            ->where('IsAdmin', true)
-            ->orderBy('Id')
-            ->first();
-
-        if ($admin === null) {
-            return response()->json(['message' => 'Editor not found'], 404);
-        }
-
-        return response()->json([
-            'editor' => [
-                'id'         => $admin->id,
-                'name'       => $admin->name,
-                'avatar_url' => $admin->avatar_url,
-            ],
-        ]);
+        return ApiResponse::success($this->editorProfileService->getPublicEditorProfile());
     }
 }

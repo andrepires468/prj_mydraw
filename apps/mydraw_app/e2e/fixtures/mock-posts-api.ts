@@ -58,6 +58,16 @@ const listPageFixture = {
   counts: { published: 1, draft: 0 },
 }
 
+/** Mesmo contrato que a API Lumen (`Status`, `Code`, `Message`, `Data`). */
+function apiEnvelope(data: unknown, httpCode = 200) {
+  return JSON.stringify({
+    Status: true,
+    Code: httpCode,
+    Message: '',
+    Data: data,
+  })
+}
+
 /**
  * Intercepts posts API calls so layout tests do not require Lumen/MinIO.
  */
@@ -73,7 +83,7 @@ export async function installPostsApiMocks(page: Page): Promise<void> {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ post: postFixture }),
+        body: apiEnvelope({ post: postFixture }),
       })
       return
     }
@@ -81,7 +91,7 @@ export async function installPostsApiMocks(page: Page): Promise<void> {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(listPageFixture),
+        body: apiEnvelope(listPageFixture),
       })
       return
     }

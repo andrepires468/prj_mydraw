@@ -1,5 +1,7 @@
 <?php
 
+use App\Support\ApiResponse;
+
 require_once __DIR__.'/../vendor/autoload.php';
 
 (new Laravel\Lumen\Bootstrap\LoadEnvironmentVariables(
@@ -92,7 +94,7 @@ $app->router->group([
 });
 
 $app->router->get('/', function () use ($app) {
-    return response()->json([
+    return ApiResponse::success([
         'name'    => config('app.name', 'mydraw'),
         'version' => $app->version(),
         'status'  => 'ok',

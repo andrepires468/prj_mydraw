@@ -1,36 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import axios from 'axios'
 import {
   extractGalleryMetadata,
   type ExtractGalleryMetadataResponse,
 } from '@/api/posts'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
+import { getApiErrorMessage } from '@/utils/apiErrorMessage'
 
 const busy = ref(false)
 const errorMsg = ref<string | null>(null)
 const successMsg = ref<string | null>(null)
 const lastSummary = ref<string | null>(null)
-
-function extractErrorMessage(err: unknown): string {
-  if (axios.isAxiosError(err)) {
-    const data = err.response?.data as
-      | { message?: string; errors?: Record<string, string[]>; error?: string }
-      | undefined
-    const firstFieldError = data?.errors
-      ? Object.values(data.errors)[0]?.[0]
-      : undefined
-    return (
-      firstFieldError ??
-      data?.message ??
-      data?.error ??
-      (err.response?.status === 401
-        ? 'Session expired. Please sign in again.'
-        : 'Failed to process the request.')
-    )
-  }
-  return err instanceof Error ? err.message : 'Unknown error'
-}
 
 async function extractAllPendingMetadata() {
   if (busy.value) return
@@ -50,7 +30,7 @@ async function extractAllPendingMetadata() {
         : 'Metadata extraction finished.'
     lastSummary.value = `Updated ${summary.updated}, no embedded data ${summary.no_metadata}, failed ${summary.failed}.`
   } catch (err) {
-    errorMsg.value = extractErrorMessage(err)
+    errorMsg.value = getApiErrorMessage(err)
   } finally {
     busy.value = false
   }

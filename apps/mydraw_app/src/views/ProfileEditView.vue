@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import { getApiErrorMessage } from '@/utils/apiErrorMessage'
 import * as authApi from '@/api/auth'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import AuthBrand from '@/components/auth/AuthBrand.vue'
@@ -77,31 +77,7 @@ async function submitPasswordChange() {
     })
     goBackToProfile()
   } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      const data = err.response?.data as
-        | {
-            message?: string | string[]
-            errors?: Record<string, string[]>
-          }
-        | undefined
-      const firstFieldError = data?.errors
-        ? Object.values(data.errors)[0]?.[0]
-        : undefined
-      const raw = data?.message
-      const messageStr =
-        typeof raw === 'string'
-          ? raw
-          : Array.isArray(raw)
-            ? raw[0]
-            : undefined
-      passwordErrorMsg.value =
-        firstFieldError ??
-        messageStr ??
-        'Could not update password.'
-    } else {
-      passwordErrorMsg.value =
-        err instanceof Error ? err.message : 'Unknown error.'
-    }
+    passwordErrorMsg.value = getApiErrorMessage(err)
     await nextTick()
     document
       .querySelector('.profile-edit-page__password-panel .auth-error')
@@ -181,30 +157,7 @@ async function confirmUnlinkGoogle() {
     await mountGoogleLinkButton()
   } catch (err: unknown) {
     unlinkConfirmOpen.value = false
-    if (axios.isAxiosError(err)) {
-      const data = err.response?.data as
-        | {
-            message?: string | string[]
-            errors?: Record<string, string[]>
-          }
-        | undefined
-      const firstFieldError = data?.errors
-        ? Object.values(data.errors)[0]?.[0]
-        : undefined
-      const raw = data?.message
-      const messageStr =
-        typeof raw === 'string'
-          ? raw
-          : Array.isArray(raw)
-            ? raw[0]
-            : undefined
-      errorMsg.value =
-        firstFieldError ??
-        messageStr ??
-        'Could not unlink Google account.'
-    } else {
-      errorMsg.value = err instanceof Error ? err.message : 'Unknown error.'
-    }
+    errorMsg.value = getApiErrorMessage(err)
     await nextTick()
     document
       .querySelector('.profile-edit-page .auth-error')
@@ -221,20 +174,7 @@ async function onGoogleLinkCredential(credential: string) {
   try {
     await auth.linkGoogleAccount(credential)
   } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      const data = err.response?.data as
-        | { message?: string; errors?: Record<string, string[]> }
-        | undefined
-      const firstFieldError = data?.errors
-        ? Object.values(data.errors)[0]?.[0]
-        : undefined
-      errorMsg.value =
-        firstFieldError ??
-        data?.message ??
-        'Could not link Google account.'
-    } else {
-      errorMsg.value = err instanceof Error ? err.message : 'Unknown error.'
-    }
+    errorMsg.value = getApiErrorMessage(err)
   } finally {
     googleLinkLoading.value = false
   }
@@ -294,20 +234,7 @@ async function submit() {
     await auth.updateProfile(nickname.value)
     await router.push('/')
   } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      const data = err.response?.data as
-        | { message?: string; errors?: Record<string, string[]> }
-        | undefined
-      const firstFieldError = data?.errors
-        ? Object.values(data.errors)[0]?.[0]
-        : undefined
-      errorMsg.value =
-        firstFieldError ??
-        data?.message ??
-        'Could not save your profile.'
-    } else {
-      errorMsg.value = err instanceof Error ? err.message : 'Unknown error.'
-    }
+    errorMsg.value = getApiErrorMessage(err)
   } finally {
     loading.value = false
   }

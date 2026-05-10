@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import { getApiErrorMessage } from '@/utils/apiErrorMessage'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import AuthBrand from '@/components/auth/AuthBrand.vue'
 import AuthField from '@/components/auth/AuthField.vue'
@@ -45,22 +45,7 @@ async function mountGoogleButton() {
         typeof route.query.redirect === 'string' ? route.query.redirect : '/'
       await router.replace(redirect)
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const data = err.response?.data as
-          | { message?: string; errors?: Record<string, string[]> }
-          | undefined
-        const firstFieldError = data?.errors
-          ? Object.values(data.errors)[0]?.[0]
-          : undefined
-        errorMsg.value =
-          firstFieldError ??
-          data?.message ??
-          (err.response?.status === 401 || err.response?.status === 422
-            ? 'Google sign-in failed.'
-            : 'Authentication failed.')
-      } else {
-        errorMsg.value = err instanceof Error ? err.message : 'Unknown error'
-      }
+      errorMsg.value = getApiErrorMessage(err)
     } finally {
       loading.value = false
     }
@@ -87,22 +72,7 @@ async function submit() {
       typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     await router.replace(redirect)
   } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      const data = err.response?.data as
-        | { message?: string; errors?: Record<string, string[]> }
-        | undefined
-      const firstFieldError = data?.errors
-        ? Object.values(data.errors)[0]?.[0]
-        : undefined
-      errorMsg.value =
-        firstFieldError ??
-        data?.message ??
-        (err.response?.status === 401
-          ? 'Invalid credentials.'
-          : 'Authentication failed.')
-    } else {
-      errorMsg.value = err instanceof Error ? err.message : 'Unknown error'
-    }
+    errorMsg.value = getApiErrorMessage(err)
   } finally {
     loading.value = false
   }

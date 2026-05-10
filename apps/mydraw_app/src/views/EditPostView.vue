@@ -13,6 +13,7 @@ import {
   type GalleryRow,
   type PostRow,
 } from '@/api/posts'
+import { getApiErrorMessage } from '@/utils/apiErrorMessage'
 import AppConfirmAlert from '@/components/common/AppConfirmAlert.vue'
 import AppModal from '@/components/common/AppModal.vue'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
@@ -206,24 +207,8 @@ function extractErrorMessage(err: unknown): string {
     if (axios.isCancel(err)) {
       return 'Request canceled.'
     }
-    const data = err.response?.data as
-      | { message?: string; errors?: Record<string, string[]>; error?: string }
-      | undefined
-    const firstFieldError = data?.errors
-      ? Object.values(data.errors)[0]?.[0]
-      : undefined
-    return (
-      firstFieldError ??
-      data?.message ??
-      data?.error ??
-      (err.response?.status === 401
-        ? 'Session expired. Please sign in again.'
-        : err.response?.status === 404
-          ? 'Post not found.'
-          : 'Failed to process the request.')
-    )
   }
-  return err instanceof Error ? err.message : 'Unknown error'
+  return getApiErrorMessage(err)
 }
 
 function galleryToQueued(row: GalleryRow): QueuedImage {

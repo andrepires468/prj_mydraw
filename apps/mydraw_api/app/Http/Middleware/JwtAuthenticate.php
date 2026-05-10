@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\ApiResponse;
 use Closure;
 use Exception;
 use Illuminate\Http\Request;
@@ -25,18 +26,18 @@ class JwtAuthenticate
             $user = $this->jwt->parseToken()->authenticate();
 
             if (!$user) {
-                return response()->json(['error' => 'user_not_found'], 404);
+                return ApiResponse::error('User not found.', 404, ['error' => 'user_not_found']);
             }
 
             $request->merge(['auth_user' => $user]);
         } catch (TokenExpiredException $e) {
-            return response()->json(['error' => 'token_expired'], 401);
+            return ApiResponse::error('Token expired.', 401, ['error' => 'token_expired']);
         } catch (TokenInvalidException $e) {
-            return response()->json(['error' => 'token_invalid'], 401);
+            return ApiResponse::error('Invalid token.', 401, ['error' => 'token_invalid']);
         } catch (JWTException $e) {
-            return response()->json(['error' => 'token_absent'], 401);
+            return ApiResponse::error('Token absent.', 401, ['error' => 'token_absent']);
         } catch (Exception $e) {
-            return response()->json(['error' => 'unauthorized'], 401);
+            return ApiResponse::error('Unauthorized.', 401, ['error' => 'unauthorized']);
         }
 
         return $next($request);

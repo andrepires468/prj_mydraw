@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# mydraw — backup local: bucket MinIO (ZIP) + MySQL (ZIP) em backup/
-# Opcional: upload dos ZIPs para o MEGA (MEGAcmd) após gerar os arquivos; se ambos
-# uploads forem OK, apaga os ZIPs desta execução no disco (ficam só no MEGA).
+# mydraw — backup local: MinIO (ZIP) + MySQL (ZIP) + arquivos .env* (ZIP) em backup/
+# Opcional: upload dos ZIPs para o MEGA (MEGAcmd); se todos os uploads deste run
+# forem OK, apaga esses ZIPs no disco (ficam só no MEGA).
 #
 # Pré-requisitos:
 #   - Docker Compose: MinIO (profile local-storage) e MySQL (profile local-db) em execução
@@ -74,11 +74,14 @@ STORAGE_STAGING="${BACKUP_DIR}/.staging-storage-$$"
 DB_STAGING="${BACKUP_DIR}/.staging-db-$$"
 STORAGE_ZIP="storage-backup-${TIMESTAMP}.zip"
 DB_ZIP="database-backup-${TIMESTAMP}.zip"
+ENV_ZIP="env-backup-${TIMESTAMP}.zip"
 STORAGE_ZIP_PATH="${BACKUP_DIR}/${STORAGE_ZIP}"
 DB_ZIP_PATH="${BACKUP_DIR}/${DB_ZIP}"
+ENV_STAGING="${BACKUP_DIR}/.staging-env-$$"
+ENV_ZIP_PATH=""
 
 cleanup() {
-  rm -rf "${STORAGE_STAGING}" "${DB_STAGING}"
+  rm -rf "${STORAGE_STAGING}" "${DB_STAGING}" "${ENV_STAGING}"
 }
 trap cleanup EXIT
 
@@ -144,7 +147,35 @@ docker compose exec -T mysql mysqldump \
 
 zip_folder "${DB_STAGING}" "${DB_ZIP}"
 
-ok "Backups locais concluídos: ${STORAGE_ZIP} e ${DB_ZIP} em ${BACKUP_DIR}/"
+# ------------------------------------------------------------------------------
+# Arquivos .env* (estrutura relativa à raiz do repositório)
+# ------------------------------------------------------------------------------
+log "Empacotando arquivos .env* do projeto..."
+mapfile -t env_files < <(cd "$ROOT_DIR" && find . -name '.env*' -type f \
+  -not -path './node_modules/*' -not -path '*/node_modules/*' \
+  -not -path './vendor/*' -not -path '*/vendor/*' \
+  -not -path './.git/*' \
+  -not -path './backup/*' \
+  | sed 's|^\./||' | sort)
+
+if [[ "${#env_files[@]}" -gt 0 ]]; then
+  mkdir -p "${ENV_STAGING}"
+  for f in "${env_files[@]}"; do
+    mkdir -p "${ENV_STAGING}/$(dirname "$f")"
+    cp "${ROOT_DIR}/${f}" "${ENV_STAGING}/${f}"
+  done
+  zip_folder "${ENV_STAGING}" "${ENV_ZIP}"
+  ENV_ZIP_PATH="${BACKUP_DIR}/${ENV_ZIP}"
+  ok "Incluídos ${#env_files[@]} arquivo(s) .env* em ${ENV_ZIP}"
+else
+  warn "Nenhum arquivo .env* encontrado — pulando ZIP de configuração."
+fi
+
+if [[ -n "${ENV_ZIP_PATH}" ]]; then
+  ok "Backups locais concluídos: ${STORAGE_ZIP}, ${DB_ZIP} e ${ENV_ZIP} em ${BACKUP_DIR}/"
+else
+  ok "Backups locais concluídos: ${STORAGE_ZIP} e ${DB_ZIP} em ${BACKUP_DIR}/"
+fi
 
 # ------------------------------------------------------------------------------
 # Upload para o MEGA (requer MEGAcmd: https://mega.nz/cmd)
@@ -194,9 +225,13 @@ if command -v "mega-put${MEGA_SUFFIX}" >/dev/null 2>&1; then
   UPLOAD_OK=1
   upload_to_mega "$STORAGE_ZIP_PATH" || UPLOAD_OK=0
   upload_to_mega "$DB_ZIP_PATH" || UPLOAD_OK=0
+  if [[ -n "${ENV_ZIP_PATH}" ]]; then
+    upload_to_mega "$ENV_ZIP_PATH" || UPLOAD_OK=0
+  fi
 
   if [[ "$UPLOAD_OK" -eq 1 ]]; then
     rm -f "${STORAGE_ZIP_PATH}" "${DB_ZIP_PATH}"
+    [[ -n "${ENV_ZIP_PATH}" ]] && rm -f "${ENV_ZIP_PATH}"
     ok "ZIPs locais removidos após upload ao MEGA."
 
     if [[ "${MEGA_KEEP_DAYS:-0}" =~ ^[0-9]+$ ]] && [[ "$MEGA_KEEP_DAYS" -gt 0 ]]; then
@@ -205,7 +240,7 @@ if command -v "mega-put${MEGA_SUFFIX}" >/dev/null 2>&1; then
       while IFS= read -r remote_line; do
         [[ -z "$remote_line" ]] && continue
         base="$(basename "$remote_line")"
-        [[ "$base" =~ ^(storage|database)-backup-.*\.zip$ ]] || continue
+        [[ "$base" =~ ^(storage|database|env)-backup-.*\.zip$ ]] || continue
         file_date="$(echo "$base" | sed -n 's/.*backup-\([0-9]\{8\}\)-.*/\1/p')"
         [[ -n "$file_date" && "$file_date" =~ ^[0-9]{8}$ ]] || continue
         if [[ "$file_date" -lt "$CUTOFF" ]]; then
@@ -213,7 +248,7 @@ if command -v "mega-put${MEGA_SUFFIX}" >/dev/null 2>&1; then
             REMOVED_REMOTE=$((REMOVED_REMOTE + 1))
           fi
         fi
-      done < <("mega-ls${MEGA_SUFFIX}" "$MEGA_REMOTE_DIR" 2>/dev/null | grep -E '(storage|database)-backup-.*\.zip$' || true)
+      done < <("mega-ls${MEGA_SUFFIX}" "$MEGA_REMOTE_DIR" 2>/dev/null | grep -E '(storage|database|env)-backup-.*\.zip$' || true)
 
       if [[ "$REMOVED_REMOTE" -gt 0 ]]; then
         ok "Removidos ${REMOVED_REMOTE} arquivo(s) antigo(s) no MEGA."
@@ -230,7 +265,7 @@ fi
 
 # Remove ZIPs locais com mais de KEEP_DAYS dias
 if [[ "${KEEP_DAYS:-0}" =~ ^[0-9]+$ ]] && [[ "$KEEP_DAYS" -gt 0 ]]; then
-  REMOVED="$(find "$BACKUP_DIR" -type f \( -name 'storage-backup-*.zip' -o -name 'database-backup-*.zip' \) -mtime +"$KEEP_DAYS" -print -delete 2>/dev/null | wc -l)"
+  REMOVED="$(find "$BACKUP_DIR" -type f \( -name 'storage-backup-*.zip' -o -name 'database-backup-*.zip' -o -name 'env-backup-*.zip' \) -mtime +"$KEEP_DAYS" -print -delete 2>/dev/null | wc -l)"
   REMOVED="${REMOVED//[[:space:]]/}"
   if [[ "${REMOVED:-0}" -gt 0 ]]; then
     ok "Removidos ${REMOVED} arquivo(s) local(is) com mais de ${KEEP_DAYS} dias."

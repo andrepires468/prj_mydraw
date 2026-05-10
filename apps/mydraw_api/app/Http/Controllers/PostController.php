@@ -6,6 +6,7 @@ use App\Models\Gallery;
 use App\Models\Post;
 use App\Models\User;
 use App\Support\PostListCache;
+use App\Support\StorageObjectUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -116,7 +117,8 @@ class PostController extends Controller
                 ->leftJoin('users', 'users.Id', '=', 'posts.user_id')
                 ->where('users.IsAdmin', true)
                 ->select('posts.*')
-                ->selectRaw('users.Name as author_name');
+                ->selectRaw('users.Name as author_name')
+                ->selectRaw('users.AvatarKey as author_avatar_key');
         }
 
         if ($sort === 'oldest') {
@@ -125,15 +127,20 @@ class PostController extends Controller
             $query->orderByDesc('posts.created_at');
         }
 
-        $query->with([
+        $with = [
             'images' => function ($q) {
                 $q->orderBy('position')->orderBy('id');
             },
-        ]);
+        ];
 
         if ($status === Post::STATUS_DRAFT && $this->isAdmin($user)) {
             $query->where('user_id', (int) $user->getKey());
+            $with['user'] = function ($q): void {
+                $q->select('Id', 'Name', 'AvatarKey', 'IsAdmin');
+            };
         }
+
+        $query->with($with);
 
         return $query;
     }
@@ -158,6 +165,15 @@ class PostController extends Controller
                 $image->setAttribute('thumbs', ['320x320' => $thumb320]);
                 $image->setAttribute('url', $thumb320);
             });
+
+            $attrs = $post->getAttributes();
+            if (array_key_exists('author_avatar_key', $attrs)) {
+                $post->setAttribute(
+                    'author_avatar_url',
+                    StorageObjectUrl::urlForKey($attrs['author_avatar_key'] ?: null),
+                );
+                $post->offsetUnset('author_avatar_key');
+            }
         }
     }
 
@@ -235,7 +251,7 @@ class PostController extends Controller
         $cursorPart = $offset !== null ? 'o'.$offset : 'p'.$page;
 
         return sprintf(
-            'posts:list:v6:%s:sort:%s:%s:pp%s:counts%s:u%s:gv%s:uv%s',
+            'posts:list:v7:%s:sort:%s:%s:pp%s:counts%s:u%s:gv%s:uv%s',
             $status,
             $sort,
             $cursorPart,
@@ -315,7 +331,7 @@ class PostController extends Controller
     {
         $post = Post::query()
             ->with([
-                'user:Id,Name,IsAdmin',
+                'user:Id,Name,IsAdmin,AvatarKey',
                 'images' => function ($q) {
                     $q->orderBy('position')->orderBy('id');
                 },

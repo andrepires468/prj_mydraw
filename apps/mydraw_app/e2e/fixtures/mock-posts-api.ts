@@ -35,11 +35,13 @@ const postFixture = {
   status: 'published' as const,
   draft_uuid: null,
   author_name: 'Extremely long author name to stress-test card layout',
+  author_avatar_url: svgPlaceholder,
   created_at: '2026-01-15T10:30:00.000000Z',
   updated_at: '2026-01-15T10:30:00.000000Z',
   user: {
     id: 1,
     name: 'Extremely long author name to stress-test card layout',
+    avatar_url: svgPlaceholder,
   },
   images: [galleryRow(1, 1), galleryRow(2, 1)],
 }

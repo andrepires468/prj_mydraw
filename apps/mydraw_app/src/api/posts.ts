@@ -63,6 +63,7 @@ export interface PostUser {
   id: number
   name: string | null
   email?: string | null
+  avatar_url?: string | null
 }
 
 export interface PostRow {
@@ -73,6 +74,8 @@ export interface PostRow {
   status: PostStatus
   draft_uuid: string | null
   author_name?: string | null
+  /** Present in list payloads for published admin posts (denormalized from join). */
+  author_avatar_url?: string | null
   created_at: string
   updated_at: string
   user?: PostUser

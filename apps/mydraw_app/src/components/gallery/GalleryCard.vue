@@ -11,15 +11,35 @@ export interface GalleryCardImage {
 interface Props {
   title: string
   category?: string | null
+  authorAvatarUrl?: string | null
   images: GalleryCardImage[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
   category: null,
+  authorAvatarUrl: null,
 })
 
 const current = ref(0)
 const failedIds = ref<Set<number | string>>(new Set())
+const authorAvatarFailed = ref(false)
+
+watch(
+  () => props.authorAvatarUrl,
+  () => {
+    authorAvatarFailed.value = false
+  },
+)
+
+const showAuthorAvatar = computed(
+  () => Boolean(props.authorAvatarUrl) && !authorAvatarFailed.value,
+)
+
+const categoryInitial = computed(() => {
+  const c = props.category?.trim()
+  if (!c) return '?'
+  return c.charAt(0).toUpperCase()
+})
 
 watch(
   () => props.images.length,
@@ -122,9 +142,27 @@ function goTo(index: number) {
       </template>
 
       <div class="gallery-card__overlay">
-        <span v-if="category" class="gallery-card__category">
-          {{ category }}
-        </span>
+        <div v-if="category" class="gallery-card__author-row">
+          <div class="gallery-card__author-avatar-wrap">
+            <img
+              v-if="showAuthorAvatar"
+              :src="authorAvatarUrl!"
+              alt=""
+              class="gallery-card__author-avatar-img"
+              width="28"
+              height="28"
+              @error="authorAvatarFailed = true"
+            />
+            <span
+              v-else
+              class="gallery-card__author-avatar-fallback"
+              aria-hidden="true"
+            >
+              {{ categoryInitial }}
+            </span>
+          </div>
+          <span class="gallery-card__category">{{ category }}</span>
+        </div>
         <h3 class="gallery-card__title">{{ title }}</h3>
       </div>
     </div>

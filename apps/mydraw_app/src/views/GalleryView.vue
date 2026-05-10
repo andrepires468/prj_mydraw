@@ -31,6 +31,7 @@ interface PostCard {
   id: number
   title: string
   category: string
+  authorAvatarUrl: string | null
   images: GalleryCardImage[]
   /** Rascunhos abrem em modo de edição; publicados abrem em visualização. */
   isDraft: boolean
@@ -144,6 +145,7 @@ const cards = computed<PostCard[]>(() => {
       id: post.id,
       title: post.title && post.title.trim().length > 0 ? post.title : fallbackTitle,
       category: post.user?.name ?? post.author_name ?? 'Post',
+      authorAvatarUrl: post.user?.avatar_url ?? post.author_avatar_url ?? null,
       images,
       isDraft: post.status === 'draft',
     })
@@ -424,6 +426,7 @@ onUnmounted(() => {
         <GalleryCard
           :title="card.title"
           :category="card.category"
+          :author-avatar-url="card.authorAvatarUrl"
           :images="card.images"
         />
       </RouterLink>

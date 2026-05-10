@@ -81,11 +81,31 @@ const galleryRowsAlignedWithImages = computed<(GalleryRow | null)[]>(() =>
 )
 
 const authorName = computed(
-  () => post.value?.user?.name?.trim() || 'Unknown author',
+  () =>
+    post.value?.user?.name?.trim()
+    || post.value?.author_name?.trim()
+    || 'Unknown author',
 )
 
 const authorInitial = computed(
   () => authorName.value.charAt(0).toUpperCase() || '?',
+)
+
+const authorAvatarFailed = ref(false)
+
+const authorAvatarUrl = computed(
+  () => post.value?.user?.avatar_url ?? post.value?.author_avatar_url ?? null,
+)
+
+watch(
+  () => authorAvatarUrl.value,
+  () => {
+    authorAvatarFailed.value = false
+  },
+)
+
+const showAuthorPhoto = computed(
+  () => Boolean(authorAvatarUrl.value) && !authorAvatarFailed.value,
 )
 
 const formattedDate = computed(() => {
@@ -229,8 +249,22 @@ watch(
         </header>
 
         <div class="post-view__author">
-          <div class="post-view__avatar" aria-hidden="true">
-            {{ authorInitial }}
+          <div class="post-view__avatar-slot" aria-hidden="true">
+            <img
+              v-if="showAuthorPhoto"
+              :src="authorAvatarUrl!"
+              alt=""
+              class="post-view__avatar-img"
+              width="44"
+              height="44"
+              @error="authorAvatarFailed = true"
+            />
+            <div
+              v-else
+              class="post-view__avatar post-view__avatar--fallback"
+            >
+              {{ authorInitial }}
+            </div>
           </div>
           <div class="post-view__author-meta">
             <span class="post-view__author-label">Created by</span>

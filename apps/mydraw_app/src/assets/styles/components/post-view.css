@@ -226,12 +226,24 @@
     @apply flex items-center gap-3 p-4 rounded-2xl bg-surface-container-low;
   }
 
-  .post-view__avatar {
-    @apply flex items-center justify-center text-lg font-bold rounded-full;
+  .post-view__avatar-slot {
+    @apply shrink-0 rounded-full overflow-hidden;
     width: 2.75rem;
     height: 2.75rem;
+  }
+
+  .post-view__avatar-img {
+    @apply block w-full h-full object-cover;
+  }
+
+  .post-view__avatar {
+    @apply flex items-center justify-center text-lg font-bold rounded-full w-full h-full;
     background-color: theme('colors.primary');
     color: theme('colors.on-primary');
+  }
+
+  .post-view__avatar--fallback {
+    @apply w-full h-full;
   }
 
   .post-view__author-meta {

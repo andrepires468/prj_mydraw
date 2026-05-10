@@ -49,6 +49,27 @@
   }
 
   /* ------ overlay com título / autor (sempre visível) ----------------- */
+  .gallery-card__author-row {
+    @apply flex items-center gap-2 min-w-0 mb-1;
+  }
+
+  .gallery-card__author-avatar-wrap {
+    @apply shrink-0 rounded-full overflow-hidden flex items-center justify-center;
+    width: 1.75rem;
+    height: 1.75rem;
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.25);
+  }
+
+  .gallery-card__author-avatar-img {
+    @apply w-full h-full object-cover;
+  }
+
+  .gallery-card__author-avatar-fallback {
+    @apply flex items-center justify-center w-full h-full text-[10px] font-bold;
+    background-color: theme('colors.primary');
+    color: theme('colors.on-primary');
+  }
+
   .gallery-card__overlay {
     @apply absolute inset-x-0 bottom-0 flex flex-col justify-end p-5 pt-16 pointer-events-none;
     background-image: linear-gradient(

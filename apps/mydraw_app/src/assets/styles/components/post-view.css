@@ -90,9 +90,9 @@
     @apply min-w-0 flex-1 rounded-2xl overflow-hidden bg-surface-container;
   }
 
-  /* Oculto abaixo de md (telas pequenas); visível a partir de md. */
+  /* Oculto abaixo de lg (inclui md); visível a partir de lg, alinhado ao flex-row do par. */
   .post-view__list-metadata {
-    @apply hidden md:block w-full lg:w-[min(22rem,calc(100%-0.5rem))] lg:max-w-[26rem] shrink-0 min-w-0;
+    @apply hidden lg:block w-full lg:w-[min(22rem,calc(100%-0.5rem))] lg:max-w-[26rem] shrink-0 min-w-0;
   }
 
   .post-view__list--with-meta .post-view__list-card--with-meta {

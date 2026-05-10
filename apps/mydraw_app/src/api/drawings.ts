@@ -52,13 +52,3 @@ export async function createDrawing(input: CreateDrawingInput) {
   })
   return data.drawing
 }
-
-export async function pingApi() {
-  const { data } = await http.get<{
-    pong: boolean
-    service: string
-    env: string
-    timestamp: string
-  }>('/ping')
-  return data
-}

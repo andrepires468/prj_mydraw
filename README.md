@@ -150,7 +150,7 @@ Prefixo base: **`/api/v1`**.
 
 | Área | Exemplos |
 | ---- | -------- |
-| Saúde | `GET /ping` |
+| Saúde (raiz da API) | `GET /` *(JSON `status: ok`; fora do prefixo `/api`)* |
 | Auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/google`; com JWT: `GET /auth/me`, `PUT /auth/profile`, `PUT /auth/password`, `POST /auth/google/link`, `POST /auth/google/unlink`, `POST /auth/logout` |
 | Posts (leitura; JWT opcional para personalização) | `GET /posts`, `GET /posts/{id}` |
 | Posts (escrita) | `PUT/DELETE /posts/{id}`, upload/reordenar/remover imagens |

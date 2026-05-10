@@ -12,53 +12,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
 use Throwable;
 
 class CreatePostController extends Controller
 {
     public function __construct(private readonly PostStorageService $storage)
     {
-    }
-
-    /**
-     * GET /api/v1/create-post/storage-check — teste de round-trip no bucket.
-     * Útil para validar credenciais/endpoint/bucket sem envolver upload real.
-     */
-    public function storageCheck(): JsonResponse
-    {
-        if (!env('APP_DEBUG')) {
-            return response()->json(['error' => 'disabled'], 404);
-        }
-
-        $disk = Storage::disk('s3');
-        $key  = sprintf('diagnostics/%s.txt', Str::uuid());
-        $body = 'mydraw storage check '.Carbon::now()->toIso8601String();
-
-        try {
-            $disk->put($key, $body, ['visibility' => 'public']);
-            $exists   = $disk->exists($key);
-            $readBack = $disk->get($key);
-            $disk->delete($key);
-
-            return response()->json([
-                'ok'       => $exists && $readBack === $body,
-                'endpoint' => env('AWS_ENDPOINT'),
-                'bucket'   => env('AWS_BUCKET'),
-                'region'   => env('AWS_DEFAULT_REGION'),
-                'exists'   => $exists,
-                'match'    => $readBack === $body,
-            ]);
-        } catch (Throwable $e) {
-            return response()->json([
-                'ok'        => false,
-                'endpoint'  => env('AWS_ENDPOINT'),
-                'bucket'    => env('AWS_BUCKET'),
-                'exception' => get_class($e),
-                'message'   => $e->getMessage(),
-            ], 502);
-        }
     }
 
     private function authUser(Request $request): ?User

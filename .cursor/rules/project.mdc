@@ -31,7 +31,7 @@ Frontend `5173` · API `8088` · MinIO console `9101` · MySQL `33306`
 
 ## Rotas API (`/api`)
 
-Públicas: `GET /ping`, `POST /auth/{register,login}`, `GET /drawings`, `GET /drawings/{id}`
+Públicas: `POST /auth/{register,login}`, `GET /drawings`, `GET /drawings/{id}`
 JWT: `GET /auth/me`, `POST /auth/logout`, `POST /drawings`, `DELETE /drawings/{id}`
 
 ## Convenções

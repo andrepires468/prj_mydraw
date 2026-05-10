@@ -10,9 +10,6 @@
 */
 
 $router->group(['prefix' => 'v1'], function () use ($router) {
-    // Health check / rota de exemplo
-    $router->get('/ping', 'PingController');
-
     // Autenticação
     $router->group(['prefix' => 'auth'], function () use ($router) {
         $router->post('/register', 'AuthController@register');
@@ -67,9 +64,6 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
 
     // Criação de post (draft UUID + galeria)
     $router->group(['prefix' => 'create-post'], function () use ($router) {
-        // Diagnóstico (só respondido se APP_DEBUG=true)
-        $router->get('/storage-check', 'CreatePostController@storageCheck');
-
         $router->group(['middleware' => 'auth.jwt'], function () use ($router) {
             // Mantém JWT explícito neste endpoint para evitar regressão caso o
             // agrupamento seja alterado no futuro.

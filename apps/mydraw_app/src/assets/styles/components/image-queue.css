@@ -66,6 +66,11 @@
     @apply bg-surface-container-high text-on-surface-variant;
   }
 
+  .image-queue-card__badge--sd {
+    @apply top-auto bottom-2 left-2 text-[9px] px-1.5 py-0.5;
+    @apply bg-surface-container-highest text-on-surface border border-outline-variant;
+  }
+
   .image-queue-card__progress {
     @apply absolute inset-x-0 bottom-0 h-1 bg-surface-container;
   }

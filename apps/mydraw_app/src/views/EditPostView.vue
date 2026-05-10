@@ -5,6 +5,7 @@ import axios from 'axios'
 import {
   deletePost,
   deletePostImage,
+  extractPostImageMetadata,
   getPost,
   reorderPostImages,
   updatePost,
@@ -84,6 +85,7 @@ const submitting = computed(() => pendingAction.value !== null)
 const reorderMode = ref(false)
 const orderSnapshotIds = ref<string[] | null>(null)
 const applyingReorder = ref(false)
+const extractingMetadata = ref(false)
 const asideSummarized = ref(readStoredAsideSummarized())
 const fileDragActive = ref(false)
 let fileDragResetTimer: number | null = null
@@ -101,7 +103,8 @@ const uploadAndEditorLocked = computed(
   () =>
     submitting.value ||
     reorderMode.value ||
-    applyingReorder.value,
+    applyingReorder.value ||
+    extractingMetadata.value,
 )
 
 const isNewPostRoute = computed(() => route.name === 'edit-post-new')
@@ -236,6 +239,7 @@ function galleryToQueued(row: GalleryRow): QueuedImage {
     status: 'done',
     progress: 100,
     galleryId: row.id,
+    metadataType: row.metadata_type ?? null,
   }
 }
 
@@ -361,6 +365,7 @@ async function uploadPostImageForItem(
       img.progress = 100
       img.galleryId = gallery.id
       img.thumbnailUrl = gallery.thumbs?.['320x320'] ?? null
+      img.metadataType = gallery.metadata_type ?? null
       if (gallery.url) {
         if (locallyCreatedPreviewUrls.has(img.previewUrl)) {
           URL.revokeObjectURL(img.previewUrl)
@@ -449,6 +454,7 @@ async function uploadGalleryForFirst(localId: string, file: File) {
       img.progress = 100
       img.galleryId = gallery.id
       img.thumbnailUrl = gallery.thumbs?.['320x320'] ?? null
+      img.metadataType = gallery.metadata_type ?? null
       if (gallery.url) {
         if (locallyCreatedPreviewUrls.has(img.previewUrl)) {
           URL.revokeObjectURL(img.previewUrl)
@@ -613,6 +619,27 @@ async function applyReorder() {
 function clearMessages() {
   errorMsg.value = null
   successMsg.value = null
+}
+
+async function extractEmbeddedMetadata() {
+  if (effectivePostId.value === null || extractingMetadata.value) return
+  if (submitting.value || reorderMode.value || applyingReorder.value) return
+  if (imagePipelineBusy.value) return
+  clearMessages()
+  extractingMetadata.value = true
+  try {
+    const res = await extractPostImageMetadata(effectivePostId.value)
+    post.value = res.post
+    if (res.post.images?.length) {
+      images.value = res.post.images.map(galleryToQueued)
+    }
+    const { summary } = res
+    successMsg.value = `Metadata: ${summary.updated} updated, ${summary.no_metadata} without embedded data, ${summary.failed} failed.`
+  } catch (err) {
+    errorMsg.value = extractErrorMessage(err)
+  } finally {
+    extractingMetadata.value = false
+  }
 }
 
 async function saveDraft() {
@@ -866,18 +893,39 @@ onBeforeUnmount(() => {
                     Manage Queue ({{ images.length }}
                     {{ images.length === 1 ? 'Image' : 'Images' }})
                   </h2>
-                  <button
-                    type="button"
-                    class="create-post-page__view-toggle"
-                    :aria-pressed="asideSummarized"
-                    @click="asideSummarized = !asideSummarized"
-                  >
-                    {{
-                      asideSummarized
-                        ? 'Show full side panel'
-                        : 'Collapse side panel'
-                    }}
-                  </button>
+                  <div class="create-post-page__section-heading-actions">
+                    <button
+                      v-if="effectivePostId !== null"
+                      type="button"
+                      class="create-post-page__view-toggle"
+                      :disabled="
+                        submitting ||
+                        reorderMode ||
+                        applyingReorder ||
+                        imagePipelineBusy ||
+                        extractingMetadata
+                      "
+                      @click="extractEmbeddedMetadata"
+                    >
+                      {{
+                        extractingMetadata
+                          ? 'Extracting…'
+                          : 'Extract metadata'
+                      }}
+                    </button>
+                    <button
+                      type="button"
+                      class="create-post-page__view-toggle"
+                      :aria-pressed="asideSummarized"
+                      @click="asideSummarized = !asideSummarized"
+                    >
+                      {{
+                        asideSummarized
+                          ? 'Show full side panel'
+                          : 'Collapse side panel'
+                      }}
+                    </button>
+                  </div>
                 </div>
                 <p
                   v-if="reorderMode"
@@ -1108,6 +1156,14 @@ onBeforeUnmount(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.create-post-page__section-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: flex-start;
 }
 
 .create-post-page__view-toggle {

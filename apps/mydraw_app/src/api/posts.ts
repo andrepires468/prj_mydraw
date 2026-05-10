@@ -15,6 +15,19 @@ export interface GalleryThumbs {
   '180x180'?: string | null
 }
 
+/** Matches backend `gallery.metadata_type` when extracted from PNG/WebUI. */
+export type GalleryMetadataType = 'stable_diffusion'
+
+export interface StableDiffusionLoraMetadata {
+  name: string
+  weight: number | null
+  hash: string | null
+  creator?: string | null
+  creator_url?: string | null
+  model_url?: string | null
+  source?: string | null
+}
+
 export interface GalleryRow {
   id: number
   post_id: number | null
@@ -26,6 +39,22 @@ export interface GalleryRow {
   position: number
   url: string | null
   thumbs: GalleryThumbs
+  metadata_type?: GalleryMetadataType | null
+  metadata_prompt?: string | null
+  metadata_negative_prompt?: string | null
+  metadata_steps?: number | null
+  metadata_sampler?: string | null
+  metadata_schedule_type?: string | null
+  metadata_cfg_scale?: number | null
+  metadata_seed?: number | null
+  metadata_width?: number | null
+  metadata_height?: number | null
+  metadata_model?: string | null
+  metadata_model_hash?: string | null
+  metadata_clip_skip?: number | null
+  metadata_version?: string | null
+  metadata_loras?: StableDiffusionLoraMetadata[] | null
+  metadata_raw?: Record<string, unknown> | null
   created_at: string
   updated_at: string
 }
@@ -202,6 +231,39 @@ export async function updatePost(
 /** Delete a post and all associated images/files. */
 export async function deletePost(postId: number): Promise<void> {
   await http.delete(`/posts/${postId}`, { timeout: 60_000 })
+}
+
+export interface ExtractImageMetadataSummary {
+  total: number
+  updated: number
+  no_metadata: number
+  failed: number
+}
+
+export interface ExtractImageMetadataErrorItem {
+  gallery_id: number
+  error: string
+}
+
+export interface ExtractImageMetadataResponse {
+  summary: ExtractImageMetadataSummary
+  errors: ExtractImageMetadataErrorItem[]
+  post: PostRow
+}
+
+/**
+ * Reads originals from storage, extracts embedded Stable Diffusion metadata per image,
+ * persists into `gallery`, optionally enriches LoRAs via Civitai.
+ */
+export async function extractPostImageMetadata(
+  postId: number,
+): Promise<ExtractImageMetadataResponse> {
+  const { data } = await http.post<ExtractImageMetadataResponse>(
+    `/posts/${postId}/images/metadata`,
+    {},
+    { timeout: 300_000 },
+  )
+  return data
 }
 
 /**

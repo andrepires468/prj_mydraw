@@ -74,6 +74,7 @@ $app->routeMiddleware([
 
 $app->register(Illuminate\Filesystem\FilesystemServiceProvider::class);
 $app->register(Illuminate\Cache\CacheServiceProvider::class);
+$app->register(App\Providers\AppServiceProvider::class);
 $app->register(App\Providers\AuthServiceProvider::class);
 $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 

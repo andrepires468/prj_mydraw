@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Gallery;
 use App\Models\Post;
 use App\Models\User;
+use App\Services\ImageMetadataExtractor;
+use App\Services\LoraMetadataEnricher;
 use App\Services\PostStorageService;
 use App\Support\PostListCache;
 use Illuminate\Http\JsonResponse;
@@ -28,8 +30,11 @@ use Throwable;
  */
 class EditPostController extends Controller
 {
-    public function __construct(private readonly PostStorageService $storage)
-    {
+    public function __construct(
+        private readonly PostStorageService $storage,
+        private readonly ImageMetadataExtractor $metadataExtractor,
+        private readonly LoraMetadataEnricher $loraEnricher,
+    ) {
     }
 
     private function authUser(Request $request): ?User
@@ -472,5 +477,186 @@ class EditPostController extends Controller
         }
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * POST /api/v1/posts/{id}/images/metadata — lê o arquivo original no storage,
+     * extrai metadados Stable Diffusion embutidos e persiste na tabela `gallery`.
+     */
+    public function extractImageMetadata(Request $request, int $id): JsonResponse
+    {
+        $user = $this->authUser($request);
+        if (!$user) {
+            return response()->json(['error' => 'unauthorized'], 401);
+        }
+        if ($response = $this->ensureAdmin($user)) {
+            return $response;
+        }
+
+        $post = $this->findOwnedPost($request, $id, $user);
+        if (!$post) {
+            return response()->json(['error' => 'not_found'], 404);
+        }
+
+        $disk = Storage::disk('s3');
+
+        /** @var \Illuminate\Support\Collection<int, Gallery> $galleryRows */
+        $galleryRows = Gallery::query()
+            ->where('post_id', $post->id)
+            ->orderBy('position')
+            ->orderBy('id')
+            ->get();
+
+        $summary = [
+            'total'        => $galleryRows->count(),
+            'updated'      => 0,
+            'no_metadata'  => 0,
+            'failed'       => 0,
+        ];
+
+        $errors = [];
+
+        $clear = $this->emptyGalleryMetadataAttributes();
+
+        foreach ($galleryRows as $gallery) {
+            $key = (string) $gallery->object_key;
+            if ($key === '') {
+                $summary['failed']++;
+                $errors[] = [
+                    'gallery_id' => $gallery->id,
+                    'error'      => 'missing_object_key',
+                ];
+
+                continue;
+            }
+
+            try {
+                $binary = $disk->get($key);
+            } catch (Throwable $e) {
+                Log::warning('extract-image-metadata read failed', [
+                    'user_id'    => $this->userId($user),
+                    'post_id'    => $post->id,
+                    'gallery_id' => $gallery->id,
+                    'object_key' => $key,
+                    'message'    => $e->getMessage(),
+                ]);
+                $summary['failed']++;
+                $errors[] = [
+                    'gallery_id' => $gallery->id,
+                    'error'      => 'storage_read_failed',
+                ];
+
+                continue;
+            }
+
+            $parsed = $this->metadataExtractor->extractStableDiffusionFromBinary($binary);
+
+            if ($parsed === null) {
+                try {
+                    $gallery->update($clear);
+                } catch (Throwable $e) {
+                    Log::error('extract-image-metadata clear failed', [
+                        'gallery_id' => $gallery->id,
+                        'message'    => $e->getMessage(),
+                    ]);
+                    $summary['failed']++;
+                    $errors[] = [
+                        'gallery_id' => $gallery->id,
+                        'error'      => 'persist_failed',
+                    ];
+
+                    continue;
+                }
+                $summary['no_metadata']++;
+
+                continue;
+            }
+
+            $parsed['metadata_loras'] = $this->loraEnricher->enrich($parsed['metadata_loras'] ?? []);
+
+            try {
+                $gallery->update($this->onlyGalleryMetadataPayload($parsed));
+            } catch (Throwable $e) {
+                Log::error('extract-image-metadata persist failed', [
+                    'gallery_id' => $gallery->id,
+                    'message'    => $e->getMessage(),
+                ]);
+                $summary['failed']++;
+                $errors[] = [
+                    'gallery_id' => $gallery->id,
+                    'error'      => 'persist_failed',
+                ];
+
+                continue;
+            }
+
+            $summary['updated']++;
+        }
+
+        $touchGlobal = $post->status === Post::STATUS_PUBLISHED;
+        PostListCache::bump($this->userId($user), $touchGlobal);
+
+        return response()->json([
+            'summary' => $summary,
+            'errors'  => $errors,
+            'post'    => $post->fresh()->load([
+                'images' => static function ($q): void {
+                    $q->orderBy('position')->orderBy('id');
+                },
+            ]),
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $parsed
+     * @return array<string, mixed>
+     */
+    private function onlyGalleryMetadataPayload(array $parsed): array
+    {
+        $keys = [
+            'metadata_type',
+            'metadata_prompt',
+            'metadata_negative_prompt',
+            'metadata_steps',
+            'metadata_sampler',
+            'metadata_schedule_type',
+            'metadata_cfg_scale',
+            'metadata_seed',
+            'metadata_width',
+            'metadata_height',
+            'metadata_model',
+            'metadata_model_hash',
+            'metadata_clip_skip',
+            'metadata_version',
+            'metadata_loras',
+            'metadata_raw',
+        ];
+
+        return array_intersect_key($parsed, array_flip($keys));
+    }
+
+    /**
+     * @return array<string, null>
+     */
+    private function emptyGalleryMetadataAttributes(): array
+    {
+        return [
+            'metadata_type'             => null,
+            'metadata_prompt'           => null,
+            'metadata_negative_prompt'  => null,
+            'metadata_steps'            => null,
+            'metadata_sampler'          => null,
+            'metadata_schedule_type'    => null,
+            'metadata_cfg_scale'        => null,
+            'metadata_seed'             => null,
+            'metadata_width'            => null,
+            'metadata_height'           => null,
+            'metadata_model'            => null,
+            'metadata_model_hash'       => null,
+            'metadata_clip_skip'        => null,
+            'metadata_version'          => null,
+            'metadata_loras'            => null,
+            'metadata_raw'              => null,
+        ];
     }
 }

@@ -61,6 +61,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->delete('/{id}',                          'EditPostController@destroy');
         $router->put('/{id}/images/reorder',            'EditPostController@reorderImages');
         $router->post('/{id}/images',                     'EditPostController@uploadImage');
+        $router->post('/{id}/images/metadata',             'EditPostController@extractImageMetadata');
         $router->delete('/{id}/images/{galleryId}',       'EditPostController@destroyImage');
     });
 

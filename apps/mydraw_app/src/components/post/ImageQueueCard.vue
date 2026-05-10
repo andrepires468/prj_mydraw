@@ -53,6 +53,15 @@ defineEmits<{
       ✓
     </span>
     <span
+      v-if="
+        image.status === 'done' && image.metadataType === 'stable_diffusion'
+      "
+      class="image-queue-card__badge image-queue-card__badge--sd"
+      title="Stable Diffusion metadata saved"
+    >
+      SD
+    </span>
+    <span
       v-else-if="image.status === 'error'"
       class="image-queue-card__badge"
       style="background: rgba(168, 54, 75, 0.9)"

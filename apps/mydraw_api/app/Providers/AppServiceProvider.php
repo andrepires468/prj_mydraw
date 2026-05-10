@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\ImageMetadataExtractor;
+use App\Services\LoraMetadataEnricher;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,6 +15,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->singleton(ImageMetadataExtractor::class);
+        $this->app->singleton(LoraMetadataEnricher::class);
     }
 }

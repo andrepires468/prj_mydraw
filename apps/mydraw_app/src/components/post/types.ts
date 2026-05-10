@@ -1,3 +1,5 @@
+import type { GalleryMetadataType } from '@/api/posts'
+
 export interface QueuedImage {
   id: string
   file: File
@@ -11,4 +13,6 @@ export interface QueuedImage {
   error?: string | null
   /** ID retornado pelo backend após upload bem-sucedido */
   galleryId?: number
+  /** When present, indicates embedded metadata was stored for this gallery row. */
+  metadataType?: GalleryMetadataType | null
 }

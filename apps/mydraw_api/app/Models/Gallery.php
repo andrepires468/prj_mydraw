@@ -14,6 +14,8 @@ class Gallery extends Model
 
     protected $table = 'gallery';
 
+    public const METADATA_TYPE_STABLE_DIFFUSION = 'stable_diffusion';
+
     protected $fillable = [
         'post_id',
         'user_id',
@@ -22,10 +24,34 @@ class Gallery extends Model
         'mime_type',
         'size',
         'position',
+        'metadata_type',
+        'metadata_prompt',
+        'metadata_negative_prompt',
+        'metadata_steps',
+        'metadata_sampler',
+        'metadata_schedule_type',
+        'metadata_cfg_scale',
+        'metadata_seed',
+        'metadata_width',
+        'metadata_height',
+        'metadata_model',
+        'metadata_model_hash',
+        'metadata_clip_skip',
+        'metadata_version',
+        'metadata_loras',
+        'metadata_raw',
     ];
 
     protected $casts = [
-        'size' => 'integer',
+        'size'                 => 'integer',
+        'metadata_steps'       => 'integer',
+        'metadata_cfg_scale'   => 'float',
+        'metadata_seed'        => 'integer',
+        'metadata_width'       => 'integer',
+        'metadata_height'      => 'integer',
+        'metadata_clip_skip'   => 'integer',
+        'metadata_loras'       => 'array',
+        'metadata_raw'         => 'array',
     ];
 
     protected $appends = ['url', 'thumbs'];

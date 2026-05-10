@@ -4,6 +4,7 @@ import LoginView from '@/views/LoginView.vue'
 import ProfileEditView from '@/views/ProfileEditView.vue'
 import EditPostView from '@/views/EditPostView.vue'
 import PostView from '@/views/PostView.vue'
+import AdminManagementView from '@/views/AdminManagementView.vue'
 import { isJwtExpired } from '@/utils/jwt'
 
 function storedUserIsAdmin(): boolean {
@@ -91,6 +92,12 @@ export const router = createRouter({
       path: '/profile',
       name: 'profile-edit',
       component: ProfileEditView,
+    },
+    {
+      path: '/admin/management',
+      name: 'admin-management',
+      component: AdminManagementView,
+      meta: { adminOnly: true },
     },
   ],
 })

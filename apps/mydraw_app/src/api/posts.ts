@@ -251,16 +251,31 @@ export interface ExtractImageMetadataResponse {
   post: PostRow
 }
 
+export interface ExtractAllPostsMetadataResponse {
+  summary: ExtractImageMetadataSummary
+  errors: ExtractImageMetadataErrorItem[]
+  posts_touched: number
+}
+
+export type ExtractGalleryMetadataResponse =
+  | ExtractImageMetadataResponse
+  | ExtractAllPostsMetadataResponse
+
 /**
- * Reads originals from storage, extracts embedded Stable Diffusion metadata per image,
- * persists into `gallery`, optionally enriches LoRAs via Civitai.
+ * Reads originals from storage, extracts embedded Stable Diffusion metadata for gallery
+ * rows that still have null `metadata_type`, persists into `gallery`, optionally enriches
+ * LoRAs via Civitai. Either one post or all posts (admin maintenance).
  */
-export async function extractPostImageMetadata(
-  postId: number,
-): Promise<ExtractImageMetadataResponse> {
-  const { data } = await http.post<ExtractImageMetadataResponse>(
-    `/posts/${postId}/images/metadata`,
-    {},
+export async function extractGalleryMetadata(
+  options: { postId: number } | { allPosts: true },
+): Promise<ExtractGalleryMetadataResponse> {
+  const body =
+    'postId' in options
+      ? { post_id: options.postId }
+      : { all_posts: true }
+  const { data } = await http.post<ExtractGalleryMetadataResponse>(
+    '/posts/metadata/extract',
+    body,
     { timeout: 300_000 },
   )
   return data

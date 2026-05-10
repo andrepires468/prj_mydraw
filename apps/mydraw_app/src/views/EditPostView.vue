@@ -5,7 +5,6 @@ import axios from 'axios'
 import {
   deletePost,
   deletePostImage,
-  extractPostImageMetadata,
   getPost,
   reorderPostImages,
   updatePost,
@@ -85,7 +84,6 @@ const submitting = computed(() => pendingAction.value !== null)
 const reorderMode = ref(false)
 const orderSnapshotIds = ref<string[] | null>(null)
 const applyingReorder = ref(false)
-const extractingMetadata = ref(false)
 const asideSummarized = ref(readStoredAsideSummarized())
 const fileDragActive = ref(false)
 let fileDragResetTimer: number | null = null
@@ -103,8 +101,7 @@ const uploadAndEditorLocked = computed(
   () =>
     submitting.value ||
     reorderMode.value ||
-    applyingReorder.value ||
-    extractingMetadata.value,
+    applyingReorder.value,
 )
 
 const isNewPostRoute = computed(() => route.name === 'edit-post-new')
@@ -621,24 +618,11 @@ function clearMessages() {
   successMsg.value = null
 }
 
-async function extractEmbeddedMetadata() {
-  if (effectivePostId.value === null || extractingMetadata.value) return
-  if (submitting.value || reorderMode.value || applyingReorder.value) return
-  if (imagePipelineBusy.value) return
-  clearMessages()
-  extractingMetadata.value = true
-  try {
-    const res = await extractPostImageMetadata(effectivePostId.value)
-    post.value = res.post
-    if (res.post.images?.length) {
-      images.value = res.post.images.map(galleryToQueued)
-    }
-    const { summary } = res
-    successMsg.value = `Metadata: ${summary.updated} updated, ${summary.no_metadata} without embedded data, ${summary.failed} failed.`
-  } catch (err) {
-    errorMsg.value = extractErrorMessage(err)
-  } finally {
-    extractingMetadata.value = false
+function mergeUpdatedPost(updated: PostRow) {
+  post.value =
+    post.value === null ? updated : { ...post.value, ...updated }
+  if (updated.images?.length) {
+    images.value = updated.images.map(galleryToQueued)
   }
 }
 
@@ -657,10 +641,7 @@ async function saveDraft() {
       title: title.value.trim(),
       description: description.value.trim() || null,
     })
-    post.value =
-      post.value === null
-        ? updated
-        : { ...post.value, ...updated }
+    mergeUpdatedPost(updated)
     successMsg.value = 'Draft saved.'
   } catch (err) {
     errorMsg.value = extractErrorMessage(err)
@@ -693,8 +674,7 @@ async function publishOrSave() {
             status: 'published' as const,
           }
     const updated = await updatePost(pid, payload)
-    post.value =
-      post.value === null ? updated : { ...post.value, ...updated }
+    mergeUpdatedPost(updated)
     successMsg.value =
       status.value === 'published'
         ? 'Post updated.'
@@ -726,10 +706,7 @@ async function unpublish() {
     const updated = await updatePost(effectivePostId.value, {
       status: 'draft',
     })
-    post.value =
-      post.value === null
-        ? updated
-        : { ...post.value, ...updated }
+    mergeUpdatedPost(updated)
     successMsg.value = 'Post moved to draft.'
   } catch (err) {
     errorMsg.value = extractErrorMessage(err)
@@ -894,25 +871,6 @@ onBeforeUnmount(() => {
                     {{ images.length === 1 ? 'Image' : 'Images' }})
                   </h2>
                   <div class="create-post-page__section-heading-actions">
-                    <button
-                      v-if="effectivePostId !== null"
-                      type="button"
-                      class="create-post-page__view-toggle"
-                      :disabled="
-                        submitting ||
-                        reorderMode ||
-                        applyingReorder ||
-                        imagePipelineBusy ||
-                        extractingMetadata
-                      "
-                      @click="extractEmbeddedMetadata"
-                    >
-                      {{
-                        extractingMetadata
-                          ? 'Extracting…'
-                          : 'Extract metadata'
-                      }}
-                    </button>
                     <button
                       type="button"
                       class="create-post-page__view-toggle"

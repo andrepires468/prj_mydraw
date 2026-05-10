@@ -57,11 +57,11 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
     // Escritas em posts existentes: JWT obrigatório; o controller verifica
     // ainda que o recurso pertence ao usuário autenticado.
     $router->group(['prefix' => 'posts', 'middleware' => 'auth.jwt'], function () use ($router) {
+        $router->post('/metadata/extract', 'EditPostController@extractGalleryMetadata');
         $router->put('/{id}',                             'EditPostController@update');
         $router->delete('/{id}',                          'EditPostController@destroy');
         $router->put('/{id}/images/reorder',            'EditPostController@reorderImages');
         $router->post('/{id}/images',                     'EditPostController@uploadImage');
-        $router->post('/{id}/images/metadata',             'EditPostController@extractImageMetadata');
         $router->delete('/{id}/images/{galleryId}',       'EditPostController@destroyImage');
     });
 

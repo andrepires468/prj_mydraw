@@ -55,6 +55,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
     // ainda que o recurso pertence ao usuário autenticado.
     $router->group(['prefix' => 'posts', 'middleware' => 'auth.jwt'], function () use ($router) {
         $router->post('/metadata/extract', 'EditPostController@extractGalleryMetadata');
+        $router->post('/{id}/ai/categorize', 'EditPostController@categorizeWithAi');
         $router->put('/{id}',                             'EditPostController@update');
         $router->delete('/{id}',                          'EditPostController@destroy');
         $router->put('/{id}/images/reorder',            'EditPostController@reorderImages');

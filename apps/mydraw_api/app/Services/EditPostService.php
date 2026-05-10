@@ -18,6 +18,7 @@ class EditPostService
     public function __construct(
         private readonly PostStorageService $storage,
         private readonly GalleryMetadataExtractionService $galleryMetadataExtraction,
+        private readonly GeminiPostCategorizationService $geminiPostCategorization,
     ) {
     }
 
@@ -421,6 +422,21 @@ class EditPostService
         }
 
         return $this->galleryMetadataExtraction->extractMissingForPost($post, $user);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function categorizeWithAi(Request $request, int $id): array
+    {
+        $user = $this->ensureAuthenticatedAdmin($request);
+
+        $post = $this->findOwnedPost($request, $id, $user);
+        if (!$post) {
+            throw new ApiException(404, 'Not found.', ['error' => 'not_found']);
+        }
+
+        return $this->geminiPostCategorization->categorizePost($post, $user);
     }
 
     private function authUser(Request $request): ?User

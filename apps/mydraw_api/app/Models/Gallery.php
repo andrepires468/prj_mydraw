@@ -40,6 +40,10 @@ class Gallery extends Model
         'metadata_version',
         'metadata_loras',
         'metadata_raw',
+        'ai_tags',
+        'ai_rating',
+        'ai_rating_reason',
+        'ai_categorized_at',
     ];
 
     protected $casts = [
@@ -52,6 +56,8 @@ class Gallery extends Model
         'metadata_clip_skip'   => 'integer',
         'metadata_loras'       => 'array',
         'metadata_raw'         => 'array',
+        'ai_tags'              => 'array',
+        'ai_categorized_at'    => 'datetime',
     ];
 
     protected $appends = ['url', 'thumbs'];

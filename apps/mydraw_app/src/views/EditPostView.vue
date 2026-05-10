@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import {
+  categorizePostWithAi,
   deletePost,
   deletePostImage,
   getPost,
@@ -86,6 +87,7 @@ const reorderMode = ref(false)
 const orderSnapshotIds = ref<string[] | null>(null)
 const applyingReorder = ref(false)
 const asideSummarized = ref(readStoredAsideSummarized())
+const aiCategorizing = ref(false)
 const fileDragActive = ref(false)
 let fileDragResetTimer: number | null = null
 
@@ -573,6 +575,43 @@ function cancelReorderMode() {
   reorderMode.value = false
 }
 
+async function categorizeWithAi() {
+  if (
+    aiCategorizing.value ||
+    submitting.value ||
+    reorderMode.value ||
+    applyingReorder.value ||
+    imagePipelineBusy.value ||
+    effectivePostId.value === null
+  )
+    return
+  clearMessages()
+  aiCategorizing.value = true
+  try {
+    const res = await categorizePostWithAi(effectivePostId.value)
+    mergeUpdatedPost(res.post)
+    const meta = res.summary.metadata_extraction
+    const cat = res.summary.categorization
+    const lines: string[] = []
+    if (meta) {
+      lines.push(
+        `Embedded metadata: updated ${meta.updated}, no embedded data ${meta.no_metadata}, failed ${meta.failed}.`,
+      )
+    }
+    lines.push(
+      `AI tags/rating: updated ${cat.updated} of ${cat.total_with_prompt} with prompt; skipped (no prompt) ${cat.skipped_missing_prompt}; failed ${cat.failed}.`,
+    )
+    if (res.errors.length > 0) {
+      lines.push(`${res.errors.length} image warning(s) — see API errors if needed.`)
+    }
+    successMsg.value = lines.join(' ')
+  } catch (err) {
+    errorMsg.value = extractErrorMessage(err)
+  } finally {
+    aiCategorizing.value = false
+  }
+}
+
 async function applyReorder() {
   if (
     !reorderMode.value ||
@@ -911,7 +950,10 @@ onBeforeUnmount(() => {
             :pending-action="pendingAction"
             :disable-secondary-actions="effectivePostId === null"
             :editor-locked="
-              reorderMode || applyingReorder || imagePipelineBusy
+              reorderMode ||
+              applyingReorder ||
+              imagePipelineBusy ||
+              aiCategorizing
             "
             @update:title="title = $event"
             @update:description="description = $event"
@@ -930,11 +972,29 @@ onBeforeUnmount(() => {
                     :disabled="
                       submitting ||
                       applyingReorder ||
-                      imagePipelineBusy
+                      imagePipelineBusy ||
+                      aiCategorizing
                     "
                     @click="enterReorderMode"
                   >
                     Reorder images
+                  </button>
+                  <button
+                    v-if="!reorderMode"
+                    type="button"
+                    class="post-metadata__secondary"
+                    :disabled="
+                      submitting ||
+                      applyingReorder ||
+                      imagePipelineBusy ||
+                      aiCategorizing ||
+                      effectivePostId === null
+                    "
+                    @click="categorizeWithAi"
+                  >
+                    {{
+                      aiCategorizing ? 'Categorizing…' : 'Categorize with AI'
+                    }}
                   </button>
                   <template v-else>
                     <button
@@ -971,11 +1031,28 @@ onBeforeUnmount(() => {
                       :disabled="
                         submitting ||
                         applyingReorder ||
-                        imagePipelineBusy
+                        imagePipelineBusy ||
+                        aiCategorizing
                       "
                       @click="enterReorderMode"
                     >
                       Reorder images
+                    </button>
+                    <button
+                      type="button"
+                      class="post-metadata__secondary"
+                      :disabled="
+                        submitting ||
+                        applyingReorder ||
+                        imagePipelineBusy ||
+                        aiCategorizing ||
+                        effectivePostId === null
+                      "
+                      @click="categorizeWithAi"
+                    >
+                      {{
+                        aiCategorizing ? 'Categorizing…' : 'Categorize with AI'
+                      }}
                     </button>
                   </div>
                 </template>

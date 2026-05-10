@@ -111,3 +111,35 @@ export async function extractGalleryMetadata(
   )
   return unwrapEnvelope<ExtractGalleryMetadataResponse>(data)
 }
+
+export interface CategorizePostAiSummary {
+  metadata_extraction: ExtractImageMetadataSummary | null
+  categorization: {
+    total_with_prompt: number
+    updated: number
+    skipped_missing_prompt: number
+    failed: number
+  }
+}
+
+export interface CategorizePostAiErrorItem {
+  gallery_id: number
+  error: string
+}
+
+export interface CategorizePostAiResponse {
+  summary: CategorizePostAiSummary
+  errors: CategorizePostAiErrorItem[]
+  post: PostRow
+}
+
+export async function categorizePostWithAi(
+  postId: number,
+): Promise<CategorizePostAiResponse> {
+  const { data } = await http.post<ApiEnvelope<CategorizePostAiResponse>>(
+    routes.posts.aiCategorize(postId),
+    {},
+    { timeout: 300_000 },
+  )
+  return unwrapEnvelope<CategorizePostAiResponse>(data)
+}

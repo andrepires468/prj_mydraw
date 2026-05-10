@@ -62,4 +62,9 @@ class EditPostController extends Controller
 
         return ApiResponse::success($this->editPostService->extractGalleryMetadata($request));
     }
+
+    public function categorizeWithAi(Request $request, int $id): JsonResponse
+    {
+        return ApiResponse::success($this->editPostService->categorizeWithAi($request, $id));
+    }
 }

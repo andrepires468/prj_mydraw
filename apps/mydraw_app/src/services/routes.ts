@@ -24,6 +24,7 @@ export const routes = {
     list: '/posts',
     one: (id: number | string) => `/posts/${id}`,
     metadataExtract: '/posts/metadata/extract',
+    aiCategorize: (postId: number) => `/posts/${postId}/ai/categorize`,
     images: (postId: number) => `/posts/${postId}/images`,
     imageOne: (postId: number, galleryId: number) =>
       `/posts/${postId}/images/${galleryId}`,

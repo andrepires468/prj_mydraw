@@ -31,6 +31,14 @@ export interface StableDiffusionLoraMetadata {
   source?: string | null
 }
 
+/** Civitai-style audience rating stored per image / post. */
+export type ContentRating =
+  | 'PG'
+  | 'PG-13'
+  | 'R'
+  | 'X'
+  | 'XXX'
+
 export interface GalleryRow {
   id: number
   post_id: number | null
@@ -58,6 +66,10 @@ export interface GalleryRow {
   metadata_version?: string | null
   metadata_loras?: StableDiffusionLoraMetadata[] | null
   metadata_raw?: Record<string, unknown> | null
+  ai_tags?: string[] | null
+  ai_rating?: ContentRating | null
+  ai_rating_reason?: string | null
+  ai_categorized_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -78,6 +90,9 @@ export interface PostRow {
   draft_uuid: string | null
   author_name?: string | null
   author_avatar_url?: string | null
+  ai_tags?: string[] | null
+  content_rating?: ContentRating | null
+  ai_categorized_at?: string | null
   created_at: string
   updated_at: string
   user?: PostUser

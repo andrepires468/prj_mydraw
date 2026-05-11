@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPost, type GalleryRow, type PostRow } from '@/api/posts'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
+import { useAuthStore } from '@/stores/auth'
 import LoadingIndicator from '@/components/gallery/LoadingIndicator.vue'
 import PostViewModeToggle from '@/components/post/PostViewModeToggle.vue'
 import PostImageCarousel from '@/components/post/PostImageCarousel.vue'
@@ -28,6 +29,7 @@ function readSavedMediaViewMode(): PostMediaViewMode {
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 
 interface Props {
   postId?: number | string
@@ -144,6 +146,23 @@ const resolvedPostId = computed<number | string | null>(() => {
   return id ? (id as string) : null
 })
 
+const canEditPost = computed(() => {
+  const p = post.value
+  const u = authStore.user
+  if (!p || !u) return false
+  if (!authStore.isAdmin) return false
+  return Number(p.user_id) === Number(u.id)
+})
+
+function goEditPost() {
+  const id = post.value?.id
+  if (id == null) return
+  router.push({
+    name: 'edit-post',
+    params: { post_id: String(id) },
+  })
+}
+
 async function load(id: number | string) {
   loading.value = true
   error.value = null
@@ -201,15 +220,41 @@ watch(
       'app-page-inner': !props.embedded,
     }"
   >
-    <button
+    <div
       v-if="!props.embedded"
-      type="button"
-      class="post-view__back"
-      @click="goBack"
+      class="post-view__top-bar"
     >
-      <MaterialIcon name="arrow_back" />
-      <span>Back</span>
-    </button>
+      <button
+        type="button"
+        class="post-view__back"
+        @click="goBack"
+      >
+        <MaterialIcon name="arrow_back" />
+        <span>Back</span>
+      </button>
+      <button
+        v-if="canEditPost"
+        type="button"
+        class="post-view__edit-btn"
+        @click="goEditPost"
+      >
+        <MaterialIcon name="edit" size="1rem" />
+        <span>Edit post</span>
+      </button>
+    </div>
+    <div
+      v-else-if="canEditPost"
+      class="post-view__embedded-edit-wrap"
+    >
+      <button
+        type="button"
+        class="post-view__edit-btn"
+        @click="goEditPost"
+      >
+        <MaterialIcon name="edit" size="1rem" />
+        <span>Edit post</span>
+      </button>
+    </div>
 
     <LoadingIndicator v-if="loading" label="Loading post..." />
 
@@ -334,6 +379,37 @@ watch(
         <section v-if="post.description" class="post-view__description">
           <h2 class="post-view__section-title">Description</h2>
           <p>{{ post.description }}</p>
+        </section>
+
+        <section
+          v-if="postTagsForDisplay.length > 0"
+          class="post-view__tags-aside"
+          aria-label="Post tags"
+        >
+          <div
+            class="post-view__metadata-card post-view__metadata-card--inline post-view__tags-card"
+          >
+            <h2 class="post-view__tags-card-title">Tags</h2>
+            <ul class="post-view__tags-list" role="list">
+              <li
+                v-for="(tag, ti) in postTagsForDisplay"
+                :key="`aside-${ti}-${tag}`"
+                class="post-view__tag-chip"
+                role="listitem"
+              >
+                {{ tag }}
+              </li>
+            </ul>
+            <div
+              v-if="post.content_rating"
+              class="post-view__tags-meta"
+            >
+              <span class="post-view__tags-rating-label">Rating</span>
+              <span class="post-view__tags-rating-badge">{{
+                post.content_rating
+              }}</span>
+            </div>
+          </div>
         </section>
 
         <dl class="post-view__stats">

@@ -15,8 +15,26 @@
     @apply text-2xl md:text-3xl;
   }
 
+  .post-view__top-bar {
+    @apply flex flex-wrap items-center justify-between gap-3 mb-6 w-full min-w-0;
+  }
+
+  .post-view__embedded-edit-wrap {
+    @apply flex justify-end mb-4 w-full min-w-0;
+  }
+
+  .post-view__edit-btn {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold uppercase
+      tracking-wide text-on-primary bg-primary border-none cursor-pointer transition-colors shrink-0;
+    box-shadow: var(--shadow-primary-button);
+  }
+
+  .post-view__edit-btn:hover {
+    filter: brightness(1.06);
+  }
+
   .post-view__back {
-    @apply inline-flex items-center gap-1.5 text-sm font-medium text-on-surface-variant mb-6
+    @apply inline-flex items-center gap-1.5 text-sm font-medium text-on-surface-variant
       rounded-full px-3 py-1.5 transition-colors;
   }
 
@@ -490,6 +508,11 @@
 
   .post-view__metadata-empty {
     @apply text-on-surface-variant italic m-0 text-xs;
+  }
+
+  /** Tags card in carousel mode — sits in the right column (`post-view__info`). */
+  .post-view__tags-aside {
+    @apply min-w-0 w-full;
   }
 
   /** Full-width tags summary below list-mode rows (under metadata column flow). */

@@ -59,19 +59,35 @@ export const router = createRouter({
     },
     {
       path: '/posts/:id(\\d+)',
-      name: 'post',
-      component: PostView,
-      props: true,
-      meta: { public: true },
+      redirect: (to) => ({
+        path: `/admin/posts/${String(to.params.id)}`,
+      }),
     },
     {
       path: '/posts/new/edit',
+      redirect: '/admin/posts/new/edit',
+    },
+    {
+      path: '/posts/:post_id(\\d+)/edit',
+      redirect: (to) => ({
+        path: `/admin/posts/${String(to.params.post_id)}/edit`,
+      }),
+    },
+    {
+      path: '/admin/posts/:id(\\d+)',
+      name: 'post',
+      component: PostView,
+      props: true,
+      meta: { adminOnly: true },
+    },
+    {
+      path: '/admin/posts/new/edit',
       name: 'edit-post-new',
       component: EditPostView,
       meta: { adminOnly: true },
     },
     {
-      path: '/posts/:post_id(\\d+)/edit',
+      path: '/admin/posts/:post_id(\\d+)/edit',
       name: 'edit-post',
       component: EditPostView,
       props: true,
@@ -116,7 +132,7 @@ router.beforeEach((to) => {
     return { path: '/' }
   }
 
-  /** Rotas visitáveis sem login: login, galeria publicada, post isolado `/posts/:id`, post na URL da galeria. */
+  /** Rotas visitáveis sem login: login, galeria publicada, post na URL da galeria (modal). Posts dedicados: `/admin/posts/:id` (apenas admin). */
   const isPublic = to.matched.some((record) => record.meta.public === true)
 
   if (!isPublic && !hasValidSession) {

@@ -11,7 +11,7 @@ const route = useRoute()
 
 const isAuthRoute = computed(() => route.meta?.guestOnly === true)
 
-/** Evita remontar o editor ao trocar só a URI (`/posts/new/edit` → `/posts/:post_id/edit`). */
+/** Evita remontar o editor ao trocar só a URI (`/admin/posts/new/edit` → `/admin/posts/:post_id/edit`). */
 const routerViewKey = computed(() => {
   const n = route.name
   if (n === 'edit-post-new' || n === 'edit-post') return 'edit-post-view'

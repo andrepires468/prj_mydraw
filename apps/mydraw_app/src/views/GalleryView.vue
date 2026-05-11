@@ -189,6 +189,11 @@ const canEditActivePost = computed(() => {
   return row.user_id === auth.user.id
 })
 
+/** Rota dedicada do post (`/admin/posts/:id`) é só para admin. */
+const canOpenActivePostStandalone = computed(
+  () => auth.isAdmin && activePostId.value !== null,
+)
+
 function getGalleryCacheKey(postStatus: PostStatus, sortOrder: GallerySort): string {
   return `${GALLERY_CACHE_PREFIX}:${postStatus}:sort:${sortOrder}:first`
 }
@@ -452,7 +457,8 @@ onUnmounted(() => {
           Edit post
         </RouterLink>
         <RouterLink
-          :to="{ name: 'post', params: { id: activePostId } }"
+          v-if="canOpenActivePostStandalone"
+          :to="{ name: 'post', params: { id: activePostId! } }"
           class="app-modal__open-window"
         >
           Open in full page

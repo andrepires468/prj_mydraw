@@ -30,7 +30,7 @@ const galleryFeedActive = computed(() =>
     </RouterLink>
     <RouterLink
       v-if="auth.isAdmin"
-      to="/posts/new/edit"
+      to="/admin/posts/new/edit"
       class="bottom-nav-bar__link"
       active-class="bottom-nav-bar__link--active"
     >

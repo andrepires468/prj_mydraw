@@ -124,7 +124,7 @@ const userInitial = computed(() => {
           </RouterLink>
           <RouterLink
             v-if="auth.isAdmin"
-            to="/posts/new/edit"
+            to="/admin/posts/new/edit"
             class="top-nav-bar__link"
             active-class="top-nav-bar__link--active"
           >

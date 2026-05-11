@@ -34,7 +34,7 @@ const authStore = useAuthStore()
 interface Props {
   postId?: number | string
   embedded?: boolean
-  /** Dados já carregados (ex.: lista da galeria); evita GET /posts/:id. */
+  /** Dados já carregados (ex.: lista da galeria); evita GET da API `GET /posts/:id`. */
   initialPost?: PostRow | null
 }
 

@@ -32,7 +32,14 @@ test.describe('Fluid layout (no horizontal overflow)', () => {
 
   test('post page', async ({ page }, testInfo) => {
     const label = `post view [${testInfo.project.name}]`
-    await page.goto('/posts/1')
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'mydraw:token',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OTksInN1YiI6IjEifQ.x',
+      )
+      localStorage.setItem('mydraw:user', JSON.stringify({ is_admin: true }))
+    })
+    await page.goto('/admin/posts/1')
     await expect(page.locator('.post-view__title')).toBeVisible({ timeout: 20_000 })
     await scrollDocumentAndAssertFluid(page, label)
   })
@@ -47,7 +54,7 @@ test.describe('Fluid layout (no horizontal overflow)', () => {
 
   test('create redirects to login — form visible', async ({ page }, testInfo) => {
     const label = `redirect create→login [${testInfo.project.name}]`
-    await page.goto('/posts/new/edit')
+    await page.goto('/admin/posts/new/edit')
     await expect(page).toHaveURL(/\/login/)
     await expect(page.getByRole('main')).toBeVisible()
     await scrollDocumentAndAssertFluid(page, label)

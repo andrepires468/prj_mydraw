@@ -115,7 +115,7 @@ const draftUuid = ref(crypto.randomUUID())
 /** Após o primeiro upload no modo novo, até o `router.replace` com id numérico. */
 const createdPostId = ref<number | null>(null)
 
-/** Quando preenchido e todas as imagens estiverem `done`, navega para `/posts/:post_id/edit`. */
+/** Quando preenchido e todas as imagens estiverem `done`, navega para `/admin/posts/:post_id/edit`. */
 const pendingUrlReplacePostId = ref<number | null>(null)
 const drainingQueuedUploads = ref(false)
 const queuedDrainRequested = ref(false)
@@ -125,7 +125,7 @@ const queueOrderSyncRequested = ref(false)
 /** Revogar object URLs criadas para previews locais (não as retornadas pela API). */
 const locallyCreatedPreviewUrls = new Set<string>()
 
-/** ID numérico do post na rota (`null` em `/posts/new/edit`). */
+/** ID numérico do post na rota (`null` em `/admin/posts/new/edit`). */
 const postId = computed(() => {
   if (isNewPostRoute.value) return null
   const raw = props.post_id ?? route.params.post_id

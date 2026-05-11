@@ -6,26 +6,35 @@ use App\Support\AiTagNormalizer;
 
 final class AiTagNormalizerTest extends TestCase
 {
-    public function testNormalizeListFiltersVagueAndDuplicates(): void
+    public function testNormalizeListPreservesCasingAndCharacters(): void
     {
         $tags = AiTagNormalizer::normalizeList([
-            'Landscape',
-            'landscape',
-            'Masterpiece',
             'Cyberpunk City',
-            'detailed',
+            'Fantasy-Art',
+            '  trim-outer  ',
         ]);
 
-        $this->assertSame(['landscape', 'cyberpunk-city'], $tags);
+        $this->assertSame(['Cyberpunk City', 'Fantasy-Art', 'trim-outer'], $tags);
     }
 
-    public function testUnionSortedUniqueMergesPerImageGroups(): void
+    public function testNormalizeListDedupesExactStrings(): void
+    {
+        $tags = AiTagNormalizer::normalizeList([
+            'Same',
+            'Same',
+            'same',
+        ]);
+
+        $this->assertSame(['Same', 'same'], $tags);
+    }
+
+    public function testUnionUniquePreservesMergeOrder(): void
     {
         $merged = AiTagNormalizer::unionSortedUnique([
             ['Forest', 'fantasy'],
             ['fantasy', 'moon'],
         ]);
 
-        $this->assertSame(['fantasy', 'forest', 'moon'], $merged);
+        $this->assertSame(['Forest', 'fantasy', 'moon'], $merged);
     }
 }

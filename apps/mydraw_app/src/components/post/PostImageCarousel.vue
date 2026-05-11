@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import type { GalleryRow } from '@/api/posts'
 import type { PostMediaImage } from './post-media'
@@ -81,6 +81,40 @@ function goTo(index: number) {
   if (index < 0 || index >= props.images.length) return
   current.value = index
 }
+
+function keyboardTargetsInput(event: KeyboardEvent): boolean {
+  const t = event.target
+  if (!(t instanceof HTMLElement)) return false
+  const tag = t.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true
+  if (t.isContentEditable) return true
+  return false
+}
+
+function onWindowKeydown(event: KeyboardEvent) {
+  if (isFullscreen.value) return
+  if (!hasMultiple.value) return
+  if (keyboardTargetsInput(event)) return
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault()
+    prev()
+    return
+  }
+  if (event.key === 'ArrowRight') {
+    event.preventDefault()
+    next()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onWindowKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onWindowKeydown)
+})
 </script>
 
 <template>

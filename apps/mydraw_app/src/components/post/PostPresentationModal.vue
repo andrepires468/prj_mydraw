@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import PostImageCarousel from './PostImageCarousel.vue'
+import type { GalleryRow } from '@/api/posts'
 import type { PostMediaImage } from './post-media'
 
 const AUTOPLAY_INTERVALS = [3, 6, 12] as const
@@ -10,6 +11,7 @@ type AutoplaySeconds = (typeof AUTOPLAY_INTERVALS)[number]
 interface Props {
   images: PostMediaImage[]
   altText: string
+  galleryRows?: (GalleryRow | null)[] | null
 }
 
 const props = defineProps<Props>()
@@ -162,6 +164,7 @@ onBeforeUnmount(() => {
           <PostImageCarousel
             v-model:current-index="currentIndex"
             :images="images"
+            :gallery-rows="galleryRows"
             :alt-text="altText"
             variant="fullscreen"
           />

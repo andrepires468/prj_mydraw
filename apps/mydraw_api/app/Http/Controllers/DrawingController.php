@@ -2,47 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Drawing;
+use App\Services\DrawingService;
+use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class DrawingController extends Controller
 {
-    /**
-     * GET /api/drawings — listagem pública paginada.
-     */
+    public function __construct(private readonly DrawingService $drawingService)
+    {
+    }
+
     public function index(Request $request): JsonResponse
     {
-        $perPage = (int) $request->input('per_page', 20);
-        $perPage = max(1, min($perPage, 50));
-
-        $drawings = Drawing::query()
-            ->with('user:id,name')
-            ->latest()
-            ->paginate($perPage);
-
-        return response()->json($drawings);
+        return ApiResponse::success($this->drawingService->index($request));
     }
 
-    /**
-     * GET /api/drawings/{id}
-     */
     public function show(int $id): JsonResponse
     {
-        $drawing = Drawing::query()
-            ->with('user:id,name')
-            ->findOrFail($id);
-
-        return response()->json(['drawing' => $drawing]);
+        return ApiResponse::success(['drawing' => $this->drawingService->show($id)]);
     }
 
-    /**
-     * POST /api/drawings — autenticado (JWT).
-     * multipart/form-data com "file".
-     */
     public function store(Request $request): JsonResponse
     {
         $this->validate($request, [
@@ -53,50 +33,11 @@ class DrawingController extends Controller
             'model'       => 'nullable|string|max:80',
         ]);
 
-        /** @var \Illuminate\Http\UploadedFile $file */
-        $file   = $request->file('file');
-        $userId = Auth::id();
-
-        $key = sprintf(
-            'drawings/%d/%s.%s',
-            $userId,
-            Str::uuid(),
-            $file->getClientOriginalExtension()
-        );
-
-        Storage::disk('s3')->put($key, file_get_contents($file->getRealPath()), [
-            'visibility'  => 'public',
-            'ContentType' => $file->getMimeType(),
-        ]);
-
-        $drawing = Drawing::create([
-            'user_id'     => $userId,
-            'title'       => $request->input('title'),
-            'description' => $request->input('description'),
-            'prompt'      => $request->input('prompt'),
-            'model'       => $request->input('model'),
-            'object_key'  => $key,
-            'mime_type'   => $file->getMimeType(),
-            'size'        => $file->getSize(),
-        ]);
-
-        return response()->json(['drawing' => $drawing->fresh('user')], 201);
+        return ApiResponse::success($this->drawingService->store($request), '', 201);
     }
 
-    /**
-     * DELETE /api/drawings/{id}
-     */
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
-        $drawing = Drawing::findOrFail($id);
-
-        if ($drawing->user_id !== Auth::id()) {
-            return response()->json(['error' => 'forbidden'], 403);
-        }
-
-        Storage::disk('s3')->delete($drawing->object_key);
-        $drawing->delete();
-
-        return response()->json(['deleted' => true]);
+        return ApiResponse::success($this->drawingService->destroy($request, $id));
     }
 }

@@ -22,6 +22,14 @@ class Post extends Model
         'description',
         'status',
         'draft_uuid',
+        'ai_tags',
+        'content_rating',
+        'ai_categorized_at',
+    ];
+
+    protected $casts = [
+        'ai_tags'           => 'array',
+        'ai_categorized_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

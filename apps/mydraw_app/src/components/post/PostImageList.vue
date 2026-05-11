@@ -43,6 +43,13 @@ function rowForIndex(i: number): GalleryRow | null {
     >
       <div class="post-view__list-pair">
         <div class="post-view__list-visual">
+          <span
+            v-if="rowForIndex(i)?.ai_rating"
+            class="post-view__image-rating"
+            :aria-label="`Content rating ${rowForIndex(i)?.ai_rating}`"
+          >
+            {{ rowForIndex(i)?.ai_rating }}
+          </span>
           <img
             v-if="!failedIds.has(img.id)"
             class="post-view__list-image"

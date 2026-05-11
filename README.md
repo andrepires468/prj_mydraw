@@ -148,9 +148,11 @@ prj_mydraw/
 
 Prefixo base: **`/api/v1`**.
 
+Todas as respostas JSON usam o envelope **`{ Status, Code, Message, Data }`** (`Status`: sucesso ou falha; `Code`: código HTTP; payload útil em **`Data`**). Erros de validação costumam incluir `Data.errors` no formato Laravel (`campo` → lista de mensagens).
+
 | Área | Exemplos |
 | ---- | -------- |
-| Saúde (raiz da API) | `GET /` *(JSON `status: ok`; fora do prefixo `/api`)* |
+| Saúde (fora de `/api`) | `GET /` *(raiz do host da API; `Data` inclui `name`, `version`, `status`)* |
 | Auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/google`; com JWT: `GET /auth/me`, `PUT /auth/profile`, `PUT /auth/password`, `POST /auth/google/link`, `POST /auth/google/unlink`, `POST /auth/logout` |
 | Posts (leitura; JWT opcional para personalização) | `GET /posts`, `GET /posts/{id}` |
 | Posts (escrita) | `PUT/DELETE /posts/{id}`, upload/reordenar/remover imagens |

@@ -129,6 +129,13 @@ const formattedDate = computed(() => {
   })
 })
 
+/** Tags as returned by the API (same as stored); list mode only in template. */
+const postTagsForDisplay = computed(() =>
+  (post.value?.ai_tags ?? []).filter(
+    (t) => typeof t === 'string' && t.trim() !== '',
+  ),
+)
+
 const resolvedPostId = computed<number | string | null>(() => {
   if (props.postId !== undefined && props.postId !== null) {
     return props.postId
@@ -245,6 +252,7 @@ watch(
         <PostImageCarousel
           v-if="mediaViewMode === 'carousel'"
           :images="images"
+          :gallery-rows="galleryRowsAlignedWithImages"
           :alt-text="post.description ?? post.title"
         />
         <PostImageList
@@ -253,6 +261,39 @@ watch(
           :gallery-rows="galleryRowsAlignedWithImages"
           :alt-text="post.description ?? post.title"
         />
+
+        <section
+          v-if="
+            mediaViewMode === 'list' && postTagsForDisplay.length > 0
+          "
+          class="post-view__tags-after-list"
+          aria-label="Post tags"
+        >
+          <div
+            class="post-view__metadata-card post-view__metadata-card--inline post-view__tags-card"
+          >
+            <h2 class="post-view__tags-card-title">Tags</h2>
+            <ul class="post-view__tags-list" role="list">
+              <li
+                v-for="(tag, ti) in postTagsForDisplay"
+                :key="`${ti}-${tag}`"
+                class="post-view__tag-chip"
+                role="listitem"
+              >
+                {{ tag }}
+              </li>
+            </ul>
+            <div
+              v-if="post.content_rating"
+              class="post-view__tags-meta"
+            >
+              <span class="post-view__tags-rating-label">Rating</span>
+              <span class="post-view__tags-rating-badge">{{
+                post.content_rating
+              }}</span>
+            </div>
+          </div>
+        </section>
       </section>
 
       <aside
@@ -311,6 +352,7 @@ watch(
     <PostPresentationModal
       v-if="presentationOpen && post && images.length > 0"
       :images="images"
+      :gallery-rows="galleryRowsAlignedWithImages"
       :alt-text="post.description ?? post.title"
       @close="closePresentation"
     />

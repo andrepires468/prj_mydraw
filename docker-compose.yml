@@ -43,6 +43,8 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       POSTS_LIST_CACHE_TTL_SECONDS: ${POSTS_LIST_CACHE_TTL_SECONDS:-15}
       CIVITAI_API_TOKEN: ${CIVITAI_API_TOKEN:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
       PHP_IDE_CONFIG: "serverName=mydraw_api"
     extra_hosts:
       - "host.docker.internal:host-gateway"

@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
+import type { GalleryRow } from '@/api/posts'
 import type { PostMediaImage } from './post-media'
 
 interface Props {
   images: PostMediaImage[]
   altText: string
+  /** Same length/order as `images`; used for per-image `ai_rating` overlay. */
+  galleryRows?: (GalleryRow | null)[] | null
   /** Optional external control of the active index (use with v-model:currentIndex). */
   currentIndex?: number
   /** Visual variant; 'fullscreen' removes the fixed aspect-ratio for presentation contexts. */
@@ -13,6 +16,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  galleryRows: undefined,
   currentIndex: undefined,
   variant: 'default',
 })
@@ -37,6 +41,14 @@ const activeImage = computed(() => props.images[current.value] ?? null)
 const activeFailed = computed(
   () => !!activeImage.value && failedIds.value.has(activeImage.value.id),
 )
+
+const activeRating = computed<string | null>(() => {
+  const rows = props.galleryRows
+  if (!rows?.length) return null
+  const row = rows[current.value]
+  const r = row?.ai_rating
+  return typeof r === 'string' && r.trim() !== '' ? r.trim() : null
+})
 const hasMultiple = computed(() => props.images.length > 1)
 const isFullscreen = computed(() => props.variant === 'fullscreen')
 
@@ -108,10 +120,26 @@ function goTo(index: number) {
       >
         <MaterialIcon name="chevron_right" />
       </button>
-      <span class="post-view__counter">
+    </template>
+
+    <div
+      v-if="activeRating || hasMultiple"
+      class="post-view__media-overlay-tr"
+    >
+      <span
+        v-if="activeRating"
+        class="post-view__image-rating"
+        :aria-label="`Content rating ${activeRating}`"
+      >
+        {{ activeRating }}
+      </span>
+      <span
+        v-if="hasMultiple"
+        class="post-view__counter"
+      >
         {{ current + 1 }} / {{ images.length }}
       </span>
-    </template>
+    </div>
   </div>
 
   <div v-if="hasMultiple" class="post-view__thumbs" role="tablist">

@@ -1,6 +1,6 @@
 @layer components {
   .auth-button {
-    @apply w-full text-on-primary py-4 rounded-full font-semibold tracking-tight flex items-center justify-center gap-2;
+    @apply w-full min-h-11 text-on-primary py-3.5 rounded-full font-semibold tracking-tight flex items-center justify-center gap-2;
     background-image: linear-gradient(
       to bottom right,
       theme('colors.primary'),

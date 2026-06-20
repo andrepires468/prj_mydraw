@@ -98,8 +98,8 @@
   .gallery-card__nav {
     @apply absolute top-1/2 -translate-y-1/2 flex items-center justify-center
       rounded-full backdrop-blur-sm transition-all;
-    width: 2rem;
-    height: 2rem;
+    width: 2.25rem;
+    height: 2.25rem;
     background-color: var(--overlay-badge-bg-soft);
     color: #fff;
     z-index: 3;

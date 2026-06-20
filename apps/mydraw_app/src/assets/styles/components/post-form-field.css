@@ -9,7 +9,7 @@
 
   .post-form-field__input,
   .post-form-field__textarea {
-    @apply w-full bg-surface-container-lowest border-none rounded-xl px-4 py-3 text-on-surface text-sm transition-all;
+    @apply w-full min-h-11 bg-surface-container-lowest border-none rounded-xl px-4 py-3 text-on-surface text-sm transition-all;
   }
 
   .post-form-field__input {

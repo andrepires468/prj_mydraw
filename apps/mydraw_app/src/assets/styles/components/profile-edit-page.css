@@ -45,9 +45,7 @@
   }
 
   .profile-edit-page__email {
-    @apply mt-6 rounded-2xl px-4 py-3 text-sm;
-    background-color: var(--surface-container-low);
-    color: var(--on-surface-variant);
+    @apply mt-6 rounded-2xl px-4 py-3 text-sm bg-surface-container-low text-on-surface-variant;
   }
 
   .profile-edit-page__email-label {
@@ -94,9 +92,7 @@
   }
 
   .profile-edit-page__google {
-    @apply mt-6 rounded-2xl px-4 py-4 text-sm;
-    background-color: var(--surface-container-low);
-    color: var(--on-surface-variant);
+    @apply mt-6 rounded-2xl px-4 py-4 text-sm bg-surface-container-low text-on-surface-variant;
   }
 
   .profile-edit-page__google-title {
@@ -112,15 +108,15 @@
   }
 
   .profile-edit-page__google-unlink {
-    @apply mt-3 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium transition-colors;
-    border: 1px solid var(--outline-variant);
-    color: var(--error);
+    @apply mt-3 inline-flex items-center justify-center min-h-11 rounded-xl px-4 text-sm font-medium transition-colors;
+    border: 1px solid rgb(var(--color-outline-variant));
+    color: theme('colors.error');
     background: transparent;
     cursor: pointer;
   }
 
   .profile-edit-page__google-unlink:hover:not(:disabled) {
-    background-color: var(--surface-container-high);
+    @apply bg-surface-container-high;
   }
 
   .profile-edit-page__google-unlink:disabled {

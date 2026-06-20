@@ -31,7 +31,7 @@
   }
 
   .app-modal__open-window {
-    @apply inline-flex items-center rounded-full px-3.5 py-1.5 text-xs font-semibold;
+    @apply inline-flex items-center justify-center min-h-9 rounded-full px-4 py-2 text-xs font-semibold;
     @apply text-on-primary bg-primary transition-colors;
     text-decoration: none;
     letter-spacing: 0.02em;
@@ -42,7 +42,7 @@
   }
 
   .app-modal__edit-post {
-    @apply inline-flex items-center rounded-full px-3.5 py-1.5 text-xs font-semibold;
+    @apply inline-flex items-center justify-center min-h-9 rounded-full px-4 py-2 text-xs font-semibold;
     @apply text-on-surface-variant bg-surface-container-high border border-outline-variant/40;
     @apply transition-colors;
     text-decoration: none;

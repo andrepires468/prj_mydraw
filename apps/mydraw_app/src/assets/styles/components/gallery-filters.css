@@ -1,14 +1,14 @@
 @layer components {
   .gallery-filters {
-    @apply flex flex-wrap items-center gap-4;
+    @apply flex flex-wrap items-center gap-3;
   }
 
   .gallery-filters__tabs {
-    @apply bg-surface-container-low p-1 rounded-full flex gap-1;
+    @apply bg-surface-container-low p-1 rounded-full flex gap-1 min-h-10 items-center;
   }
 
   .gallery-filters__tab {
-    @apply px-6 py-2 rounded-full font-medium text-sm transition-all text-on-surface-variant;
+    @apply px-5 py-2 min-h-9 rounded-full font-medium text-sm transition-all text-on-surface-variant;
     @apply inline-flex items-center gap-2;
     border: none;
     background: transparent;
@@ -40,7 +40,7 @@
   }
 
   .gallery-filters__sort {
-    @apply flex items-center gap-3 bg-surface-container-low px-4 py-2 rounded-full;
+    @apply flex items-center gap-3 min-h-10 bg-surface-container-low px-4 py-2 rounded-full;
   }
 
   .gallery-filters__sort-label {

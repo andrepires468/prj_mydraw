@@ -56,8 +56,10 @@ class EditPostController extends Controller
     public function extractGalleryMetadata(Request $request): JsonResponse
     {
         $this->validate($request, [
-            'all_posts' => 'sometimes|boolean',
-            'post_id'   => 'sometimes|integer|min:1',
+            'all_posts'              => 'sometimes|boolean',
+            'post_id'                => 'sometimes|integer|min:1',
+            'include_ai_categorize'  => 'sometimes|boolean',
+            'posts_limit'            => 'sometimes|nullable|integer|min:1|max:100',
         ]);
 
         return ApiResponse::success($this->editPostService->extractGalleryMetadata($request));

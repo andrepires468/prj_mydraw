@@ -77,21 +77,25 @@ class EditPostService
                 || $finalStatus === Post::STATUS_PUBLISHED;
             PostListCache::bump($this->userId($user), $touchGlobal);
 
+            $metadataExtractionError = null;
             try {
                 $fresh = $post->fresh();
                 if ($fresh) {
                     $this->galleryMetadataExtraction->extractMissingForPost($fresh, $user);
                 }
             } catch (Throwable $e) {
-                Log::error('edit-post/update: gallery metadata extraction failed', [
-                    'user_id'   => $this->userId($user),
-                    'post_id'   => $post->id,
-                    'exception' => get_class($e),
-                    'message'   => $e->getMessage(),
-                ]);
+                $metadataExtractionError = mb_substr(trim($e->getMessage()), 0, 500);
+                if ($metadataExtractionError === '') {
+                    $metadataExtractionError = 'Gallery metadata extraction failed.';
+                }
             }
 
-            return ['post' => $post->fresh()->load('images')];
+            $payload = ['post' => $post->fresh()->load('images')];
+            if ($metadataExtractionError !== null) {
+                $payload['metadata_extraction_error'] = $metadataExtractionError;
+            }
+
+            return $payload;
         } catch (Throwable $e) {
             Log::error('edit-post/update failed', [
                 'user_id'   => $this->userId($user),
@@ -401,6 +405,8 @@ class EditPostService
      */
     public function extractGalleryMetadata(Request $request): array
     {
+        ini_set('max_execution_time', '300'); // 5 minutes
+
         $user = $this->ensureAuthenticatedAdmin($request);
 
         $allPosts = $request->boolean('all_posts');
@@ -411,9 +417,36 @@ class EditPostService
         if (!$allPosts && !$request->filled('post_id')) {
             throw new ApiException(422, 'Invalid payload.', ['error' => 'invalid_payload']);
         }
+        if ($request->boolean('include_ai_categorize') && !$allPosts) {
+            throw new ApiException(
+                422,
+                'include_ai_categorize requires all_posts.',
+                ['error' => 'invalid_payload']
+            );
+        }
 
         if ($allPosts) {
-            return $this->galleryMetadataExtraction->extractMissingForAllPosts($user);
+            $postsLimit = $this->parseOptionalPostsLimit($request);
+
+            $scope = null;
+            if ($postsLimit !== null) {
+                $scope = $this->resolveBatchScopePostIds($postsLimit);
+            }
+
+            $out = $this->galleryMetadataExtraction->extractMissingForAllPosts($user, $scope);
+            $out['batch'] = [
+                'posts_limit'    => $postsLimit,
+                'scope_post_ids' => $scope,
+            ];
+
+            if ($request->boolean('include_ai_categorize')) {
+                $out['ai_categorization_batch'] = $this->geminiPostCategorization->categorizeMissingForAllPosts(
+                    $user,
+                    $scope
+                );
+            }
+
+            return $out;
         }
 
         $post = $this->findOwnedPost($request, (int) $request->input('post_id'), $user);
@@ -431,7 +464,7 @@ class EditPostService
     {
         $user = $this->ensureAuthenticatedAdmin($request);
 
-        $post = $this->findOwnedPost($request, $id, $user);
+        $post = Post::query()->find($id);
         if (!$post) {
             throw new ApiException(404, 'Not found.', ['error' => 'not_found']);
         }
@@ -477,5 +510,53 @@ class EditPostService
         }
 
         return $post;
+    }
+
+    /**
+     * Limite opcional de posts por requisição (admin management). Null = sem limite.
+     */
+    private function parseOptionalPostsLimit(Request $request): ?int
+    {
+        if (!$request->has('posts_limit')) {
+            return null;
+        }
+
+        $raw = $request->input('posts_limit');
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        $v = (int) $raw;
+        if ($v < 1 || $v > 100) {
+            throw new ApiException(
+                422,
+                'posts_limit must be between 1 and 100.',
+                ['error' => 'invalid_posts_limit']
+            );
+        }
+
+        return $v;
+    }
+
+    /**
+     * Primeiros N post_ids que ainda precisam de metadados embutidos OU categorização IA.
+     *
+     * @return int[]
+     */
+    private function resolveBatchScopePostIds(int $postsLimit): array
+    {
+        $ids = Gallery::query()
+            ->where(function ($q): void {
+                $q->whereNull('metadata_type')
+                    ->orWhereNull('ai_categorized_at');
+            })
+            ->distinct()
+            ->orderBy('post_id')
+            ->pluck('post_id')
+            ->map(static fn ($id) => (int) $id)
+            ->values()
+            ->all();
+
+        return array_slice($ids, 0, $postsLimit);
     }
 }

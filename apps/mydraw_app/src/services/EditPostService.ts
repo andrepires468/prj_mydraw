@@ -49,16 +49,21 @@ export async function reorderPostImages(
   unwrapEnvelope<{ ok: boolean }>(data)
 }
 
+export interface UpdatePostResult {
+  post: PostRow
+  metadata_extraction_error?: string
+}
+
 export async function updatePost(
   postId: number,
   payload: UpdatePostPayload,
-): Promise<PostRow> {
-  const { data } = await http.put<ApiEnvelope<{ post: PostRow }>>(
+): Promise<UpdatePostResult> {
+  const { data } = await http.put<ApiEnvelope<UpdatePostResult>>(
     routes.posts.update(postId),
     payload,
     { timeout: 60_000 },
   )
-  return unwrapEnvelope<{ post: PostRow }>(data).post
+  return unwrapEnvelope<UpdatePostResult>(data)
 }
 
 export async function deletePost(postId: number): Promise<void> {
@@ -79,6 +84,7 @@ export interface ExtractImageMetadataSummary {
 export interface ExtractImageMetadataErrorItem {
   gallery_id: number
   error: string
+  message?: string
 }
 
 export interface ExtractImageMetadataResponse {
@@ -87,10 +93,31 @@ export interface ExtractImageMetadataResponse {
   post: PostRow
 }
 
+/** Resposta agregada quando `include_ai_categorize` é usado com `all_posts`. */
+export interface AiCategorizationBatchSummary {
+  skipped?: boolean
+  reason?: string
+  summary: {
+    posts_total: number
+    posts_with_updates: number
+    posts_skipped_no_prompt: number
+    posts_failed: number
+  }
+  errors: Array<{ post_id: number; message: string; http_status: number }>
+}
+
+/** Eco do backend: escopo do lote e limite aplicado. */
+export interface AdminGalleryMetadataBatchInfo {
+  posts_limit: number | null
+  scope_post_ids: number[] | null
+}
+
 export interface ExtractAllPostsMetadataResponse {
   summary: ExtractImageMetadataSummary
   errors: ExtractImageMetadataErrorItem[]
   posts_touched: number
+  ai_categorization_batch?: AiCategorizationBatchSummary
+  batch?: AdminGalleryMetadataBatchInfo
 }
 
 export type ExtractGalleryMetadataResponse =
@@ -98,16 +125,27 @@ export type ExtractGalleryMetadataResponse =
   | ExtractAllPostsMetadataResponse
 
 export async function extractGalleryMetadata(
-  options: { postId: number } | { allPosts: true },
+  options:
+    | { postId: number }
+    | { allPosts: true; includeAiCategorize?: boolean; postsLimit?: number },
 ): Promise<ExtractGalleryMetadataResponse> {
   const body =
     'postId' in options
       ? { post_id: options.postId }
-      : { all_posts: true }
+      : {
+          all_posts: true,
+          ...(options.includeAiCategorize
+            ? { include_ai_categorize: true }
+            : {}),
+          ...(typeof options.postsLimit === 'number'
+            ? { posts_limit: options.postsLimit }
+            : {}),
+        }
   const { data } = await http.post<ApiEnvelope<ExtractGalleryMetadataResponse>>(
     routes.posts.metadataExtract,
     body,
-    { timeout: 300_000 },
+    /** Metadados + até ~4 min de Gemini por post; margem para lote pequeno. */
+    { timeout: 360_000 },
   )
   return unwrapEnvelope<ExtractGalleryMetadataResponse>(data)
 }
@@ -119,6 +157,9 @@ export interface CategorizePostAiSummary {
     updated: number
     skipped_missing_prompt: number
     failed: number
+    source_gallery_id?: number | null
+    skipped?: boolean
+    reason?: string
   }
 }
 
@@ -139,7 +180,7 @@ export async function categorizePostWithAi(
   const { data } = await http.post<ApiEnvelope<CategorizePostAiResponse>>(
     routes.posts.aiCategorize(postId),
     {},
-    { timeout: 300_000 },
+    { timeout: 360_000 },
   )
   return unwrapEnvelope<CategorizePostAiResponse>(data)
 }

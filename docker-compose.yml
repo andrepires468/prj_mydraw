@@ -45,6 +45,9 @@ services:
       CIVITAI_API_TOKEN: ${CIVITAI_API_TOKEN:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
+      GEMINI_429_MAX_ATTEMPTS: ${GEMINI_429_MAX_ATTEMPTS:-5}
+      GEMINI_REQUEST_TIMEOUT_SECONDS: ${GEMINI_REQUEST_TIMEOUT_SECONDS:-240}
+      AI_CATEGORIZATION_ENABLED: ${AI_CATEGORIZATION_ENABLED:-true}
       PHP_IDE_CONFIG: "serverName=mydraw_api"
     extra_hosts:
       - "host.docker.internal:host-gateway"

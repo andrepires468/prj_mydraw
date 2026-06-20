@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Support\PostListCache;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -43,7 +42,6 @@ class GalleryMetadataExtractionService
         [$summary, $errors, $touchedPostIds] = $this->processGalleryRows(
             $galleryRows,
             $disk,
-            $this->userId($actor),
         );
 
         $this->bumpCachesForPosts($touchedPostIds);
@@ -60,25 +58,45 @@ class GalleryMetadataExtractionService
     }
 
     /**
-     * Extract metadata for every gallery row (any post) with null `metadata_type`.
+     * Extract metadata for gallery rows with null `metadata_type`.
+     * When `$postIdsScope` is non-null, only rows whose `post_id` is in that list (batch admin).
+     * Empty scope processes nothing.
      *
+     * @param  int[]|null  $postIdsScope
      * @return array{summary: array<string, int>, errors: array<int, array{gallery_id: int, error: string}>, posts_touched: int}
      */
-    public function extractMissingForAllPosts(User $actor): array
+    public function extractMissingForAllPosts(User $actor, ?array $postIdsScope = null): array
     {
-        $galleryRows = Gallery::query()
+        $query = Gallery::query()
             ->whereNull('metadata_type')
             ->orderBy('post_id')
             ->orderBy('position')
-            ->orderBy('id')
-            ->get();
+            ->orderBy('id');
+
+        if ($postIdsScope !== null) {
+            if ($postIdsScope === []) {
+                return [
+                    'summary'       => [
+                        'total'       => 0,
+                        'updated'     => 0,
+                        'no_metadata' => 0,
+                        'failed'      => 0,
+                    ],
+                    'errors'        => [],
+                    'posts_touched' => 0,
+                ];
+            }
+
+            $query->whereIn('post_id', $postIdsScope);
+        }
+
+        $galleryRows = $query->get();
 
         $disk = Storage::disk('s3');
 
         [$summary, $errors, $touchedPostIds] = $this->processGalleryRows(
             $galleryRows,
             $disk,
-            $this->userId($actor),
         );
 
         $this->bumpCachesForPosts($touchedPostIds);
@@ -97,7 +115,6 @@ class GalleryMetadataExtractionService
     private function processGalleryRows(
         Collection $galleryRows,
         Filesystem $disk,
-        int $actorUserId,
     ): array {
         $summary = [
             'total'       => $galleryRows->count(),
@@ -126,17 +143,11 @@ class GalleryMetadataExtractionService
             try {
                 $binary = $disk->get($key);
             } catch (Throwable $e) {
-                Log::warning('gallery-metadata-extraction read failed', [
-                    'user_id'    => $actorUserId,
-                    'post_id'    => $gallery->post_id,
-                    'gallery_id' => $gallery->id,
-                    'object_key' => $key,
-                    'message'    => $e->getMessage(),
-                ]);
                 $summary['failed']++;
                 $errors[] = [
                     'gallery_id' => $gallery->id,
                     'error'      => 'storage_read_failed',
+                    'message'    => mb_substr($e->getMessage(), 0, 240),
                 ];
 
                 continue;
@@ -149,14 +160,11 @@ class GalleryMetadataExtractionService
                     $gallery->update($clear);
                     $touchedPostIds[(int) $gallery->post_id] = true;
                 } catch (Throwable $e) {
-                    Log::error('gallery-metadata-extraction clear failed', [
-                        'gallery_id' => $gallery->id,
-                        'message'    => $e->getMessage(),
-                    ]);
                     $summary['failed']++;
                     $errors[] = [
                         'gallery_id' => $gallery->id,
                         'error'      => 'persist_failed',
+                        'message'    => mb_substr($e->getMessage(), 0, 240),
                     ];
 
                     continue;
@@ -172,14 +180,11 @@ class GalleryMetadataExtractionService
                 $gallery->update($this->onlyGalleryMetadataPayload($parsed));
                 $touchedPostIds[(int) $gallery->post_id] = true;
             } catch (Throwable $e) {
-                Log::error('gallery-metadata-extraction persist failed', [
-                    'gallery_id' => $gallery->id,
-                    'message'    => $e->getMessage(),
-                ]);
                 $summary['failed']++;
                 $errors[] = [
                     'gallery_id' => $gallery->id,
                     'error'      => 'persist_failed',
+                    'message'    => mb_substr($e->getMessage(), 0, 240),
                 ];
 
                 continue;

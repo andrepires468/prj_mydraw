@@ -598,9 +598,15 @@ async function categorizeWithAi() {
         `Embedded metadata: updated ${meta.updated}, no embedded data ${meta.no_metadata}, failed ${meta.failed}.`,
       )
     }
-    lines.push(
-      `AI tags/rating: updated ${cat.updated} of ${cat.total_with_prompt} with prompt; skipped (no prompt) ${cat.skipped_missing_prompt}; failed ${cat.failed}.`,
-    )
+    if (cat.skipped && cat.reason === 'ai_categorization_disabled') {
+      lines.push('AI tags/rating: skipped (AI categorization disabled on server).')
+    } else if (cat.skipped && cat.reason === 'gemini_not_configured') {
+      lines.push('AI tags/rating: skipped (Gemini not configured).')
+    } else {
+      lines.push(
+        `AI tags/rating: updated ${cat.updated} of ${cat.total_with_prompt} with prompt; skipped (no prompt) ${cat.skipped_missing_prompt}; failed ${cat.failed}.`,
+      )
+    }
     if (res.errors.length > 0) {
       lines.push(`${res.errors.length} image warning(s) — see API errors if needed.`)
     }
@@ -661,12 +667,15 @@ async function saveDraft() {
   clearMessages()
   pendingAction.value = 'save'
   try {
-    const updated = await updatePost(effectivePostId.value, {
+    const res = await updatePost(effectivePostId.value, {
       title: title.value.trim(),
       description: description.value.trim() || null,
     })
-    mergeUpdatedPost(updated)
+    mergeUpdatedPost(res.post)
     successMsg.value = 'Draft saved.'
+    if (res.metadata_extraction_error) {
+      successMsg.value += ` Note: metadata extraction — ${res.metadata_extraction_error}`
+    }
   } catch (err) {
     errorMsg.value = extractErrorMessage(err)
   } finally {
@@ -697,12 +706,15 @@ async function publishOrSave() {
             description: description.value.trim() || null,
             status: 'published' as const,
           }
-    const updated = await updatePost(pid, payload)
-    mergeUpdatedPost(updated)
+    const res = await updatePost(pid, payload)
+    mergeUpdatedPost(res.post)
     successMsg.value =
       status.value === 'published'
         ? 'Post updated.'
         : 'Post published successfully.'
+    if (res.metadata_extraction_error) {
+      successMsg.value += ` Note: metadata extraction — ${res.metadata_extraction_error}`
+    }
     if (status.value === 'published') {
       window.setTimeout(
         () => router.push({ name: 'post', params: { id: pid } }),
@@ -727,11 +739,14 @@ async function unpublish() {
   clearMessages()
   pendingAction.value = 'unpublish'
   try {
-    const updated = await updatePost(effectivePostId.value, {
+    const res = await updatePost(effectivePostId.value, {
       status: 'draft',
     })
-    mergeUpdatedPost(updated)
+    mergeUpdatedPost(res.post)
     successMsg.value = 'Post moved to draft.'
+    if (res.metadata_extraction_error) {
+      successMsg.value += ` Note: metadata extraction — ${res.metadata_extraction_error}`
+    }
   } catch (err) {
     errorMsg.value = extractErrorMessage(err)
   } finally {

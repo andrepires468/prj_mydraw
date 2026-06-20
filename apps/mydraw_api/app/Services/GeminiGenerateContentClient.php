@@ -6,7 +6,6 @@ use App\Exceptions\GeminiApiException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -16,12 +15,22 @@ use Throwable;
  */
 final class GeminiGenerateContentClient
 {
+    /** Tempo máximo de espera por resposta do Gemini (segundos). Padrão: 4 minutos. */
+    private const DEFAULT_REQUEST_TIMEOUT_SECONDS = 240;
+
     private Client $http;
+
+    private int $requestTimeoutSeconds;
 
     public function __construct(?Client $http = null)
     {
+        $this->requestTimeoutSeconds = max(
+            30,
+            (int) env('GEMINI_REQUEST_TIMEOUT_SECONDS', self::DEFAULT_REQUEST_TIMEOUT_SECONDS)
+        );
+
         $this->http = $http ?? new Client([
-            'timeout'         => 120,
+            'timeout'         => $this->requestTimeoutSeconds,
             'connect_timeout' => 15,
         ]);
     }
@@ -55,53 +64,176 @@ final class GeminiGenerateContentClient
             ],
         ];
 
-        try {
-            $response = $this->http->post($url, [
-                'query' => ['key' => $apiKey],
-                'json'  => $payload,
-            ]);
-        } catch (RequestException $e) {
-            throw $this->wrapRequestException($e);
-        } catch (GuzzleException $e) {
-            Log::warning('gemini: request failed', [
-                'message' => $this->sanitizeLogMessage($e->getMessage()),
-            ]);
+        $max429Attempts = max(1, min(10, (int) env('GEMINI_429_MAX_ATTEMPTS', 5)));
+        $response         = null;
+        $attempt          = 0;
 
-            throw new GeminiApiException(
-                'Gemini API request failed.',
-                0,
-                $e
-            );
+        while (true) {
+            $attempt++;
+            try {
+                $response = $this->http->post($url, [
+                    'query' => ['key' => $apiKey],
+                    'json'  => $payload,
+                ]);
+                break;
+            } catch (RequestException $e) {
+                if ($this->isTimeoutException($e)) {
+                    throw $this->timeoutGeminiException($e);
+                }
+
+                $wrapped = $this->wrapRequestException($e);
+                if ($wrapped->getHttpStatus() === 429 && $attempt < $max429Attempts) {
+                    $delay = $this->retryDelaySecondsFor429($e, $wrapped->getMessage());
+                    sleep($delay);
+
+                    continue;
+                }
+                throw $wrapped;
+            } catch (GuzzleException $e) {
+                if ($this->isTimeoutException($e)) {
+                    throw $this->timeoutGeminiException($e);
+                }
+
+                throw new GeminiApiException(
+                    'Gemini API request failed.',
+                    0,
+                    $e
+                );
+            }
         }
 
         $body = (string) $response->getBody();
         try {
             $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
         } catch (Throwable $e) {
-            Log::warning('gemini: invalid json envelope', ['body' => $body]);
-
             throw new \RuntimeException('Invalid Gemini response envelope.', 0, $e);
         }
 
         $text = $this->extractText($decoded);
         if ($text === null || $text === '') {
-            Log::warning('gemini: empty text', ['body' => $body]);
+            $hint = $this->describeWhyNoText($decoded);
 
-            throw new \RuntimeException('Gemini returned no text.');
+            throw new \RuntimeException($hint);
         }
 
         $text = $this->stripMarkdownFence($text);
 
-        try {
-            /** @var array<string, mixed> $json */
-            $json = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
-        } catch (Throwable $e) {
-            Log::warning('gemini: model json parse failed', ['text' => $text]);
+        /** @var array<string, mixed> */
+        return $this->parseModelJsonFromText($text);
+    }
 
-            throw new \RuntimeException('Gemini returned non-JSON content.', 0, $e);
+    /**
+     * Aceita JSON puro, blocos ```json … ``` ou texto com prólogo/epílogo ao redor do objeto.
+     *
+     * @return array<string, mixed>
+     */
+    private function parseModelJsonFromText(string $rawText): array
+    {
+        $text = trim($rawText);
+        if ($text !== '' && strncmp($text, "\xEF\xBB\xBF", 3) === 0) {
+            $text = substr($text, 3);
         }
 
-        return $json;
+        $parsed = $this->tryJsonDecodeArray($text);
+        if ($parsed !== null) {
+            return $parsed;
+        }
+
+        if (preg_match_all('/```(?:json)?\s*([\s\S]*?)```/i', $text, $blocks)) {
+            foreach ($blocks[1] as $block) {
+                $block = trim($block);
+                $parsed = $this->tryJsonDecodeArray($block);
+                if ($parsed !== null) {
+                    return $parsed;
+                }
+                $slice = $this->extractFirstBalancedJsonObject($block);
+                if ($slice !== null) {
+                    $parsed = $this->tryJsonDecodeArray($slice);
+                    if ($parsed !== null) {
+                        return $parsed;
+                    }
+                }
+            }
+        }
+
+        $slice = $this->extractFirstBalancedJsonObject($text);
+        if ($slice !== null) {
+            $parsed = $this->tryJsonDecodeArray($slice);
+            if ($parsed !== null) {
+                return $parsed;
+            }
+        }
+
+        throw new \RuntimeException(
+            'Gemini returned non-JSON content (no parseable JSON object found in model output).'
+        );
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function tryJsonDecodeArray(string $text): ?array
+    {
+        if ($text === '') {
+            return null;
+        }
+
+        try {
+            $data = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
+
+            return is_array($data) ? $data : null;
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Extrai o primeiro objeto JSON `{ ... }` com chaves balanceadas (ignora strings).
+     */
+    private function extractFirstBalancedJsonObject(string $text): ?string
+    {
+        $start = strpos($text, '{');
+        if ($start === false) {
+            return null;
+        }
+
+        $len      = strlen($text);
+        $depth    = 0;
+        $inString = false;
+        $escape   = false;
+
+        for ($i = $start; $i < $len; $i++) {
+            $c = $text[$i];
+
+            if ($inString) {
+                if ($escape) {
+                    $escape = false;
+                } elseif ($c === '\\') {
+                    $escape = true;
+                } elseif ($c === '"') {
+                    $inString = false;
+                }
+
+                continue;
+            }
+
+            if ($c === '"') {
+                $inString = true;
+
+                continue;
+            }
+
+            if ($c === '{') {
+                $depth++;
+            } elseif ($c === '}') {
+                $depth--;
+                if ($depth === 0) {
+                    return substr($text, $start, $i - $start + 1);
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -139,6 +271,50 @@ final class GeminiGenerateContentClient
         return implode('', $texts);
     }
 
+    /**
+     * Explica resposta sem texto útil (bloqueio, finishReason, etc.).
+     *
+     * @param  array<string, mixed>  $decoded
+     */
+    private function describeWhyNoText(array $decoded): string
+    {
+        $pf = $decoded['promptFeedback'] ?? null;
+        if (is_array($pf)) {
+            $br = $pf['blockReason'] ?? null;
+            if (
+                is_string($br)
+                && $br !== ''
+                && $br !== 'BLOCK_REASON_UNSPECIFIED'
+            ) {
+                return 'Gemini blocked the request (promptFeedback.blockReason: '.$br.').';
+            }
+        }
+
+        $cands = $decoded['candidates'] ?? null;
+        if (!is_array($cands) || $cands === []) {
+            return 'Gemini returned no candidates — often blocked or filtered; check promptFeedback in the API response.';
+        }
+
+        $first = $cands[0] ?? null;
+        if (!is_array($first)) {
+            return 'Gemini returned an invalid candidate shape.';
+        }
+
+        $fr = $first['finishReason'] ?? null;
+        if (
+            is_string($fr)
+            && $fr !== ''
+            && $fr !== 'STOP'
+            && $fr !== 'MAX_TOKENS'
+            && $fr !== 'FINISH_REASON_UNSPECIFIED'
+        ) {
+            return 'Gemini stopped without normal text (finishReason: '.$fr.').';
+        }
+
+        return 'Gemini returned no text in candidate parts (finishReason: '
+            .(is_string($fr) ? $fr : 'unknown').').';
+    }
+
     private function stripMarkdownFence(string $text): string
     {
         $t = trim($text);
@@ -150,6 +326,29 @@ final class GeminiGenerateContentClient
         $t = preg_replace('/\s*```$/', '', $t) ?? $t;
 
         return trim($t);
+    }
+
+    /**
+     * Espera antes de repetir após HTTP 429 (cabeçalho Retry-After ou texto "retry in Xs" da Google).
+     */
+    private function retryDelaySecondsFor429(RequestException $e, string $errorMessage): int
+    {
+        $response = $e->getResponse();
+        if ($response !== null && $response->hasHeader('Retry-After')) {
+            $raw = trim($response->getHeaderLine('Retry-After'));
+            if ($raw !== '' && ctype_digit($raw)) {
+                $v = (int) $raw;
+                if ($v > 0) {
+                    return min(120, max(1, $v));
+                }
+            }
+        }
+
+        if (preg_match('/retry in\s*([\d.]+)\s*s/i', $errorMessage, $m)) {
+            return (int) min(120, max(1, (int) ceil((float) $m[1])));
+        }
+
+        return 10;
     }
 
     private function wrapRequestException(RequestException $e): GeminiApiException
@@ -173,12 +372,6 @@ final class GeminiGenerateContentClient
         }
 
         $safe = $this->buildSafeErrorMessage($status, $googleMsg);
-
-        Log::warning('gemini: request failed', [
-            'http_status'   => $status,
-            'google_error'  => $googleMsg,
-            'log_hint'      => $this->sanitizeLogMessage($e->getMessage()),
-        ]);
 
         return new GeminiApiException($safe, $status, $e);
     }
@@ -220,13 +413,34 @@ final class GeminiGenerateContentClient
         return mb_substr($msg, 0, $max).'…';
     }
 
-    /**
-     * Remove API key query params from Guzzle error strings before logging.
-     */
-    private function sanitizeLogMessage(string $message): string
+    private function timeoutGeminiException(Throwable $e): GeminiApiException
     {
-        $out = preg_replace('/([?&])key=[^&\s]+/i', '$1key=[REDACTED]', $message) ?? $message;
+        $minutes = (int) ceil($this->requestTimeoutSeconds / 60);
 
-        return preg_replace('/\bAIza[0-9A-Za-z_-]{20,}\b/', '[REDACTED]', $out) ?? $out;
+        return new GeminiApiException(
+            sprintf(
+                'Gemini API did not respond within %d minute(s) (request timed out). Try again or reduce posts per run.',
+                max(1, $minutes)
+            ),
+            504,
+            $e
+        );
+    }
+
+    private function isTimeoutException(Throwable $e): bool
+    {
+        $msg = strtolower($e->getMessage());
+        if (str_contains($msg, 'timed out') || str_contains($msg, 'timeout')) {
+            return true;
+        }
+
+        if ($e instanceof RequestException) {
+            $errno = $e->getHandlerContext()['errno'] ?? null;
+            if ($errno === 28) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

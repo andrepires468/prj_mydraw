@@ -11,6 +11,13 @@ const busy = ref(false)
 const errorMsg = ref<string | null>(null)
 const successMsg = ref<string | null>(null)
 const lastSummary = ref<string | null>(null)
+/** Quantidade de posts no escopo do lote (metadados + IA nos mesmos IDs). */
+const postsPerBatch = ref(1)
+
+function clampPostsLimit(raw: number): number {
+  if (!Number.isFinite(raw) || raw < 1) return 1
+  return Math.min(100, Math.floor(raw))
+}
 
 async function extractAllPendingMetadata() {
   if (busy.value) return
@@ -19,8 +26,14 @@ async function extractAllPendingMetadata() {
   lastSummary.value = null
   busy.value = true
   try {
-    const res: ExtractGalleryMetadataResponse =
-      await extractGalleryMetadata({ allPosts: true })
+    const limit = clampPostsLimit(Number(postsPerBatch.value))
+    postsPerBatch.value = limit
+
+    const res: ExtractGalleryMetadataResponse = await extractGalleryMetadata({
+      allPosts: true,
+      includeAiCategorize: true,
+      postsLimit: limit,
+    })
     const { summary } = res
     const posts =
       'posts_touched' in res ? res.posts_touched : undefined
@@ -28,7 +41,28 @@ async function extractAllPendingMetadata() {
       posts != null
         ? `Processed ${summary.total} image(s) across ${posts} post(s).`
         : 'Metadata extraction finished.'
-    lastSummary.value = `Updated ${summary.updated}, no embedded data ${summary.no_metadata}, failed ${summary.failed}.`
+    let detail = `Posts per run: ${limit}. Metadata: updated ${summary.updated}, no embedded data ${summary.no_metadata}, failed ${summary.failed}.`
+
+    if ('batch' in res && res.batch?.scope_post_ids != null) {
+      const ids = res.batch.scope_post_ids
+      detail += ` Scope (same IDs for metadata + AI): ${ids.length ? ids.join(', ') : 'none pending'}.`
+    }
+
+    const ai =
+      'ai_categorization_batch' in res ? res.ai_categorization_batch : undefined
+    if (ai?.skipped && ai.reason === 'gemini_not_configured') {
+      detail += ' AI tags: skipped (Gemini not configured).'
+    } else if (ai?.skipped && ai.reason === 'ai_categorization_disabled') {
+      detail += ' AI tags: skipped (AI categorization disabled in server config).'
+    } else if (ai && !ai.skipped) {
+      const s = ai.summary
+      detail += ` AI: ${s.posts_with_updates} post(s) updated, ${s.posts_skipped_no_prompt} skipped, ${s.posts_failed} failed.`
+      if (ai.errors?.length) {
+        const e = ai.errors[0]
+        detail += ` First AI error: post ${e.post_id} — ${e.message} (HTTP ${e.http_status}).`
+      }
+    }
+    lastSummary.value = detail
   } catch (err) {
     errorMsg.value = getApiErrorMessage(err)
   } finally {
@@ -68,9 +102,27 @@ async function extractAllPendingMetadata() {
         Gallery metadata
       </h2>
       <p class="admin-management-page__card-desc">
-        Scan every post and extract Stable Diffusion parameters from originals that do not
-        yet have metadata stored in the gallery.
+        Each run picks the next pending posts (missing embedded metadata or AI tags), up to the
+        count below. For each post: extract SD parameters from pending images, then one Gemini
+        call using only the first eligible image prompt to set tags and content rating on the
+        post and all pending images in that post. Repeat until no pending posts remain.
       </p>
+      <div class="admin-management-page__field-row">
+        <label class="admin-management-page__field" for="posts-per-batch">
+          <span class="admin-management-page__label">Posts per run</span>
+          <input
+            id="posts-per-batch"
+            v-model.number="postsPerBatch"
+            type="number"
+            min="1"
+            max="100"
+            step="1"
+            class="admin-management-page__input"
+            :disabled="busy"
+            autocomplete="off"
+          />
+        </label>
+      </div>
       <button
         type="button"
         class="admin-management-page__primary"
@@ -78,7 +130,7 @@ async function extractAllPendingMetadata() {
         @click="extractAllPendingMetadata"
       >
         <span v-if="busy" class="admin-management-page__spinner" aria-hidden="true" />
-        {{ busy ? 'Extracting…' : 'Extract metadata for all pending images' }}
+        {{ busy ? 'Processing…' : 'Run metadata & AI (1 call per post)' }}
       </button>
       <p v-if="lastSummary" class="admin-management-page__summary">
         {{ lastSummary }}
@@ -147,6 +199,41 @@ async function extractAllPendingMetadata() {
   line-height: 1.5;
   color: color-mix(in srgb, var(--text-color) 78%, transparent);
   margin-bottom: 1rem;
+}
+
+.admin-management-page__field-row {
+  margin-bottom: 1rem;
+}
+
+.admin-management-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 12rem;
+}
+
+.admin-management-page__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text-color) 72%, transparent);
+}
+
+.admin-management-page__input {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0 0.75rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-bg, var(--surface-soft-bg));
+  color: var(--text-color);
+  font-size: 0.95rem;
+}
+
+.admin-management-page__input:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent-color, #8b5cf6) 55%, transparent);
+  outline-offset: 1px;
 }
 
 .admin-management-page__primary {

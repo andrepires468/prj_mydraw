@@ -1,0 +1,77 @@
+@layer components {
+  .post-picture-viewer {
+    @apply fixed inset-0 z-[120] flex flex-col items-stretch;
+    background: rgb(8 10 14 / 0.78);
+    backdrop-filter: blur(25px) saturate(120%);
+    -webkit-backdrop-filter: blur(25px) saturate(120%);
+  }
+
+  .post-picture-viewer__close {
+    @apply absolute top-3 right-3 md:top-4 md:right-4 z-[3];
+    @apply inline-flex items-center justify-center rounded-full w-9 h-9 transition-colors;
+    color: rgb(255 255 255 / 0.85);
+    background: rgb(0 0 0 / 0.35);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgb(255 255 255 / 0.08);
+  }
+
+  .post-picture-viewer__close:hover {
+    color: #fff;
+    background: rgb(0 0 0 / 0.55);
+  }
+
+  .post-picture-viewer__stage {
+    @apply relative flex-1 min-h-0 flex items-center justify-center;
+    @apply px-2 md:px-6 pt-14 md:pt-16 pb-4 md:pb-6;
+  }
+
+  .post-picture-viewer__viewport {
+    @apply relative w-full h-full flex items-center justify-center overflow-hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .post-picture-viewer__image {
+    @apply max-w-full max-h-full object-contain;
+    display: block;
+    transform-origin: center center;
+    will-change: transform;
+  }
+
+  .post-picture-viewer__image--zoomable {
+    cursor: zoom-in;
+  }
+
+  .post-picture-viewer__image--zoomed {
+    cursor: grab;
+  }
+
+  .post-picture-viewer__image--zoomed:active {
+    cursor: grabbing;
+  }
+
+  .post-picture-viewer__placeholder {
+    @apply flex flex-col items-center justify-center gap-2 text-on-surface-variant text-sm;
+    min-height: 12rem;
+  }
+
+  .post-picture-viewer__placeholder .material-symbols-outlined {
+    font-size: 3rem;
+    opacity: 0.55;
+  }
+
+  .post-picture-viewer__overlay-tr {
+    @apply absolute top-3 right-3 z-[4] flex flex-col items-end gap-1.5 pointer-events-none;
+  }
+
+  .post-picture-viewer__fade-enter-active,
+  .post-picture-viewer__fade-leave-active {
+    transition: opacity 280ms ease;
+  }
+
+  .post-picture-viewer__fade-enter-from,
+  .post-picture-viewer__fade-leave-to {
+    opacity: 0;
+  }
+}

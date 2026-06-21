@@ -9,6 +9,7 @@ import PostViewModeToggle from '@/components/post/PostViewModeToggle.vue'
 import PostImageCarousel from '@/components/post/PostImageCarousel.vue'
 import PostImageList from '@/components/post/PostImageList.vue'
 import PostPresentationModal from '@/components/post/PostPresentationModal.vue'
+import PostPictureViewerModal from '@/components/post/PostPictureViewerModal.vue'
 import type { PostMediaImage, PostMediaViewMode } from '@/components/post/post-media'
 
 const MEDIA_VIEW_MODE_STORAGE_KEY = 'mydraw:post-view:media-mode'
@@ -53,6 +54,8 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const mediaViewMode = ref<PostMediaViewMode>(readSavedMediaViewMode())
 const presentationOpen = ref(false)
+const pictureViewerOpen = ref(false)
+const mediaCurrentIndex = ref(0)
 
 function openPresentation() {
   presentationOpen.value = true
@@ -60,6 +63,15 @@ function openPresentation() {
 
 function closePresentation() {
   presentationOpen.value = false
+}
+
+function openPictureViewer(index: number) {
+  mediaCurrentIndex.value = index
+  pictureViewerOpen.value = true
+}
+
+function closePictureViewer() {
+  pictureViewerOpen.value = false
 }
 
 const sortedGalleryRows = computed<GalleryRow[]>(() =>
@@ -296,15 +308,18 @@ watch(
 
         <PostImageCarousel
           v-if="mediaViewMode === 'carousel'"
+          v-model:current-index="mediaCurrentIndex"
           :images="images"
           :gallery-rows="galleryRowsAlignedWithImages"
           :alt-text="post.description ?? post.title"
+          @open-viewer="openPictureViewer"
         />
         <PostImageList
           v-else
           :images="images"
           :gallery-rows="galleryRowsAlignedWithImages"
           :alt-text="post.description ?? post.title"
+          @open-viewer="openPictureViewer"
         />
 
         <section
@@ -431,6 +446,16 @@ watch(
       :gallery-rows="galleryRowsAlignedWithImages"
       :alt-text="post.description ?? post.title"
       @close="closePresentation"
+    />
+
+    <PostPictureViewerModal
+      v-if="pictureViewerOpen && post && images.length > 0"
+      v-model:current-index="mediaCurrentIndex"
+      :images="images"
+      :gallery-rows="galleryRowsAlignedWithImages"
+      :alt-text="post.description ?? post.title"
+      :initial-index="mediaCurrentIndex"
+      @close="closePictureViewer"
     />
   </component>
 </template>

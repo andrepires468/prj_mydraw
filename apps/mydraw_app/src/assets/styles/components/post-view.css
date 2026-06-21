@@ -183,6 +183,22 @@
     background: var(--media-empty-gradient);
   }
 
+  .post-view__image-btn {
+    @apply absolute inset-0 w-full h-full p-0 border-0 bg-transparent cursor-zoom-in;
+  }
+
+  .post-view__image-btn:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-surface-container;
+  }
+
+  .post-view__list-image-btn {
+    @apply block w-full p-0 border-0 bg-transparent cursor-zoom-in;
+  }
+
+  .post-view__list-image-btn:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2;
+  }
+
   .post-view__media--fullscreen .post-view__image {
     background: transparent;
   }

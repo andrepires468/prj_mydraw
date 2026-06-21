@@ -17,6 +17,10 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const emit = defineEmits<{
+  openViewer: [index: number]
+}>()
+
 const failedIds = ref<Set<number | string>>(new Set())
 
 function onError(id: number | string) {
@@ -50,14 +54,21 @@ function rowForIndex(i: number): GalleryRow | null {
           >
             {{ rowForIndex(i)?.ai_rating }}
           </span>
-          <img
+          <button
             v-if="!failedIds.has(img.id)"
-            class="post-view__list-image"
-            :src="img.url"
-            :alt="`${altText} (${i + 1})`"
-            loading="lazy"
-            @error="onError(img.id)"
-          />
+            type="button"
+            class="post-view__list-image-btn"
+            :aria-label="`View image ${i + 1} full screen`"
+            @click="emit('openViewer', i)"
+          >
+            <img
+              class="post-view__list-image"
+              :src="img.url"
+              :alt="`${altText} (${i + 1})`"
+              loading="lazy"
+              @error="onError(img.id)"
+            />
+          </button>
           <div v-else class="post-view__placeholder">
             <MaterialIcon name="broken_image" />
             <span>Image unavailable</span>

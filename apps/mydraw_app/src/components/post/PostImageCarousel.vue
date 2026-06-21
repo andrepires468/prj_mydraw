@@ -13,16 +13,20 @@ interface Props {
   currentIndex?: number
   /** Visual variant; 'fullscreen' removes the fixed aspect-ratio for presentation contexts. */
   variant?: 'default' | 'fullscreen'
+  /** When false, clicking the image does not emit `openViewer` (e.g. slideshow). */
+  openOnClick?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   galleryRows: undefined,
   currentIndex: undefined,
   variant: 'default',
+  openOnClick: true,
 })
 
 const emit = defineEmits<{
   'update:currentIndex': [value: number]
+  openViewer: [index: number]
 }>()
 
 const internalIndex = ref(0)
@@ -82,6 +86,11 @@ function goTo(index: number) {
   current.value = index
 }
 
+function openViewer() {
+  if (!props.openOnClick) return
+  emit('openViewer', current.value)
+}
+
 function keyboardTargetsInput(event: KeyboardEvent): boolean {
   const t = event.target
   if (!(t instanceof HTMLElement)) return false
@@ -123,8 +132,23 @@ onUnmounted(() => {
     :class="{ 'post-view__media--fullscreen': isFullscreen }"
   >
     <Transition name="post-view__image-fade" mode="out-in">
+      <button
+        v-if="activeImage && !activeFailed && openOnClick"
+        :key="activeImage.id"
+        type="button"
+        class="post-view__image-btn"
+        :aria-label="`View image ${current + 1} full screen`"
+        @click="openViewer"
+      >
+        <img
+          class="post-view__image"
+          :src="activeImage.url"
+          :alt="altText"
+          @error="onError(activeImage.id)"
+        />
+      </button>
       <img
-        v-if="activeImage && !activeFailed"
+        v-else-if="activeImage && !activeFailed"
         :key="activeImage.id"
         class="post-view__image"
         :src="activeImage.url"

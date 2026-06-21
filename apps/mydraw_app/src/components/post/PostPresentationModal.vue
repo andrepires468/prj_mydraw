@@ -171,6 +171,7 @@ onBeforeUnmount(() => {
             :gallery-rows="galleryRows"
             :alt-text="altText"
             variant="fullscreen"
+            :open-on-click="false"
           />
         </div>
       </div>

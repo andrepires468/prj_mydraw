@@ -10,7 +10,18 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-*.local
+.env.mobile
+.env.mobile.local
+!.env.mobile.example
+
+# Vite / TypeScript (gerados localmente)
+.vite/
+*.tsbuildinfo
+
+# Capacitor — pastas `android/` e `ios/` são versionadas (projeto nativo).
+# Artefatos recriados por `npm run build:mobile` + `cap sync` ficam nos .gitignore
+# dentro de android/ e ios/ (web assets, plugins cordova, configs JSON, builds Gradle/Xcode).
+# Ver também a seção Capacitor em `.gitignore` na raiz do monorepo.
 
 # Editor directories and files
 .vscode/*

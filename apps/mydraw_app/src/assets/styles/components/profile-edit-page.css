@@ -1,6 +1,14 @@
 @layer components {
   .profile-edit-page {
-    @apply min-h-screen w-full flex items-center justify-center p-6 pb-24 md:pb-6 bg-surface relative overflow-hidden;
+    @apply min-h-screen w-full flex items-center justify-center md:pb-6 bg-surface relative overflow-hidden;
+    padding: calc(1.5rem + var(--safe-area-top)) calc(1.5rem + var(--safe-area-right))
+      calc(var(--mobile-bottom-inset) + 1rem) calc(1.5rem + var(--safe-area-left));
+  }
+
+  @media (min-width: 768px) {
+    .profile-edit-page {
+      padding-bottom: calc(1.5rem + var(--safe-area-bottom));
+    }
   }
 
   .profile-edit-page ::selection {

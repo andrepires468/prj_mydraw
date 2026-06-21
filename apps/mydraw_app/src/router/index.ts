@@ -1,4 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
+import { isNativePlatform } from '@/utils/platform'
 import GalleryView from '@/views/GalleryView.vue'
 import LoginView from '@/views/LoginView.vue'
 import ProfileEditView from '@/views/ProfileEditView.vue'
@@ -18,8 +19,11 @@ function storedUserIsAdmin(): boolean {
   }
 }
 
+/** Hash history no WebView Capacitor evita 404 em refresh e assets locais. */
+const routerHistory = isNativePlatform() ? createWebHashHistory() : createWebHistory()
+
 export const router = createRouter({
-  history: createWebHistory(),
+  history: routerHistory,
   routes: [
     {
       path: '/',

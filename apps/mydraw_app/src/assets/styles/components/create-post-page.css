@@ -1,6 +1,7 @@
 @layer components {
   .create-post-page {
-    @apply py-12 mb-32 w-full;
+    @apply py-12 w-full;
+    margin-bottom: var(--mobile-bottom-inset);
   }
 
   .create-post-page__header {

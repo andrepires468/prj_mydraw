@@ -1,6 +1,8 @@
 @layer components {
   .fab {
-    @apply md:hidden fixed bottom-28 right-6 w-14 h-14 text-on-primary rounded-full flex items-center justify-center z-40 transition-transform;
+    @apply md:hidden fixed w-14 h-14 text-on-primary rounded-full flex items-center justify-center z-40 transition-transform;
+    bottom: calc(7rem + var(--safe-area-bottom));
+    right: calc(1.5rem + var(--safe-area-right));
     background-image: linear-gradient(to bottom right, theme('colors.primary'), theme('colors.primary-container'));
     box-shadow: var(--shadow-fab);
     border: none;

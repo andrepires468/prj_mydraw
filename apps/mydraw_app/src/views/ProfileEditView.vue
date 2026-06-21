@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue'
+import { computed, onMounted, ref, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getApiErrorMessage } from '@/utils/apiErrorMessage'
@@ -8,6 +8,7 @@ import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import AuthBrand from '@/components/auth/AuthBrand.vue'
 import AuthField from '@/components/auth/AuthField.vue'
 import AuthSubmitButton from '@/components/auth/AuthSubmitButton.vue'
+import AuthGoogleButton from '@/components/auth/AuthGoogleButton.vue'
 import AppConfirmAlert from '@/components/common/AppConfirmAlert.vue'
 import {
   NICKNAME_MAX_LEN,
@@ -15,12 +16,7 @@ import {
   isValidNickname,
   sanitizeNicknameKeystrokes,
 } from '@/utils/nickname'
-import {
-  isGoogleSignInConfigured,
-  renderGoogleSignInButton,
-  setGoogleCredentialHandler,
-  whenGoogleLibraryReady,
-} from '@/utils/googleIdentity'
+import { isGoogleSignInConfigured } from '@/utils/googleIdentity'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -29,7 +25,6 @@ const nickname = ref('')
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
 const avatarFailed = ref(false)
-const googleMountEl = ref<HTMLElement | null>(null)
 const googleLinkLoading = ref(false)
 const unlinkConfirmOpen = ref(false)
 const unlinkLoading = ref(false)
@@ -105,36 +100,7 @@ onMounted(async () => {
     return
   }
   syncFromUser()
-  await nextTick()
-  await mountGoogleLinkButton()
 })
-
-watch(
-  () => [
-    googleConfigured.value,
-    auth.user?.google_linked,
-    auth.user?.email,
-  ],
-  async () => {
-    await nextTick()
-    await mountGoogleLinkButton()
-  },
-)
-
-async function mountGoogleLinkButton() {
-  if (
-    !googleConfigured.value ||
-    !auth.user?.email ||
-    auth.user.google_linked ||
-    !googleMountEl.value
-  ) {
-    return
-  }
-  const ready = await whenGoogleLibraryReady()
-  if (!ready || !googleMountEl.value) return
-  setGoogleCredentialHandler(onGoogleLinkCredential)
-  renderGoogleSignInButton(googleMountEl.value)
-}
 
 function openUnlinkConfirm() {
   if (unlinkLoading.value) return
@@ -153,8 +119,6 @@ async function confirmUnlinkGoogle() {
     const meUser = await authApi.unlinkGoogleAccount()
     auth.setUser(meUser)
     unlinkConfirmOpen.value = false
-    await nextTick()
-    await mountGoogleLinkButton()
   } catch (err: unknown) {
     unlinkConfirmOpen.value = false
     errorMsg.value = getApiErrorMessage(err)
@@ -180,9 +144,9 @@ async function onGoogleLinkCredential(credential: string) {
   }
 }
 
-onBeforeUnmount(() => {
-  setGoogleCredentialHandler(undefined)
-})
+function onGoogleLinkError(message: string) {
+  errorMsg.value = message
+}
 
 const userInitial = computed(() => {
   const name =
@@ -346,15 +310,17 @@ async function submit() {
               </p>
             </template>
 
-            <template v-else>
+            <template v-else-if="auth.user.email">
               <p class="profile-edit-page__google-hint">
                 Link Google using the same email as above. After linking you can
                 sign in with Google.
               </p>
-              <div
-                ref="googleMountEl"
-                class="google-sign-in-mount"
-                :aria-busy="googleLinkLoading"
+              <AuthGoogleButton
+                native-label="Link Google account"
+                :loading="googleLinkLoading || loading"
+                :disabled="googleLinkLoading || loading"
+                @credential="onGoogleLinkCredential"
+                @error="onGoogleLinkError"
               />
             </template>
           </div>

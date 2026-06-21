@@ -1,4 +1,5 @@
 import type { EditorProfile } from '@/api/editorProfile'
+import { rewriteStorageUrlsInData } from '@/utils/storageUrl'
 
 const STORAGE_KEY = 'mydraw:editor-profile:v1'
 /** Atualização remota no máximo uma vez por dia. */
@@ -22,7 +23,7 @@ export function readEditorProfileCache(): StoredPayload | null {
     ) {
       return null
     }
-    return parsed
+    return rewriteStorageUrlsInData(parsed)
   } catch {
     return null
   }

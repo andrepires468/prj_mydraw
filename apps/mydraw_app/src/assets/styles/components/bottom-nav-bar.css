@@ -1,6 +1,9 @@
 @layer components {
   .bottom-nav-bar {
-    @apply md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-end px-4 pb-6 pt-2 shadow-nav-top;
+    @apply md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-end pt-2 shadow-nav-top;
+    padding-bottom: calc(1.5rem + var(--safe-area-bottom));
+    padding-left: calc(1rem + var(--safe-area-left));
+    padding-right: calc(1rem + var(--safe-area-right));
     background-color: var(--glass-nav-bottom-bg);
     backdrop-filter: blur(24px);
     border-top: 1px solid var(--glass-border);
@@ -9,7 +12,7 @@
   }
 
   .bottom-nav-bar__link {
-    @apply flex flex-col items-center justify-center min-w-[4.5rem] p-2 transition-all text-on-surface-variant;
+    @apply flex flex-col items-center justify-center min-w-[4.5rem] min-h-11 p-2 transition-all text-on-surface-variant;
     text-decoration: none;
   }
 

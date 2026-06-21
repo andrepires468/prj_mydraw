@@ -1,9 +1,56 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
+import path from 'node:path'
+
+const appDir = fileURLToPath(new URL('.', import.meta.url))
+const repoRoot = path.resolve(appDir, '../..')
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const appEnv = loadEnv(mode, appDir, '')
+  const rootEnv = loadEnv(mode, repoRoot, '')
+
+  /** Herda variáveis da raiz do monorepo quando ausentes no app (ex.: build mobile). */
+  const envDefine: Record<string, string> = {}
+  const devHost = appEnv.VITE_DEV_HOST?.trim() || '192.168.86.122'
+
+  function lanUrl(raw: string | undefined, fallbackPort: string): string | undefined {
+    if (raw?.trim()) {
+      try {
+        const u = new URL(raw.trim())
+        if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
+          u.hostname = devHost
+          return u.origin
+        }
+        return u.origin
+      } catch {
+        return raw.trim()
+      }
+    }
+    return `http://${devHost}:${fallbackPort}`
+  }
+
+  if (mode === 'mobile') {
+    const apiUrl = lanUrl(appEnv.VITE_API_URL || rootEnv.APP_VITE_API_URL, '8088')
+    const minioUrl = lanUrl(
+      appEnv.VITE_MINIO_PUBLIC_URL || rootEnv.APP_VITE_MINIO_PUBLIC_URL,
+      '9100',
+    )
+    if (apiUrl) envDefine['import.meta.env.VITE_API_URL'] = JSON.stringify(apiUrl)
+    if (minioUrl) envDefine['import.meta.env.VITE_MINIO_PUBLIC_URL'] = JSON.stringify(minioUrl)
+    if (devHost) envDefine['import.meta.env.VITE_DEV_HOST'] = JSON.stringify(devHost)
+  }
+
+  const googleClientId = appEnv.VITE_GOOGLE_CLIENT_ID || rootEnv.APP_VITE_GOOGLE_CLIENT_ID
+  if (googleClientId && !appEnv.VITE_GOOGLE_CLIENT_ID) {
+    envDefine['import.meta.env.VITE_GOOGLE_CLIENT_ID'] = JSON.stringify(googleClientId)
+  }
+
+  return {
+  /** Caminhos relativos — necessário para assets no WebView Capacitor (file:// / capacitor://). */
+  base: './',
+  define: envDefine,
   plugins: [vue()],
   resolve: {
     alias: {
@@ -28,4 +75,5 @@ export default defineConfig({
       usePolling: true,
     },
   },
+  }
 })

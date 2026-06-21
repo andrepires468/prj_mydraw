@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import { useAuthStore } from '@/stores/auth'
+import { registerBackHandler } from '@/utils/backHandlerStack'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -19,6 +20,10 @@ const galleryNavActive = computed(() =>
 
 const menuOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
+const mobileNavOpen = ref(false)
+
+let unregisterMobileBack: (() => void) | undefined
+let previousBodyOverflow = ''
 
 function toggleMenu() {
   menuOpen.value = !menuOpen.value
@@ -27,6 +32,46 @@ function toggleMenu() {
 function closeMenu() {
   menuOpen.value = false
 }
+
+function closeMobileNav() {
+  mobileNavOpen.value = false
+}
+
+function toggleMobileNav() {
+  mobileNavOpen.value = !mobileNavOpen.value
+}
+
+const primaryNavLinks = computed(() => {
+  const links: Array<{
+    to: string
+    label: string
+    isActive: boolean
+  }> = [
+    {
+      to: '/gallery/published',
+      label: 'Gallery',
+      isActive: galleryNavActive.value,
+    },
+  ]
+
+  if (auth.isAdmin) {
+    links.push(
+      {
+        to: '/admin/management',
+        label: 'Management',
+        isActive: route.name === 'admin-management',
+      },
+      {
+        to: '/admin/posts/new/edit',
+        label: 'Create',
+        isActive:
+          route.name === 'edit-post-new' || route.name === 'edit-post',
+      },
+    )
+  }
+
+  return links
+})
 
 function onDocumentClick(event: MouseEvent) {
   if (!menuOpen.value) return
@@ -37,9 +82,9 @@ function onDocumentClick(event: MouseEvent) {
 }
 
 function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape' && menuOpen.value) {
-    closeMenu()
-  }
+  if (event.key !== 'Escape') return
+  if (menuOpen.value) closeMenu()
+  if (mobileNavOpen.value) closeMobileNav()
 }
 
 const THEME_KEY = 'mydraw:theme'
@@ -71,7 +116,29 @@ onMounted(() => {
   document.addEventListener('keydown', onKeydown)
 })
 
+watch(mobileNavOpen, (open) => {
+  if (open) {
+    closeMenu()
+    previousBodyOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    unregisterMobileBack = registerBackHandler(closeMobileNav)
+  } else {
+    unregisterMobileBack?.()
+    unregisterMobileBack = undefined
+    document.body.style.overflow = previousBodyOverflow
+  }
+})
+
+watch(
+  () => route.fullPath,
+  () => {
+    closeMobileNav()
+  },
+)
+
 onBeforeUnmount(() => {
+  unregisterMobileBack?.()
+  document.body.style.overflow = previousBodyOverflow
   document.removeEventListener('click', onDocumentClick)
   document.removeEventListener('keydown', onKeydown)
 })
@@ -104,31 +171,28 @@ const userInitial = computed(() => {
   <header class="top-nav-bar">
     <div class="app-page-inner top-nav-bar__inner">
       <div class="top-nav-bar__left">
+        <button
+          type="button"
+          class="top-nav-bar__menu-toggle"
+          :aria-expanded="mobileNavOpen"
+          aria-controls="top-nav-bar-drawer"
+          :aria-label="mobileNavOpen ? 'Close menu' : 'Open menu'"
+          @click="toggleMobileNav"
+        >
+          <MaterialIcon name="menu" />
+        </button>
+
         <RouterLink to="/" class="top-nav-bar__brand">mydrow.app</RouterLink>
 
-        <nav class="top-nav-bar__nav">
+        <nav class="top-nav-bar__nav" aria-label="Main navigation">
           <RouterLink
-            to="/gallery/published"
+            v-for="link in primaryNavLinks"
+            :key="link.to"
+            :to="link.to"
             class="top-nav-bar__link"
-            :class="{ 'top-nav-bar__link--active': galleryNavActive }"
+            :class="{ 'top-nav-bar__link--active': link.isActive }"
           >
-            Gallery
-          </RouterLink>
-          <RouterLink
-            v-if="auth.isAdmin"
-            to="/admin/management"
-            class="top-nav-bar__link"
-            active-class="top-nav-bar__link--active"
-          >
-            Management
-          </RouterLink>
-          <RouterLink
-            v-if="auth.isAdmin"
-            to="/admin/posts/new/edit"
-            class="top-nav-bar__link"
-            active-class="top-nav-bar__link--active"
-          >
-            Create
+            {{ link.label }}
           </RouterLink>
         </nav>
       </div>
@@ -277,5 +341,57 @@ const userInitial = computed(() => {
         </div>
       </div>
     </div>
+
+    <Teleport to="body">
+      <Transition name="top-nav-bar__drawer">
+        <div
+          v-if="mobileNavOpen"
+          class="top-nav-bar__drawer-root"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Main navigation"
+        >
+          <button
+            type="button"
+            class="top-nav-bar__drawer-backdrop"
+            aria-label="Close menu"
+            @click="closeMobileNav"
+          />
+
+          <aside id="top-nav-bar-drawer" class="top-nav-bar__drawer">
+            <header class="top-nav-bar__drawer-header">
+              <RouterLink
+                to="/"
+                class="top-nav-bar__drawer-brand"
+                @click="closeMobileNav"
+              >
+                mydrow.app
+              </RouterLink>
+              <button
+                type="button"
+                class="top-nav-bar__icon-button"
+                aria-label="Close menu"
+                @click="closeMobileNav"
+              >
+                <MaterialIcon name="close" />
+              </button>
+            </header>
+
+            <nav class="top-nav-bar__drawer-nav" aria-label="Main navigation">
+              <RouterLink
+                v-for="link in primaryNavLinks"
+                :key="`drawer-${link.to}`"
+                :to="link.to"
+                class="top-nav-bar__drawer-link"
+                :class="{ 'top-nav-bar__drawer-link--active': link.isActive }"
+                @click="closeMobileNav"
+              >
+                {{ link.label }}
+              </RouterLink>
+            </nav>
+          </aside>
+        </div>
+      </Transition>
+    </Teleport>
   </header>
 </template>

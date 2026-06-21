@@ -1,6 +1,13 @@
 @layer components {
   .admin-management-page {
-    @apply py-12 pb-32 md:pb-24 w-full;
+    @apply py-12 w-full;
+    padding-bottom: var(--mobile-bottom-inset);
+  }
+
+  @media (min-width: 768px) {
+    .admin-management-page {
+      @apply pb-24;
+    }
   }
 
   .admin-management-page__header {

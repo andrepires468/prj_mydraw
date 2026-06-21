@@ -7,6 +7,26 @@
     @apply flex justify-center;
   }
 
+  .google-sign-in-native {
+    @apply w-full min-h-11 px-4 rounded-full font-semibold text-sm flex items-center justify-center gap-3;
+    @apply text-on-surface bg-surface-container-lowest border border-outline-variant transition-colors;
+    cursor: pointer;
+  }
+
+  .google-sign-in-native:hover:not(:disabled) {
+    @apply bg-surface-container-low border-outline-variant/80;
+  }
+
+  .google-sign-in-native:disabled {
+    @apply opacity-60 cursor-not-allowed;
+  }
+
+  .google-sign-in-native__icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    flex-shrink: 0;
+  }
+
   .auth-divider {
     @apply relative flex items-center gap-3 py-4 text-xs font-medium text-on-surface-variant uppercase tracking-wide;
   }

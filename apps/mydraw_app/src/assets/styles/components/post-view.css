@@ -1,6 +1,13 @@
 @layer components {
   .post-view {
-    @apply pt-8 pb-32 md:pb-24 w-full min-w-0;
+    @apply pt-8 w-full min-w-0;
+    padding-bottom: var(--mobile-bottom-inset);
+  }
+
+  @media (min-width: 768px) {
+    .post-view {
+      @apply pb-24;
+    }
   }
 
   .post-view--embedded {

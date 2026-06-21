@@ -1,27 +1,38 @@
 import axios, { type AxiosInstance } from 'axios'
 import { isJwtExpired } from '@/utils/jwt'
+import { rewriteStorageUrlsInData } from '@/utils/storageUrl'
 
 /**
- * In dev, when the page is opened via LAN IP/hostname (not localhost),
- * rewrite only the API hostname—keep port/protocol from .env—so the browser
- * does not call localhost on the wrong device.
+ * Resolve a base da API.
+ * - Mobile build: URL LAN do `.env.mobile`.
+ * - Live reload / browser dev: troca localhost → IP da página ou `VITE_DEV_HOST`.
  */
 function resolveApiBaseUrl(): string {
-  const fromEnv = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8088'
-  if (!import.meta.env.DEV || typeof window === 'undefined') {
-    return fromEnv
-  }
+  const fromEnv =
+    (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8088'
+
+  if (typeof window === 'undefined') return fromEnv
+
+  const devHost = (import.meta.env.VITE_DEV_HOST as string | undefined)?.trim()
   const pageHost = window.location.hostname
-  if (!pageHost || pageHost === 'localhost' || pageHost === '127.0.0.1') {
-    return fromEnv
+  const rewriteHost =
+    pageHost && pageHost !== 'localhost' && pageHost !== '127.0.0.1'
+      ? pageHost
+      : devHost || null
+
+  if (rewriteHost) {
+    try {
+      const u = new URL(fromEnv)
+      if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
+        u.hostname = rewriteHost
+        return u.origin
+      }
+    } catch {
+      /* mantém fromEnv */
+    }
   }
-  try {
-    const u = new URL(fromEnv)
-    u.hostname = pageHost
-    return u.origin
-  } catch {
-    return fromEnv
-  }
+
+  return fromEnv
 }
 
 const apiUrl = resolveApiBaseUrl()
@@ -56,7 +67,12 @@ http.interceptors.request.use((config) => {
 })
 
 http.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data !== null && typeof response.data === 'object') {
+      response.data = rewriteStorageUrlsInData(response.data)
+    }
+    return response
+  },
   (error) => {
     if (error.response?.status === 401) {
       clearStoredSession()
@@ -64,3 +80,8 @@ http.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+/** Útil para debug de conectividade no dispositivo. */
+export function getResolvedApiBaseUrl(): string {
+  return apiUrl
+}

@@ -1,6 +1,17 @@
-/** Bridge para Google Identity Services (um único `initialize` por carregamento da página). */
+/**
+ * Google Sign-In — GIS no browser; Credential Manager nativo no Capacitor.
+ */
+import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in'
+import { Capacitor } from '@capacitor/core'
+import { isNativePlatform } from '@/utils/platform'
+import {
+  formatGoogleSignInError,
+  isGoogleSignInCanceled,
+} from '@/utils/formatGoogleSignInError'
 
 let gsiInitialized = false
+let nativeInitialized = false
+let nativeInitPromise: Promise<void> | null = null
 
 let credentialHandler: ((credential: string) => void) | undefined
 
@@ -20,8 +31,45 @@ export function isGoogleSignInConfigured(): boolean {
   return Boolean(getGoogleClientId())
 }
 
+export function usesNativeGoogleSignIn(): boolean {
+  return isNativePlatform() && isGoogleSignInConfigured()
+}
+
+/** Inicializa o plugin nativo (Android/iOS). Chamar uma vez no boot ou antes do signIn. */
+export async function initNativeGoogleSignIn(): Promise<void> {
+  const clientId = getGoogleClientId()
+  if (!clientId || !isNativePlatform()) return
+  if (nativeInitialized) return
+  if (nativeInitPromise) {
+    await nativeInitPromise
+    return
+  }
+
+  nativeInitPromise = (async () => {
+    await GoogleSignIn.initialize({ clientId })
+    nativeInitialized = true
+  })()
+
+  try {
+    await nativeInitPromise
+  } catch (err) {
+    nativeInitialized = false
+    nativeInitPromise = null
+    throw err
+  }
+}
+
 export async function whenGoogleLibraryReady(): Promise<boolean> {
   if (!isGoogleSignInConfigured()) return false
+  if (isNativePlatform()) {
+    try {
+      await initNativeGoogleSignIn()
+      return nativeInitialized
+    } catch {
+      return false
+    }
+  }
+
   const deadline = Date.now() + 12000
   while (Date.now() < deadline) {
     if (typeof window !== 'undefined' && window.google?.accounts?.id) {
@@ -32,7 +80,7 @@ export async function whenGoogleLibraryReady(): Promise<boolean> {
   return false
 }
 
-export function ensureGsiInitialized(): boolean {
+function ensureGsiInitialized(): boolean {
   const clientId = getGoogleClientId()
   if (!clientId || typeof window === 'undefined' || !window.google?.accounts?.id) {
     return false
@@ -48,13 +96,11 @@ export function ensureGsiInitialized(): boolean {
   return true
 }
 
-/**
- * Renderiza o botão oficial do Google no elemento (limpa o conteúdo antes).
- */
 export function renderGoogleSignInButton(
   container: HTMLElement,
   options?: { width?: number },
 ): void {
+  if (isNativePlatform()) return
   if (!ensureGsiInitialized() || !window.google?.accounts?.id) return
   container.replaceChildren()
   const w = options?.width ?? Math.min(320, container.clientWidth || 320)
@@ -65,4 +111,56 @@ export function renderGoogleSignInButton(
     text: 'continue_with',
     width: w,
   })
+}
+
+/** Fluxo nativo (Capacitor) — retorna o ID Token JWT para a API. */
+export async function signInWithGoogleNative(): Promise<string | null> {
+  const clientId = getGoogleClientId()
+  if (!clientId || !isNativePlatform()) return null
+
+  await initNativeGoogleSignIn()
+
+  try {
+    const result = await GoogleSignIn.signIn()
+    const token = result.idToken?.trim()
+    if (!token) {
+      throw new Error('Google Sign-In returned no ID token.')
+    }
+    return token
+  } catch (err: unknown) {
+    if (isGoogleSignInCanceled(err)) {
+      return null
+    }
+    throw err
+  }
+}
+
+export { formatGoogleSignInError, isGoogleSignInCanceled }
+
+export async function mountGoogleSignInButton(container: HTMLElement): Promise<boolean> {
+  if (!isGoogleSignInConfigured()) return false
+
+  if (isNativePlatform()) {
+    try {
+      await initNativeGoogleSignIn()
+      return nativeInitialized
+    } catch {
+      return false
+    }
+  }
+
+  const ready = await whenGoogleLibraryReady()
+  if (!ready) return false
+  renderGoogleSignInButton(container)
+  return true
+}
+
+export async function handleGoogleRedirectCallback(): Promise<string | null> {
+  if (Capacitor.getPlatform() !== 'web' || !isGoogleSignInConfigured()) {
+    return null
+  }
+
+  await initNativeGoogleSignIn()
+  const result = await GoogleSignIn.handleRedirectCallback()
+  return result.idToken ?? null
 }

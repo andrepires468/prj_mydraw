@@ -52,7 +52,7 @@
   }
 
   .gallery-filters__sort-trigger {
-    @apply inline-flex items-center gap-1 max-w-full rounded-md border border-transparent -mr-1 -my-0.5 pl-1 pr-1 py-0.5 text-sm font-semibold text-on-surface transition-colors;
+    @apply inline-flex items-center gap-1 max-w-full min-h-10 rounded-md border border-transparent -mr-1 pl-2 pr-2 py-1.5 text-sm font-semibold text-on-surface transition-colors;
     background: transparent;
     cursor: pointer;
   }

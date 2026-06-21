@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">mydraw</string>
+    <string name="title_activity_main">mydraw</string>
+    <string name="package_name">app.mydrow.gallery</string>
+    <string name="custom_url_scheme">app.mydrow.gallery</string>
+</resources>

@@ -52,6 +52,27 @@ apps/mydraw_app/.vite/
 apps/mydraw_app/*.log
 apps/mydraw_app/coverage/
 
+# Capacitor (apps/mydraw_app) — gerado por `cap sync` / build nativo
+# Projetos android/ e ios/ são versionados; abaixo só o que não deve ir pro git.
+apps/mydraw_app/.env.mobile
+apps/mydraw_app/android/.gradle/
+apps/mydraw_app/android/local.properties
+apps/mydraw_app/android/capacitor-cordova-android-plugins/
+apps/mydraw_app/android/app/src/main/assets/public/
+apps/mydraw_app/android/app/src/main/assets/capacitor.config.json
+apps/mydraw_app/android/app/src/main/assets/capacitor.plugins.json
+apps/mydraw_app/android/app/src/main/res/xml/config.xml
+apps/mydraw_app/android/**/build/
+apps/mydraw_app/ios/App/App/public/
+apps/mydraw_app/ios/App/App/capacitor.config.json
+apps/mydraw_app/ios/App/App/capacitor.plugins.json
+apps/mydraw_app/ios/App/App/config.xml
+apps/mydraw_app/ios/capacitor-cordova-ios-plugins/
+apps/mydraw_app/ios/DerivedData/
+apps/mydraw_app/ios/App/Pods/
+apps/mydraw_app/ios/App/build/
+apps/mydraw_app/ios/xcuserdata/
+
 # ==============================================================================
 # Uploads / tempor\u00e1rios
 # ==============================================================================

@@ -6,4 +6,15 @@
   .app-page-inner {
     @apply w-full max-w-screen-2xl mx-auto px-6;
   }
+
+  /** Espaço inferior para bottom nav + safe area (mobile). */
+  .app-page-inner--mobile-nav {
+    padding-bottom: var(--mobile-bottom-inset);
+  }
+
+  @media (min-width: 768px) {
+    .app-page-inner--mobile-nav {
+      @apply pb-24;
+    }
+  }
 }

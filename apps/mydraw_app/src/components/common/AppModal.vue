@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
+import { registerBackHandler } from '@/utils/backHandlerStack'
 
 interface Props {
   title?: string
@@ -15,6 +16,7 @@ const emit = defineEmits<{
 }>()
 
 let previousOverflow = ''
+let unregisterBack: (() => void) | undefined
 
 function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
@@ -26,9 +28,11 @@ onMounted(() => {
   previousOverflow = document.body.style.overflow
   document.body.style.overflow = 'hidden'
   document.addEventListener('keydown', handleKeydown)
+  unregisterBack = registerBackHandler(() => emit('close'))
 })
 
 onBeforeUnmount(() => {
+  unregisterBack?.()
   document.body.style.overflow = previousOverflow
   document.removeEventListener('keydown', handleKeydown)
 })

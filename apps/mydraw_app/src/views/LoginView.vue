@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getApiErrorMessage } from '@/utils/apiErrorMessage'
@@ -7,13 +7,8 @@ import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import AuthBrand from '@/components/auth/AuthBrand.vue'
 import AuthField from '@/components/auth/AuthField.vue'
 import AuthSubmitButton from '@/components/auth/AuthSubmitButton.vue'
+import AuthGoogleButton from '@/components/auth/AuthGoogleButton.vue'
 import AuthSecurityFooter from '@/components/auth/AuthSecurityFooter.vue'
-import {
-  isGoogleSignInConfigured,
-  renderGoogleSignInButton,
-  setGoogleCredentialHandler,
-  whenGoogleLibraryReady,
-} from '@/utils/googleIdentity'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -24,43 +19,30 @@ const password = ref('')
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
 const showPassword = ref(false)
-const googleMountEl = ref<HTMLElement | null>(null)
-const showGoogleSignIn = ref(isGoogleSignInConfigured())
 
 function togglePassword() {
   showPassword.value = !showPassword.value
 }
 
-async function mountGoogleButton() {
-  if (!showGoogleSignIn.value || !googleMountEl.value) return
-  const ready = await whenGoogleLibraryReady()
-  if (!ready || !googleMountEl.value) return
-  setGoogleCredentialHandler(async (credential: string) => {
-    if (loading.value) return
-    errorMsg.value = null
-    loading.value = true
-    try {
-      await auth.loginWithGoogle(credential)
-      const redirect =
-        typeof route.query.redirect === 'string' ? route.query.redirect : '/'
-      await router.replace(redirect)
-    } catch (err: unknown) {
-      errorMsg.value = getApiErrorMessage(err)
-    } finally {
-      loading.value = false
-    }
-  })
-  renderGoogleSignInButton(googleMountEl.value)
+async function onGoogleCredential(credential: string) {
+  if (loading.value) return
+  errorMsg.value = null
+  loading.value = true
+  try {
+    await auth.loginWithGoogle(credential)
+    const redirect =
+      typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+    await router.replace(redirect)
+  } catch (err: unknown) {
+    errorMsg.value = getApiErrorMessage(err)
+  } finally {
+    loading.value = false
+  }
 }
 
-onMounted(async () => {
-  await nextTick()
-  await mountGoogleButton()
-})
-
-onBeforeUnmount(() => {
-  setGoogleCredentialHandler(undefined)
-})
+function onGoogleError(message: string) {
+  errorMsg.value = message
+}
 
 async function submit() {
   if (loading.value) return
@@ -150,14 +132,12 @@ async function submit() {
             />
           </div>
 
-          <template v-if="showGoogleSignIn">
-            <div class="auth-divider" aria-hidden="true">or</div>
-            <div
-              ref="googleMountEl"
-              class="google-sign-in-mount"
-              aria-label="Sign in with Google"
-            />
-          </template>
+          <AuthGoogleButton
+            :loading="loading"
+            :disabled="loading"
+            @credential="onGoogleCredential"
+            @error="onGoogleError"
+          />
 
           <AuthSecurityFooter />
         </form>

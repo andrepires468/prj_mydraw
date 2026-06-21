@@ -6,17 +6,35 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "build:mobile": "vue-tsc -b && vite build --mode mobile",
+    "sync:android": "npm run build:mobile && cap sync android",
+    "android:sha1": "cd android && ./gradlew signingReport",
+    "dev:android": "CAP_USE_LIVE_RELOAD=true cap sync android && cap run android -l --external",
+    "cap:android": "cap open android",
+    "cap:ios": "cap open ios",
+    "cap:run:android": "npm run sync:android && cap run android",
+    "cap:run:ios": "npm run build:mobile && cap sync ios && cap run ios",
     "preview": "vite preview",
+    "cap:sync": "cap sync",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/ios": "^8.4.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
+    "@capawesome/capacitor-google-sign-in": "^0.1.2",
     "axios": "^1.15.1",
     "pinia": "^3.0.4",
     "vue": "^3.5.32",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.52.0",
     "@tailwindcss/forms": "^0.5.11",
     "@types/node": "^24.12.2",
     "@vitejs/plugin-vue": "^6.0.5",
@@ -27,7 +45,6 @@
     "tailwindcss": "^3.4.19",
     "typescript": "~6.0.2",
     "vite": "^8.0.4",
-    "vue-tsc": "^3.2.6",
-    "@playwright/test": "^1.52.0"
+    "vue-tsc": "^3.2.6"
   }
 }

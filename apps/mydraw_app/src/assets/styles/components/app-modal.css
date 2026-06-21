@@ -1,6 +1,10 @@
 @layer components {
   .app-modal {
-    @apply fixed inset-0 z-[90] flex items-start justify-center p-9;
+    @apply fixed inset-0 z-[90] flex items-start justify-center;
+    padding-top: calc(2.25rem + var(--safe-area-top));
+    padding-bottom: calc(2.25rem + var(--safe-area-bottom));
+    padding-left: calc(2.25rem + var(--safe-area-left));
+    padding-right: calc(2.25rem + var(--safe-area-right));
     background: color-mix(in srgb, var(--color-background) 65%, #000 35%);
     backdrop-filter: blur(20px);
   }
@@ -8,8 +12,8 @@
   .app-modal__panel {
     @apply w-full max-w-screen-2xl rounded-2xl overflow-hidden;
     @apply bg-surface/85 shadow-2xl;
-    /* 36px (p-9) acima e abaixo do overlay */
-    max-height: calc(100vh - 4.5rem);
+    /* overlay padding + safe area */
+    max-height: calc(100vh - 4.5rem - var(--safe-area-top) - var(--safe-area-bottom));
     border: 1px solid color-mix(in srgb, var(--color-outline-variant) 18%, transparent);
     display: flex;
     flex-direction: column;

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
+import { RouterView, useRoute, useRouter } from 'vue-router'
 import TopNavBar from '@/components/layout/TopNavBar.vue'
 import BottomNavBar from '@/components/layout/BottomNavBar.vue'
 import FloatingActionButton from '@/components/layout/FloatingActionButton.vue'
@@ -8,6 +8,11 @@ import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
 const route = useRoute()
+const router = useRouter()
+
+function goToNewPost(): void {
+  void router.push({ name: 'edit-post-new' })
+}
 
 const isAuthRoute = computed(() => route.meta?.guestOnly === true)
 
@@ -36,6 +41,7 @@ onMounted(() => {
       <FloatingActionButton
         v-if="auth.isAdmin"
         aria-label="Create new drawing"
+        @click="goToNewPost"
       />
     </template>
   </div>

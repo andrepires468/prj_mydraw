@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
+import { registerBackHandler } from '@/utils/backHandlerStack'
 import PostImageCarousel from './PostImageCarousel.vue'
 import type { GalleryRow } from '@/api/posts'
 import type { PostMediaImage } from './post-media'
@@ -29,6 +30,7 @@ const playLabel = computed(() => (isPlaying.value ? 'Pause slideshow' : 'Play sl
 
 let timer: number | null = null
 let previousOverflow = ''
+let unregisterBack: (() => void) | undefined
 
 function clearTimer() {
   if (timer !== null) {
@@ -96,9 +98,11 @@ onMounted(() => {
   previousOverflow = document.body.style.overflow
   document.body.style.overflow = 'hidden'
   document.addEventListener('keydown', handleKeydown, true)
+  unregisterBack = registerBackHandler(() => close())
 })
 
 onBeforeUnmount(() => {
+  unregisterBack?.()
   document.body.style.overflow = previousOverflow
   document.removeEventListener('keydown', handleKeydown, true)
   clearTimer()

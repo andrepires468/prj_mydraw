@@ -26,6 +26,7 @@ import LoadingIndicator from '@/components/gallery/LoadingIndicator.vue'
 import type { GallerySort } from '@/components/gallery/types'
 import AppModal from '@/components/common/AppModal.vue'
 import PostView from '@/views/PostView.vue'
+import { rewriteStorageUrlsInData } from '@/utils/storageUrl'
 
 interface PostCard {
   id: number
@@ -37,8 +38,8 @@ interface PostCard {
   isDraft: boolean
 }
 
-/** v2: primeira página em cache com 10 itens (scroll infinito). */
-const GALLERY_CACHE_PREFIX = 'mydraw:gallery-cache:v2'
+/** v3: cache com URLs de storage reescritas para LAN no mobile. */
+const GALLERY_CACHE_PREFIX = 'mydraw:gallery-cache:v3'
 const GALLERY_PAGE_INITIAL = 10
 const GALLERY_PAGE_MORE = 12
 const GALLERY_SORT_STORAGE_KEY = 'mydraw:gallery-sort:v1'
@@ -205,7 +206,7 @@ function readGalleryCache(postStatus: PostStatus, sortOrder: GallerySort): Galle
   try {
     const parsed = JSON.parse(raw) as GalleryCachePayload
     if (!parsed?.page || !Array.isArray(parsed.page.data) || !parsed.counts) return null
-    return parsed
+    return rewriteStorageUrlsInData(parsed)
   } catch {
     return null
   }
@@ -380,7 +381,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <main class="app-page-inner pt-12 pb-32 md:pb-24 w-full">
+  <main class="app-page-inner app-page-inner--mobile-nav pt-12 w-full">
     <div class="gallery-toolbar">
       <GalleryStatusToggle
         :model-value="galleryStatus"

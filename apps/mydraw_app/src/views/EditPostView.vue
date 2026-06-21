@@ -951,6 +951,7 @@ onBeforeUnmount(() => {
             :can-publish="canPublish"
             :pending-action="pendingAction"
             :disable-secondary-actions="effectivePostId === null"
+            :show-destroy="!isNewPostRoute && effectivePostId !== null"
             :editor-locked="
               reorderMode ||
               applyingReorder ||
@@ -999,8 +1000,10 @@ onBeforeUnmount(() => {
       v-if="deletePostConfirmOpen"
       title="Delete post"
       message="This post and all images will be permanently deleted. This cannot be undone."
+      confirm-phrase="delete"
+      confirm-phrase-label="Type"
       cancel-label="Cancel"
-      confirm-label="Delete post"
+      confirm-label="Delete"
       confirm-variant="danger"
       @cancel="cancelDeletePost"
       @confirm="confirmDeletePost"

@@ -23,14 +23,38 @@
     @apply mt-3 text-sm md:text-base leading-relaxed text-on-surface-variant m-0;
   }
 
+  .app-confirm-alert__phrase {
+    @apply mt-6 flex flex-col gap-2;
+  }
+
+  .app-confirm-alert__phrase-label {
+    @apply text-xs font-semibold uppercase tracking-wide text-on-surface-variant;
+  }
+
+  .app-confirm-alert__phrase-word {
+    @apply ml-1 font-bold text-error normal-case tracking-normal;
+  }
+
+  .app-confirm-alert__phrase-input {
+    @apply w-full min-h-11 rounded-xl border border-outline-variant/50 bg-surface-container-low px-4 py-3 text-sm text-on-surface transition-all;
+  }
+
+  .app-confirm-alert__phrase-input:focus {
+    @apply outline-none ring-2 ring-error/30 border-error/40;
+  }
+
   .app-confirm-alert__actions {
     @apply grid grid-cols-2 gap-3 md:gap-4 mt-8;
   }
 
   .app-confirm-alert__btn {
-    @apply w-full py-3.5 md:py-4 rounded-full font-bold uppercase tracking-widest text-xs;
+    @apply w-full min-h-11 py-3.5 md:py-4 rounded-full font-bold uppercase tracking-widest text-xs;
     @apply transition-colors duration-200 focus:outline-none focus-visible:ring-2;
     @apply focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-surface;
+  }
+
+  .app-confirm-alert__btn:disabled {
+    @apply opacity-45 cursor-not-allowed active:scale-100;
   }
 
   .app-confirm-alert__btn--secondary {
@@ -41,6 +65,10 @@
   .app-confirm-alert__btn--danger {
     @apply bg-error text-on-error shadow-lg shadow-error/15;
     @apply hover:opacity-95 active:scale-[0.98];
+  }
+
+  .app-confirm-alert__btn--danger:disabled {
+    @apply hover:opacity-45 shadow-none;
   }
 
   .app-confirm-alert__btn--primary {

@@ -29,6 +29,8 @@ interface Props {
    * Desativa salvar, despublicar e excluir (ex.: ainda não existe `post_id` no servidor).
    */
   disableSecondaryActions?: boolean
+  /** Exibe o botão de excluir post (somente modo edit com post persistido). */
+  showDestroy?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -40,6 +42,7 @@ const props = withDefaults(defineProps<Props>(), {
   pendingAction: null,
   editorLocked: false,
   disableSecondaryActions: false,
+  showDestroy: false,
 })
 
 defineEmits<{
@@ -162,6 +165,7 @@ const isDeleteBusy = computed(() => props.pendingAction === 'delete')
         </button>
 
         <button
+          v-if="showDestroy"
           type="button"
           class="post-metadata__danger"
           :disabled="formDisabled || disableSecondaryActions"

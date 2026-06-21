@@ -135,6 +135,16 @@ class EditPostService
             ->values()
             ->all();
 
+        $disk       = Storage::disk('s3');
+        $logContext = [
+            'user_id' => $this->userId($user),
+            'post_id' => $post->id,
+        ];
+
+        foreach ($objectKeys as $key) {
+            $this->storage->deleteImageFiles($disk, (string) $key, $logContext);
+        }
+
         try {
             DB::transaction(function () use ($post) {
                 $post->delete();
@@ -158,15 +168,6 @@ class EditPostService
                     'detail'  => env('APP_DEBUG') ? $e->getMessage() : null,
                 ]
             );
-        }
-
-        $disk = Storage::disk('s3');
-        $logContext = [
-            'user_id' => $this->userId($user),
-            'post_id' => $post->id,
-        ];
-        foreach ($objectKeys as $key) {
-            $this->storage->deleteImageFiles($disk, (string) $key, $logContext);
         }
 
         return ['deleted' => true];

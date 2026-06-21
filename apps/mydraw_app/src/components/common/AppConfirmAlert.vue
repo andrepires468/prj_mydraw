@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, useId } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue'
 
 interface Props {
   title: string
@@ -8,12 +8,20 @@ interface Props {
   confirmLabel?: string
   /** Estilo do botão de confirmação (ação destrutiva → danger). */
   confirmVariant?: 'danger' | 'primary'
+  /**
+   * Quando definido, exige digitar exatamente este texto para habilitar a confirmação.
+   */
+  confirmPhrase?: string
+  confirmPhraseLabel?: string
+  confirmPhrasePlaceholder?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   cancelLabel: 'Cancel',
   confirmLabel: 'Confirm',
   confirmVariant: 'primary',
+  confirmPhraseLabel: 'Type the word below to confirm',
+  confirmPhrasePlaceholder: '',
 })
 
 const emit = defineEmits<{
@@ -23,6 +31,8 @@ const emit = defineEmits<{
 
 const titleId = useId()
 const descId = useId()
+const phraseInputId = useId()
+const phraseInput = ref('')
 
 const confirmBtnClass = computed(() =>
   props.confirmVariant === 'danger'
@@ -30,12 +40,22 @@ const confirmBtnClass = computed(() =>
     : 'app-confirm-alert__btn--primary',
 )
 
+const confirmEnabled = computed(() => {
+  if (!props.confirmPhrase) return true
+  return phraseInput.value.trim() === props.confirmPhrase
+})
+
 let previousOverflow = ''
 
 function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     emit('cancel')
   }
+}
+
+function handleConfirm() {
+  if (!confirmEnabled.value) return
+  emit('confirm')
 }
 
 onMounted(() => {
@@ -71,6 +91,24 @@ onBeforeUnmount(() => {
         <p :id="descId" class="app-confirm-alert__message">
           {{ message }}
         </p>
+
+        <div v-if="confirmPhrase" class="app-confirm-alert__phrase">
+          <label :for="phraseInputId" class="app-confirm-alert__phrase-label">
+            {{ confirmPhraseLabel }}
+            <span class="app-confirm-alert__phrase-word">{{ confirmPhrase }}</span>
+          </label>
+          <input
+            :id="phraseInputId"
+            v-model="phraseInput"
+            type="text"
+            class="app-confirm-alert__phrase-input"
+            :placeholder="confirmPhrasePlaceholder || confirmPhrase"
+            autocomplete="off"
+            spellcheck="false"
+            @keydown.enter.prevent="handleConfirm"
+          />
+        </div>
+
         <div class="app-confirm-alert__actions">
           <button
             type="button"
@@ -83,7 +121,8 @@ onBeforeUnmount(() => {
             type="button"
             class="app-confirm-alert__btn"
             :class="confirmBtnClass"
-            @click="$emit('confirm')"
+            :disabled="!confirmEnabled"
+            @click="handleConfirm"
           >
             {{ confirmLabel }}
           </button>

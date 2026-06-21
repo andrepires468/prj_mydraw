@@ -108,22 +108,6 @@
     }
   }
 
-  /* Botão "Delete post" — tom curatorial (#b770c2) */
-  .create-post-page .post-metadata__danger {
-    color: #b770c2;
-    border-color: rgb(183 112 194 / 40%);
-    background: transparent;
-  }
-
-  .create-post-page .post-metadata__danger:hover:not(:disabled) {
-    background: rgb(183 112 194 / 8%);
-  }
-
-  .create-post-page .post-metadata__danger .post-metadata__publish-spinner {
-    border-color: rgb(183 112 194 / 25%);
-    border-top-color: #b770c2;
-  }
-
   .create-post-page__title {
     @apply text-4xl md:text-5xl font-extrabold tracking-tighter text-on-surface mb-2;
   }

@@ -19,34 +19,11 @@ import AppConfirmAlert from '@/components/common/AppConfirmAlert.vue'
 import AppModal from '@/components/common/AppModal.vue'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import PostEditorUploadStack from '@/components/post/PostEditorUploadStack.vue'
+import PostEditorReorderActions from '@/components/post/PostEditorReorderActions.vue'
 import ImageQueueGrid from '@/components/post/ImageQueueGrid.vue'
 import PostMetadataForm from '@/components/post/PostMetadataForm.vue'
+import { useEditPostAsideSummarized } from '@/composables/useEditPostAsideSummarized'
 import type { QueuedImage } from '@/components/post/types'
-
-const ASIDE_SUMMARIZED_STORAGE_KEY = 'mydraw:edit-post-aside-summarized:v1'
-
-function readStoredAsideSummarized(): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    const raw = window.localStorage.getItem(ASIDE_SUMMARIZED_STORAGE_KEY)
-    if (raw === '1' || raw === 'true') return true
-    if (raw === '0' || raw === 'false') return false
-  } catch {
-    /* storage indisponível */
-  }
-  return false
-}
-
-function writeAsideSummarized(value: boolean) {
-  try {
-    window.localStorage.setItem(
-      ASIDE_SUMMARIZED_STORAGE_KEY,
-      value ? '1' : '0',
-    )
-  } catch {
-    /* quota / privado */
-  }
-}
 
 interface Props {
   post_id?: number | string
@@ -86,12 +63,39 @@ const submitting = computed(() => pendingAction.value !== null)
 const reorderMode = ref(false)
 const orderSnapshotIds = ref<string[] | null>(null)
 const applyingReorder = ref(false)
-const asideSummarized = ref(readStoredAsideSummarized())
+const { asideSummarized } = useEditPostAsideSummarized()
 const aiCategorizing = ref(false)
 const fileDragActive = ref(false)
 let fileDragResetTimer: number | null = null
 
-watch(asideSummarized, (v) => writeAsideSummarized(v))
+const pageTitle = computed(() => {
+  if (isNewPostRoute.value) return 'New post'
+  return status.value === 'published' ? 'Edit Post' : 'Edit Draft'
+})
+
+const pageSubtitle = computed(() => {
+  if (isNewPostRoute.value) {
+    return 'Upload the first image to create your draft; additional images will attach afterward. Save or publish when you are ready.'
+  }
+  if (status.value === 'draft') {
+    return 'Pick up where you left off. Save as draft or publish when ready.'
+  }
+  return 'Refine the title, description, and images. Changes go live immediately.'
+})
+
+const showPanelToggle = computed(
+  () => isNewPostRoute.value || (!loadError.value && !loading.value),
+)
+
+const reorderActionsLocked = computed(
+  () =>
+    submitting.value ||
+    applyingReorder.value ||
+    imagePipelineBusy.value ||
+    aiCategorizing.value,
+)
+
+const aiCategorizeDisabled = computed(() => effectivePostId.value === null)
 
 /** Enquanto há upload/fila pendente no backend — bloqueia ações laterais como o publish. */
 const imagePipelineBusy = computed(() =>
@@ -831,26 +835,25 @@ onBeforeUnmount(() => {
     :class="{ 'create-post-page--aside-summarized': asideSummarized }"
   >
     <header class="create-post-page__header">
-      <h1 class="create-post-page__title">
-        <template v-if="isNewPostRoute">
-          New post
-        </template>
-        <template v-else>
-          {{ status === 'published' ? 'Edit Post' : 'Edit Draft' }}
-        </template>
-      </h1>
-      <p class="create-post-page__subtitle">
-        <template v-if="isNewPostRoute">
-          Upload the first image to create your draft; additional images will attach
-          afterward. Save or publish when you are ready.
-        </template>
-        <template v-else-if="status === 'draft'">
-          Pick up where you left off. Save as draft or publish when ready.
-        </template>
-        <template v-else>
-          Refine the title, description, and images. Changes go live immediately.
-        </template>
-      </p>
+      <div class="create-post-page__header-row">
+        <div class="create-post-page__header-copy">
+          <h1 class="create-post-page__title">{{ pageTitle }}</h1>
+          <p class="create-post-page__subtitle">{{ pageSubtitle }}</p>
+        </div>
+        <button
+          v-if="showPanelToggle"
+          type="button"
+          class="create-post-page__view-toggle"
+          :aria-pressed="asideSummarized"
+          @click="asideSummarized = !asideSummarized"
+        >
+          {{
+            asideSummarized
+              ? 'Show full side panel'
+              : 'Collapse side panel'
+          }}
+        </button>
+      </div>
     </header>
 
     <p
@@ -904,26 +907,10 @@ onBeforeUnmount(() => {
           >
             <section v-if="images.length > 0" class="flex flex-col gap-6">
               <div class="create-post-page__section-header">
-                <div class="create-post-page__section-heading-row">
-                  <h2 class="create-post-page__section-title">
-                    Manage Queue ({{ images.length }}
-                    {{ images.length === 1 ? 'Image' : 'Images' }})
-                  </h2>
-                  <div class="create-post-page__section-heading-actions">
-                    <button
-                      type="button"
-                      class="create-post-page__view-toggle"
-                      :aria-pressed="asideSummarized"
-                      @click="asideSummarized = !asideSummarized"
-                    >
-                      {{
-                        asideSummarized
-                          ? 'Show full side panel'
-                          : 'Collapse side panel'
-                      }}
-                    </button>
-                  </div>
-                </div>
+                <h2 class="create-post-page__section-title">
+                  Manage Queue ({{ images.length }}
+                  {{ images.length === 1 ? 'Image' : 'Images' }})
+                </h2>
                 <p
                   v-if="reorderMode"
                   class="create-post-page__section-hint mt-2 max-w-xl"
@@ -978,125 +965,19 @@ onBeforeUnmount(() => {
             @destroy="requestDeletePost"
           >
             <template v-if="images.length > 0" #reorder>
-              <template v-if="asideSummarized">
-                <div class="post-metadata__reorder-actions">
-                  <button
-                    v-if="!reorderMode"
-                    type="button"
-                    class="post-metadata__secondary"
-                    :disabled="
-                      submitting ||
-                      applyingReorder ||
-                      imagePipelineBusy ||
-                      aiCategorizing
-                    "
-                    @click="enterReorderMode"
-                  >
-                    Reorder images
-                  </button>
-                  <button
-                    v-if="!reorderMode"
-                    type="button"
-                    class="post-metadata__secondary"
-                    :disabled="
-                      submitting ||
-                      applyingReorder ||
-                      imagePipelineBusy ||
-                      aiCategorizing ||
-                      effectivePostId === null
-                    "
-                    @click="categorizeWithAi"
-                  >
-                    {{
-                      aiCategorizing ? 'Categorizing…' : 'Categorize with AI'
-                    }}
-                  </button>
-                  <template v-else>
-                    <button
-                      type="button"
-                      class="post-metadata__secondary"
-                      :disabled="applyingReorder"
-                      @click="cancelReorderMode"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      class="post-metadata__reorder-apply"
-                      :disabled="!canApplyReorder || applyingReorder"
-                      @click="applyReorder"
-                    >
-                      {{
-                        applyingReorder ? 'Applying…' : 'Apply order'
-                      }}
-                    </button>
-                  </template>
-                </div>
-              </template>
-              <template v-else>
-                <p class="post-metadata__reorder-title">Image order</p>
-                <template v-if="!reorderMode">
-                  <p class="post-metadata__reorder-hint">
-                    Change the display order in the gallery.
-                  </p>
-                  <div class="post-metadata__reorder-actions">
-                    <button
-                      type="button"
-                      class="post-metadata__secondary"
-                      :disabled="
-                        submitting ||
-                        applyingReorder ||
-                        imagePipelineBusy ||
-                        aiCategorizing
-                      "
-                      @click="enterReorderMode"
-                    >
-                      Reorder images
-                    </button>
-                    <button
-                      type="button"
-                      class="post-metadata__secondary"
-                      :disabled="
-                        submitting ||
-                        applyingReorder ||
-                        imagePipelineBusy ||
-                        aiCategorizing ||
-                        effectivePostId === null
-                      "
-                      @click="categorizeWithAi"
-                    >
-                      {{
-                        aiCategorizing ? 'Categorizing…' : 'Categorize with AI'
-                      }}
-                    </button>
-                  </div>
-                </template>
-                <template v-else>
-                  <p class="post-metadata__reorder-hint">
-                    Drag thumbnails in the queue on the left, then confirm.
-                  </p>
-                  <div class="post-metadata__reorder-actions">
-                    <button
-                      type="button"
-                      class="post-metadata__secondary"
-                      :disabled="applyingReorder"
-                      @click="cancelReorderMode"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      class="post-metadata__reorder-apply"
-                      :disabled="!canApplyReorder || applyingReorder"
-                      @click="applyReorder"
-                    >
-                      {{
-                        applyingReorder ? 'Applying…' : 'Apply order'
-                      }}
-                    </button>
-                  </div>
-                </template>
-              </template>
+              <PostEditorReorderActions
+                :reorder-mode="reorderMode"
+                :aside-summarized="asideSummarized"
+                :applying-reorder="applyingReorder"
+                :can-apply-reorder="canApplyReorder"
+                :ai-categorizing="aiCategorizing"
+                :actions-locked="reorderActionsLocked"
+                :ai-disabled="aiCategorizeDisabled"
+                @enter-reorder="enterReorderMode"
+                @cancel-reorder="cancelReorderMode"
+                @apply-reorder="applyReorder"
+                @categorize="categorizeWithAi"
+              />
             </template>
           </PostMetadataForm>
         </div>
@@ -1168,124 +1049,3 @@ onBeforeUnmount(() => {
     </AppModal>
   </main>
 </template>
-
-<style scoped>
-/* Botão "Delete post" na barra lateral — tom #b770c2 */
-.create-post-page :deep(.post-metadata__danger) {
-  color: #b770c2;
-  border-color: rgb(183 112 194 / 40%);
-  background: transparent;
-}
-
-.create-post-page :deep(.post-metadata__danger:hover:not(:disabled)) {
-  background: rgb(183 112 194 / 8%);
-}
-
-.create-post-page :deep(.post-metadata__danger .post-metadata__publish-spinner) {
-  border-color: rgb(183 112 194 / 25%);
-  border-top-color: #b770c2;
-}
-
-.create-post-page__section-heading-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.create-post-page__section-heading-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: flex-end;
-  align-items: flex-start;
-}
-
-.create-post-page__view-toggle {
-  margin-left: auto;
-  flex-shrink: 0;
-  border: 1px solid var(--glass-border);
-  background: var(--surface-soft-bg);
-  color: var(--text-color);
-  border-radius: 9999px;
-  padding: 0.55rem 1rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.create-post-page__view-toggle:hover {
-  border-color: color-mix(in srgb, var(--glass-border) 45%, var(--accent-color, #8b5cf6));
-  background: color-mix(in srgb, var(--surface-soft-bg) 84%, #8b5cf6 16%);
-}
-
-.create-post-page--aside-summarized .create-post-page__aside {
-  position: sticky;
-  top: 4.5rem;
-  z-index: 45;
-  order: -1;
-  transition:
-    opacity 0.16s ease,
-    transform 0.16s ease,
-    visibility 0.16s ease;
-}
-
-.create-post-page__layout--file-drag-active .create-post-page__aside {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-0.5rem);
-  visibility: hidden;
-}
-
-@media (min-width: 1024px) {
-  .create-post-page--aside-summarized .create-post-page__editor,
-  .create-post-page--aside-summarized .create-post-page__aside {
-    grid-column: 1 / -1;
-  }
-}
-
-.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata) {
-  position: static;
-  top: auto;
-  border-radius: 1rem;
-  padding: 0.75rem 1rem;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata__reorder) {
-  padding-top: 0;
-  border-top: none;
-}
-
-.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata__reorder-actions) {
-  flex-direction: row;
-}
-
-.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata__actions) {
-  padding-top: 0;
-}
-
-.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata__publish),
-.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata__secondary),
-.create-post-page--aside-summarized .create-post-page__aside :deep(.post-metadata__reorder-apply) {
-  width: auto;
-  min-width: 11rem;
-  white-space: nowrap;
-}
-
-/* Painel resumido: editor em largura total — fila com mais colunas (5 → 7 em lg+). */
-@media (min-width: 1024px) {
-  .create-post-page--aside-summarized :deep(.image-queue) {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-  }
-}
-</style>

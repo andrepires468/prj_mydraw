@@ -26,7 +26,10 @@ import LoadingIndicator from '@/components/gallery/LoadingIndicator.vue'
 import type { GallerySort } from '@/components/gallery/types'
 import AppModal from '@/components/common/AppModal.vue'
 import PostView from '@/views/PostView.vue'
-import { rewriteStorageUrlsInData } from '@/utils/storageUrl'
+import {
+  readGalleryCache,
+  writeGalleryCache,
+} from '@/utils/galleryListCache'
 
 interface PostCard {
   id: number
@@ -38,17 +41,9 @@ interface PostCard {
   isDraft: boolean
 }
 
-/** v3: cache com URLs de storage reescritas para LAN no mobile. */
-const GALLERY_CACHE_PREFIX = 'mydraw:gallery-cache:v3'
 const GALLERY_PAGE_INITIAL = 10
 const GALLERY_PAGE_MORE = 12
 const GALLERY_SORT_STORAGE_KEY = 'mydraw:gallery-sort:v1'
-
-interface GalleryCachePayload {
-  page: PostsPage
-  counts: PostsCounts
-  updatedAt: string
-}
 
 function readStoredSort(): GallerySort {
   if (typeof window === 'undefined') return 'newest'
@@ -195,33 +190,6 @@ const canOpenActivePostStandalone = computed(
   () => auth.isAdmin && activePostId.value !== null,
 )
 
-function getGalleryCacheKey(postStatus: PostStatus, sortOrder: GallerySort): string {
-  return `${GALLERY_CACHE_PREFIX}:${postStatus}:sort:${sortOrder}:first`
-}
-
-function readGalleryCache(postStatus: PostStatus, sortOrder: GallerySort): GalleryCachePayload | null {
-  if (typeof window === 'undefined') return null
-  const raw = window.localStorage.getItem(getGalleryCacheKey(postStatus, sortOrder))
-  if (!raw) return null
-  try {
-    const parsed = JSON.parse(raw) as GalleryCachePayload
-    if (!parsed?.page || !Array.isArray(parsed.page.data) || !parsed.counts) return null
-    return rewriteStorageUrlsInData(parsed)
-  } catch {
-    return null
-  }
-}
-
-function writeGalleryCache(postStatus: PostStatus, sortOrder: GallerySort, nextPage: PostsPage): void {
-  if (typeof window === 'undefined') return
-  const payload: GalleryCachePayload = {
-    page: nextPage,
-    counts: nextPage.counts ?? counts.value,
-    updatedAt: new Date().toISOString(),
-  }
-  window.localStorage.setItem(getGalleryCacheKey(postStatus, sortOrder), JSON.stringify(payload))
-}
-
 function listPayloadHasMore(payload: PostsPage, perPageForChunk: number): boolean {
   if (payload.has_more === true) return true
   if (payload.has_more === false) return false
@@ -273,27 +241,37 @@ async function loadInitial(includeCounts = false) {
         }
       : null
 
-  loading.value = true
+  loading.value = page.value === null
   loadingMore.value = false
   error.value = null
-  listHasMore.value = false
-  nextOffset.value = 0
+  if (page.value === null) {
+    listHasMore.value = false
+    nextOffset.value = 0
+  }
+
+  const fetchPromise = listPosts(
+    1,
+    GALLERY_PAGE_INITIAL,
+    galleryStatus.value,
+    includeCounts,
+    sort.value,
+    null,
+  )
+
   try {
-    const nextPage = await listPosts(
-      1,
-      GALLERY_PAGE_INITIAL,
-      galleryStatus.value,
-      includeCounts,
-      sort.value,
-      null,
-    )
+    const nextPage = await fetchPromise
     page.value = nextPage
     if (nextPage.counts) {
       counts.value = nextPage.counts
     }
     nextOffset.value = nextPage.data.length
     listHasMore.value = listPayloadHasMore(nextPage, GALLERY_PAGE_INITIAL)
-    writeGalleryCache(galleryStatus.value, sort.value, nextPage)
+    writeGalleryCache(
+      galleryStatus.value,
+      sort.value,
+      nextPage,
+      nextPage.counts ?? counts.value,
+    )
   } catch (err: unknown) {
     error.value = err instanceof Error ? err.message : 'Unknown error'
     if (snapshot) {

@@ -105,6 +105,7 @@ function onWindowKeydown(event: KeyboardEvent) {
   if (!hasMultiple.value) return
   if (keyboardTargetsInput(event)) return
   if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+  if (event.defaultPrevented) return
 
   if (event.key === 'ArrowLeft') {
     event.preventDefault()

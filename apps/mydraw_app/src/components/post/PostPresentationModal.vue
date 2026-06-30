@@ -69,12 +69,16 @@ function handleKeydown(event: KeyboardEvent) {
   }
   if (event.key === 'ArrowRight') {
     event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation()
     if (!hasMultiple.value) return
     currentIndex.value = (currentIndex.value + 1) % props.images.length
     return
   }
   if (event.key === 'ArrowLeft') {
     event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation()
     if (!hasMultiple.value) return
     currentIndex.value
       = (currentIndex.value - 1 + props.images.length) % props.images.length

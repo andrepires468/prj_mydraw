@@ -29,6 +29,8 @@ export const routes = {
     imageOne: (postId: number, galleryId: number) =>
       `/posts/${postId}/images/${galleryId}`,
     reorder: (postId: number) => `/posts/${postId}/images/reorder`,
+    reorderList: '/posts/reorder-list',
+    reorderPosts: '/posts/reorder',
     update: (postId: number) => `/posts/${postId}`,
   },
   createPost: {

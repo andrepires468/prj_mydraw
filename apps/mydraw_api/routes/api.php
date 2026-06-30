@@ -54,6 +54,8 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
     // Escritas em posts existentes: JWT obrigatório; o controller verifica
     // ainda que o recurso pertence ao usuário autenticado.
     $router->group(['prefix' => 'posts', 'middleware' => 'auth.jwt'], function () use ($router) {
+        $router->get('/reorder-list', 'PostController@reorderList');
+        $router->put('/reorder', 'PostController@reorder');
         $router->post('/metadata/extract', 'EditPostController@extractGalleryMetadata');
         $router->post('/{id}/ai/categorize', 'EditPostController@categorizeWithAi');
         $router->put('/{id}',                             'EditPostController@update');

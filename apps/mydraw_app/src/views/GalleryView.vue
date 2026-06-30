@@ -367,7 +367,16 @@ onUnmounted(() => {
         :show-draft="auth.isAdmin"
         @update:model-value="changeStatus"
       />
-      <GalleryFilters :sort="sort" @update:sort="sort = $event" />
+      <div class="gallery-toolbar__actions">
+        <RouterLink
+          v-if="galleryStatus === 'published' && auth.isAdmin"
+          :to="{ name: 'gallery-published-reorder' }"
+          class="gallery-toolbar__reorder-link"
+        >
+          Reorder posts
+        </RouterLink>
+        <GalleryFilters :sort="sort" @update:sort="sort = $event" />
+      </div>
     </div>
 
     <p

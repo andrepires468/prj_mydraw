@@ -21,11 +21,21 @@ class Post extends Model
         'title',
         'description',
         'status',
+        'sort_order',
         'draft_uuid',
         'ai_tags',
         'content_rating',
         'ai_categorized_at',
     ];
+
+    public static function nextPublishedSortOrder(): int
+    {
+        $max = (int) self::query()
+            ->where('status', self::STATUS_PUBLISHED)
+            ->max('sort_order');
+
+        return $max + 1;
+    }
 
     protected $casts = [
         'ai_tags'           => 'array',

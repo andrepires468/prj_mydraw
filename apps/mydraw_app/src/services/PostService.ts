@@ -88,6 +88,7 @@ export interface PostRow {
   description: string | null
   status: PostStatus
   draft_uuid: string | null
+  sort_order?: number
   author_name?: string | null
   author_avatar_url?: string | null
   ai_tags?: string[] | null
@@ -154,4 +155,26 @@ export async function getPost(id: number | string): Promise<PostRow> {
     routes.posts.one(id),
   )
   return unwrapEnvelope<{ post: PostRow }>(data).post
+}
+
+export interface PostReorderRow {
+  id: number
+  title: string
+  sort_order: number
+  cover_url: string | null
+}
+
+export async function listPostsForReorder(): Promise<PostReorderRow[]> {
+  const { data } = await http.get<ApiEnvelope<{ posts: PostReorderRow[] }>>(
+    routes.posts.reorderList,
+  )
+  return unwrapEnvelope<{ posts: PostReorderRow[] }>(data).posts
+}
+
+export async function reorderPosts(order: number[]): Promise<void> {
+  const { data } = await http.put<ApiEnvelope<{ ok: boolean }>>(
+    routes.posts.reorderPosts,
+    { order },
+  )
+  unwrapEnvelope<{ ok: boolean }>(data)
 }

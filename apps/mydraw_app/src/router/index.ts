@@ -6,6 +6,7 @@ import ProfileEditView from '@/views/ProfileEditView.vue'
 import EditPostView from '@/views/EditPostView.vue'
 import PostView from '@/views/PostView.vue'
 import AdminManagementView from '@/views/AdminManagementView.vue'
+import PostReorderView from '@/views/PostReorderView.vue'
 import { isJwtExpired } from '@/utils/jwt'
 
 function storedUserIsAdmin(): boolean {
@@ -45,6 +46,12 @@ export const router = createRouter({
       path: '/gallery/drafts',
       name: 'gallery-drafts',
       component: GalleryView,
+      meta: { adminOnly: true },
+    },
+    {
+      path: '/gallery/published/reorder',
+      name: 'gallery-published-reorder',
+      component: PostReorderView,
       meta: { adminOnly: true },
     },
     {

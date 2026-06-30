@@ -26,6 +26,7 @@
 @import './components/auth-footer.css';
 
 @import './components/admin-management-page.css';
+@import './components/post-reorder-page.css';
 @import './components/create-post-page.css';
 @import './components/upload-dropzone.css';
 @import './components/image-queue.css';

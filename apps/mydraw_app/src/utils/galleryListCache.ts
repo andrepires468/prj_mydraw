@@ -154,3 +154,17 @@ export function writeGalleryCache(
   removeOtherGalleryCacheKeys(cacheKey)
   persist()
 }
+
+/** Clears all gallery list caches (e.g. after manual post reorder). */
+export function clearGalleryCache(): void {
+  if (typeof window === 'undefined') return
+  try {
+    for (const key of Object.keys(window.localStorage)) {
+      if (key.startsWith('mydraw:gallery-cache:')) {
+        window.localStorage.removeItem(key)
+      }
+    }
+  } catch {
+    /* storage indisponível */
+  }
+}

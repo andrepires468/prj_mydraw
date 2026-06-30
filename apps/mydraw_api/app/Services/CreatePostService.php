@@ -176,6 +176,7 @@ class CreatePostService
                 'title'       => (string) ($request->input('title') ?? ''),
                 'description' => $request->input('description'),
                 'status'      => Post::STATUS_PUBLISHED,
+                'sort_order'  => Post::nextPublishedSortOrder(),
                 'draft_uuid'  => null,
             ]);
 

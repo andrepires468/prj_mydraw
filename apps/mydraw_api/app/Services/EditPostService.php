@@ -64,6 +64,9 @@ class EditPostService
         if ($request->has('status') && $targetStatus !== $post->status) {
             $updates['status'] = $targetStatus;
             $updates['draft_uuid'] = null;
+            if ($targetStatus === Post::STATUS_PUBLISHED && $post->status !== Post::STATUS_PUBLISHED) {
+                $updates['sort_order'] = Post::nextPublishedSortOrder();
+            }
         }
 
         if (empty($updates)) {

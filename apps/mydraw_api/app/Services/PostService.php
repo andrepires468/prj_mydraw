@@ -138,10 +138,16 @@ class PostService
                 ->selectRaw('users.AvatarKey as author_avatar_key');
         }
 
-        if ($sort === 'oldest') {
-            $query->orderBy('posts.created_at', 'asc');
+        if ($status === Post::STATUS_DRAFT) {
+            if ($sort === 'oldest') {
+                $query->orderBy('posts.created_at', 'asc');
+            } else {
+                $query->orderByDesc('posts.created_at');
+            }
+        } elseif ($sort === 'oldest') {
+            $query->orderByDesc('posts.sort_order')->orderByDesc('posts.id');
         } else {
-            $query->orderByDesc('posts.created_at');
+            $query->orderBy('posts.sort_order')->orderBy('posts.id');
         }
 
         $with = [
@@ -258,7 +264,7 @@ class PostService
         $cursorPart = $offset !== null ? 'o'.$offset : 'p'.$page;
 
         return sprintf(
-            'posts:list:v7:%s:sort:%s:%s:pp%s:counts%s:u%s:gv%s:uv%s',
+            'posts:list:v8:%s:sort:%s:%s:pp%s:counts%s:u%s:gv%s:uv%s',
             $status,
             $sort,
             $cursorPart,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import {
   listPosts,
   type PostsPage,
@@ -26,10 +26,6 @@ import LoadingIndicator from '@/components/gallery/LoadingIndicator.vue'
 import type { GallerySort } from '@/components/gallery/types'
 import AppModal from '@/components/common/AppModal.vue'
 import PostView from '@/views/PostView.vue'
-import {
-  readGalleryCache,
-  writeGalleryCache,
-} from '@/utils/galleryListCache'
 
 interface PostCard {
   id: number
@@ -44,6 +40,21 @@ interface PostCard {
 const GALLERY_PAGE_INITIAL = 10
 const GALLERY_PAGE_MORE = 12
 const GALLERY_SORT_STORAGE_KEY = 'mydraw:gallery-sort:v1'
+const LEGACY_GALLERY_LIST_CACHE_PREFIX = 'mydraw:gallery-cache:'
+
+function clearLegacyGalleryListCache(): void {
+  if (typeof window === 'undefined') return
+  try {
+    for (let i = window.localStorage.length - 1; i >= 0; i--) {
+      const key = window.localStorage.key(i)
+      if (key?.startsWith(LEGACY_GALLERY_LIST_CACHE_PREFIX)) {
+        window.localStorage.removeItem(key)
+      }
+    }
+  } catch {
+    /* storage indisponível */
+  }
+}
 
 function readStoredSort(): GallerySort {
   if (typeof window === 'undefined') return 'newest'
@@ -202,14 +213,10 @@ const nextOffset = ref(0)
 const loadSentinelRef = ref<HTMLElement | null>(null)
 let loadMoreObserver: IntersectionObserver | null = null
 
-function hydrateGalleryFromCache(postStatus: PostStatus, sortOrder: GallerySort): boolean {
-  const cached = readGalleryCache(postStatus, sortOrder)
-  if (!cached) return false
-  page.value = cached.page
-  counts.value = cached.counts
-  nextOffset.value = cached.page.data.length
-  listHasMore.value = listPayloadHasMore(cached.page, GALLERY_PAGE_INITIAL)
-  return true
+function resetGalleryListState(): void {
+  page.value = null
+  listHasMore.value = false
+  nextOffset.value = 0
 }
 
 function detachLoadMoreObserver(): void {
@@ -266,12 +273,6 @@ async function loadInitial(includeCounts = false) {
     }
     nextOffset.value = nextPage.data.length
     listHasMore.value = listPayloadHasMore(nextPage, GALLERY_PAGE_INITIAL)
-    writeGalleryCache(
-      galleryStatus.value,
-      sort.value,
-      nextPage,
-      nextPage.counts ?? counts.value,
-    )
   } catch (err: unknown) {
     error.value = err instanceof Error ? err.message : 'Unknown error'
     if (snapshot) {
@@ -334,20 +335,20 @@ function closePostModal() {
 }
 
 watch(galleryStatus, () => {
-  hydrateGalleryFromCache(galleryStatus.value, sort.value)
+  resetGalleryListState()
   void loadInitial(false)
 })
 
 watch(sort, () => {
   writeStoredSort(sort.value)
-  hydrateGalleryFromCache(galleryStatus.value, sort.value)
+  resetGalleryListState()
   void loadInitial(false)
 })
 
 onMounted(async () => {
+  clearLegacyGalleryListCache()
   hydrateEditorProfileFromCache()
   void refreshEditorProfileIfStale()
-  hydrateGalleryFromCache(galleryStatus.value, sort.value)
   await loadInitial(true)
   await nextTick()
   attachLoadMoreObserver()
@@ -466,5 +467,7 @@ onUnmounted(() => {
       v-else-if="loadingMore"
       label="Loading more posts..."
     />
+
+    <RouterView class="hidden" aria-hidden="true" />
   </main>
 </template>

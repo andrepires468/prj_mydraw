@@ -20,6 +20,12 @@ const isAuthRoute = computed(() => route.meta?.guestOnly === true)
 const routerViewKey = computed(() => {
   const n = route.name
   if (n === 'edit-post-new' || n === 'edit-post') return 'edit-post-view'
+  if (n === 'gallery-published' || n === 'gallery-published-post') {
+    return 'gallery-published-view'
+  }
+  if (n === 'gallery-drafts' || n === 'gallery-drafts-post') {
+    return 'gallery-drafts-view'
+  }
   return route.path
 })
 

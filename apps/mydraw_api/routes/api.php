@@ -44,15 +44,8 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
 
     // Posts (listagem pública com imagens da Gallery).
     //
-    // Leituras: JWT opcional — endpoints são públicos mas personalizam a
-    // resposta quando o token é enviado (drafts do próprio usuário, etc.).
-    $router->group(['prefix' => 'posts', 'middleware' => 'auth.jwt.optional'], function () use ($router) {
-        $router->get('/',       'PostController@index');
-        $router->get('/{id}',   'PostController@show');
-    });
-
-    // Escritas em posts existentes: JWT obrigatório; o controller verifica
-    // ainda que o recurso pertence ao usuário autenticado.
+    // Rotas estáticas autenticadas devem ser registradas antes de GET /{id}
+    // (auth.jwt.optional) para evitar shadowing no router.
     $router->group(['prefix' => 'posts', 'middleware' => 'auth.jwt'], function () use ($router) {
         $router->get('/reorder-list', 'PostController@reorderList');
         $router->put('/reorder', 'PostController@reorder');
@@ -63,6 +56,13 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->put('/{id}/images/reorder',            'EditPostController@reorderImages');
         $router->post('/{id}/images',                     'EditPostController@uploadImage');
         $router->delete('/{id}/images/{galleryId}',       'EditPostController@destroyImage');
+    });
+
+    // Leituras: JWT opcional — endpoints são públicos mas personalizam a
+    // resposta quando o token é enviado (drafts do próprio usuário, etc.).
+    $router->group(['prefix' => 'posts', 'middleware' => 'auth.jwt.optional'], function () use ($router) {
+        $router->get('/',       'PostController@index');
+        $router->get('/{id}',   'PostController@show');
     });
 
     // Criação de post (draft UUID + galeria)

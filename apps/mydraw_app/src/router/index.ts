@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
+import { defineComponent, h, type Component } from 'vue'
 import { isNativePlatform } from '@/utils/platform'
 import GalleryView from '@/views/GalleryView.vue'
 import LoginView from '@/views/LoginView.vue'
@@ -19,6 +20,12 @@ function storedUserIsAdmin(): boolean {
     return false
   }
 }
+
+/** Filho de rota só para URL do modal; a UI fica no GalleryView pai. */
+const GalleryPostModalRoute: Component = defineComponent({
+  name: 'GalleryPostModalRoute',
+  render: () => h('div', { 'aria-hidden': 'true', class: 'hidden' }),
+})
 
 /** Hash history no WebView Capacitor evita 404 em refresh e assets locais. */
 const routerHistory = isNativePlatform() ? createWebHashHistory() : createWebHistory()
@@ -41,31 +48,33 @@ export const router = createRouter({
       name: 'gallery-published',
       component: GalleryView,
       meta: { public: true },
+      children: [
+        {
+          path: 'post/:id(\\d+)',
+          name: 'gallery-published-post',
+          component: GalleryPostModalRoute,
+          meta: { public: true },
+        },
+      ],
     },
     {
       path: '/gallery/drafts',
       name: 'gallery-drafts',
       component: GalleryView,
       meta: { adminOnly: true },
+      children: [
+        {
+          path: 'post/:id(\\d+)',
+          name: 'gallery-drafts-post',
+          component: GalleryPostModalRoute,
+          meta: { adminOnly: true },
+        },
+      ],
     },
     {
       path: '/gallery/published/reorder',
       name: 'gallery-published-reorder',
       component: PostReorderView,
-      meta: { adminOnly: true },
-    },
-    {
-      path: '/gallery/published/post/:id(\\d+)',
-      name: 'gallery-published-post',
-      component: GalleryView,
-      props: true,
-      meta: { public: true },
-    },
-    {
-      path: '/gallery/drafts/post/:id(\\d+)',
-      name: 'gallery-drafts-post',
-      component: GalleryView,
-      props: true,
       meta: { adminOnly: true },
     },
     {

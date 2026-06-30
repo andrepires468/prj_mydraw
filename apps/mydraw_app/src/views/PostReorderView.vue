@@ -8,7 +8,6 @@ import {
 } from '@/api/posts'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
 import LoadingIndicator from '@/components/gallery/LoadingIndicator.vue'
-import { clearGalleryCache } from '@/utils/galleryListCache'
 import { getApiErrorMessage } from '@/utils/apiErrorMessage'
 
 const loading = ref(true)
@@ -87,7 +86,6 @@ async function applyReorder(): Promise<void> {
   try {
     const order = items.value.map((item) => item.id)
     await reorderPosts(order)
-    clearGalleryCache()
     initialOrder.value = order.slice()
     successMsg.value = 'Gallery order updated.'
   } catch (err) {

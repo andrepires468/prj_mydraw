@@ -61,11 +61,13 @@ class EditPostService
             }
         }
 
+        $prependOnPublish = false;
         if ($request->has('status') && $targetStatus !== $post->status) {
             $updates['status'] = $targetStatus;
             $updates['draft_uuid'] = null;
             if ($targetStatus === Post::STATUS_PUBLISHED && $post->status !== Post::STATUS_PUBLISHED) {
-                $updates['sort_order'] = Post::nextPublishedSortOrder();
+                $updates['sort_order'] = 1;
+                $prependOnPublish = true;
             }
         }
 
@@ -74,7 +76,12 @@ class EditPostService
         }
 
         try {
-            $post->update($updates);
+            DB::transaction(function () use ($post, $updates, $prependOnPublish): void {
+                if ($prependOnPublish) {
+                    Post::prependPublishedSortOrder((int) $post->id);
+                }
+                $post->update($updates);
+            });
             $finalStatus = (string) ($updates['status'] ?? $post->status);
             $touchGlobal = $originalStatus === Post::STATUS_PUBLISHED
                 || $finalStatus === Post::STATUS_PUBLISHED;

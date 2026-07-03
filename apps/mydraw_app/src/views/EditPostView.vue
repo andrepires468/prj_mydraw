@@ -16,8 +16,9 @@ import {
 } from '@/api/posts'
 import { getApiErrorMessage } from '@/utils/apiErrorMessage'
 import AppConfirmAlert from '@/components/common/AppConfirmAlert.vue'
-import AppModal from '@/components/common/AppModal.vue'
 import MaterialIcon from '@/components/common/MaterialIcon.vue'
+import PostPictureViewerModal from '@/components/post/PostPictureViewerModal.vue'
+import type { PostMediaImage } from '@/components/post/post-media'
 import PostEditorUploadStack from '@/components/post/PostEditorUploadStack.vue'
 import PostEditorReorderActions from '@/components/post/PostEditorReorderActions.vue'
 import ImageQueueGrid from '@/components/post/ImageQueueGrid.vue'
@@ -47,10 +48,8 @@ const loadError = ref<string | null>(null)
 const errorMsg = ref<string | null>(null)
 const successMsg = ref<string | null>(null)
 
-const previewModalUrl = ref<string | null>(null)
-const previewModalAlt = ref('')
-/** No modal de pré-visualização: mostra pixels naturais da imagem (com rolagem). */
-const previewModalNaturalSize = ref(false)
+const pictureViewerOpen = ref(false)
+const pictureViewerIndex = ref(0)
 
 const removeConfirmImageId = ref<string | null>(null)
 const deletePostConfirmOpen = ref(false)
@@ -102,6 +101,33 @@ const imagePipelineBusy = computed(() =>
   images.value.some(
     (i) => i.status === 'uploading' || i.status === 'queued',
   ),
+)
+
+const viewableQueuedImages = computed(() =>
+  images.value.filter((img) => !!img.previewUrl),
+)
+
+const pictureViewerImages = computed<PostMediaImage[]>(() =>
+  viewableQueuedImages.value.map((img) => ({
+    id: img.galleryId ?? img.id,
+    url: img.previewUrl,
+    thumbUrl: img.thumbnailUrl ?? img.previewUrl,
+  })),
+)
+
+const pictureViewerGalleryRows = computed<(GalleryRow | null)[]>(() => {
+  const rows = post.value?.images ?? []
+  return viewableQueuedImages.value.map((img) => {
+    if (img.galleryId === undefined) return null
+    return rows.find((r) => r.id === img.galleryId) ?? null
+  })
+})
+
+const pictureViewerAltText = computed(
+  () =>
+    title.value.trim() ||
+    description.value?.trim() ||
+    'Post image',
 )
 
 const uploadAndEditorLocked = computed(
@@ -543,16 +569,14 @@ async function removeImageNow(localId: string) {
 
 function previewImage(localId: string) {
   if (reorderMode.value) return
-  const img = images.value.find((i) => i.id === localId)
-  if (!img?.previewUrl) return
-  previewModalNaturalSize.value = false
-  previewModalUrl.value = img.previewUrl
-  previewModalAlt.value = img.file.name || 'Preview'
+  const index = viewableQueuedImages.value.findIndex((i) => i.id === localId)
+  if (index < 0) return
+  pictureViewerIndex.value = index
+  pictureViewerOpen.value = true
 }
 
-function closePreviewModal() {
-  previewModalUrl.value = null
-  previewModalNaturalSize.value = false
+function closePictureViewer() {
+  pictureViewerOpen.value = false
 }
 
 function reorder(from: number, to: number) {
@@ -1009,46 +1033,14 @@ onBeforeUnmount(() => {
       @confirm="confirmDeletePost"
     />
 
-    <AppModal
-      v-if="previewModalUrl"
-      title="Image preview"
-      @close="closePreviewModal"
-    >
-      <template #actions>
-        <button
-          type="button"
-          class="app-modal__edit-post"
-          :aria-pressed="previewModalNaturalSize"
-          :title="
-            previewModalNaturalSize
-              ? 'Fit image to visible area'
-              : 'View image at actual size (1:1)'
-          "
-          @click="previewModalNaturalSize = !previewModalNaturalSize"
-        >
-          {{
-            previewModalNaturalSize ? 'Fit to screen' : 'Actual size'
-          }}
-        </button>
-      </template>
-      <div
-        class="p-2 md:p-4"
-        :class="
-          previewModalNaturalSize
-            ? 'overflow-auto max-h-[min(85vh,calc(100vh-8rem))] w-full min-h-0'
-            : 'flex justify-center'
-        "
-      >
-        <img
-          :src="previewModalUrl"
-          :alt="previewModalAlt"
-          :class="
-            previewModalNaturalSize
-              ? 'block max-w-none max-h-none w-max h-max shrink-0 rounded-lg'
-              : 'max-h-[min(85vh,calc(100vh-8rem))] max-w-full rounded-lg object-contain'
-          "
-        />
-      </div>
-    </AppModal>
+    <PostPictureViewerModal
+      v-if="pictureViewerOpen && pictureViewerImages.length > 0"
+      v-model:current-index="pictureViewerIndex"
+      :images="pictureViewerImages"
+      :gallery-rows="pictureViewerGalleryRows"
+      :alt-text="pictureViewerAltText"
+      :initial-index="pictureViewerIndex"
+      @close="closePictureViewer"
+    />
   </main>
 </template>

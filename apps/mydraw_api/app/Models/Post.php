@@ -28,13 +28,12 @@ class Post extends Model
         'ai_categorized_at',
     ];
 
-    public static function nextPublishedSortOrder(): int
+    public static function prependPublishedSortOrder(int $postId): void
     {
-        $max = (int) self::query()
+        self::query()
             ->where('status', self::STATUS_PUBLISHED)
-            ->max('sort_order');
-
-        return $max + 1;
+            ->where('id', '!=', $postId)
+            ->increment('sort_order');
     }
 
     protected $casts = [

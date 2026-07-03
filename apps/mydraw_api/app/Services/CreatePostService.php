@@ -172,13 +172,16 @@ class CreatePostService
         }
 
         try {
-            $post->update([
-                'title'       => (string) ($request->input('title') ?? ''),
-                'description' => $request->input('description'),
-                'status'      => Post::STATUS_PUBLISHED,
-                'sort_order'  => Post::nextPublishedSortOrder(),
-                'draft_uuid'  => null,
-            ]);
+            DB::transaction(function () use ($post, $request): void {
+                Post::prependPublishedSortOrder((int) $post->id);
+                $post->update([
+                    'title'       => (string) ($request->input('title') ?? ''),
+                    'description' => $request->input('description'),
+                    'status'      => Post::STATUS_PUBLISHED,
+                    'sort_order'  => 1,
+                    'draft_uuid'  => null,
+                ]);
+            });
 
             PostListCache::bump($userId, true);
 

@@ -216,3 +216,5 @@ onMounted(() => {
     </div>
   </main>
 </template>
+
+<style src="@/assets/styles/route-post-reorder.css"></style>

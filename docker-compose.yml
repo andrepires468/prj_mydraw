@@ -124,7 +124,7 @@ services:
       VITE_API_VERSION: ${APP_VITE_API_VERSION:-v1}
       VITE_MINIO_PUBLIC_URL: ${APP_VITE_MINIO_PUBLIC_URL:-http://localhost:9100}
       VITE_GOOGLE_CLIENT_ID: ${APP_VITE_GOOGLE_CLIENT_ID:-}
-    command: sh -c "if [ -f package.json ]; then npm install && npm run dev -- --host 0.0.0.0 --port 5173; else echo 'mydraw_app vazio — rode bash scripts/init.sh antes' && sleep infinity; fi"
+    command: sh -c "if [ -f package.json ]; then npm install && (node warmup-vite.mjs &) && npm run dev -- --host 0.0.0.0 --port 5173; else echo 'mydraw_app vazio — rode bash scripts/init.sh antes' && sleep infinity; fi"
     networks:
       - mydraw
 

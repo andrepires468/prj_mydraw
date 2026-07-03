@@ -1,0 +1,9 @@
+@import './components/create-post-page.css';
+@import './components/upload-dropzone.css';
+@import './components/image-queue.css';
+@import './components/post-metadata.css';
+@import './components/post-form-field.css';
+@import './components/post-picture-viewer.css';
+@import './components/app-confirm-alert.css';
+
+@tailwind components;

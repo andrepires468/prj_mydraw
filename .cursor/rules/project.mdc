@@ -11,6 +11,7 @@ Galeria de desenhos feitos com IA. Monorepo Docker Compose.
 
 - **API** `apps/mydraw_api/` — Lumen 10, PHP 8.2, `tymon/jwt-auth`, `league/flysystem-aws-s3-v3`
 - **APP** `apps/mydraw_app/` — Vue 3 + Vite 8, TS, Pinia, vue-router, Tailwind 3, Axios
+- **Mobile** — Capacitor 8 (Android / iOS), WebView, `@capawesome/capacitor-google-sign-in`
 - **Infra** — MySQL 8, MinIO (S3), Nginx, Node 20 (dev)
 - **Deploy** — Easypanel
 
@@ -19,7 +20,10 @@ Galeria de desenhos feitos com IA. Monorepo Docker Compose.
 ```
 apps/
   mydraw_api/   app/ (Controllers, Models, Middleware, Providers), routes/api.php, config/
-  mydraw_app/   src/ (api/, components/{auth,gallery,layout,common}, views/, stores/, router/, assets/styles/)
+  mydraw_app/   src/ (api/, components/{auth,gallery,layout,common,post}, views/, stores/, router/, assets/styles/)
+                android/   ← projeto nativo Capacitor
+                capacitor.config.ts
+                warmup-vite.mjs
 docker/{api,app,nginx}/
 scripts/init.sh
 docker-compose.yml e `.env` na raiz (`.env.example`) — Compose + API + `VITE_*` do app (sem `.env` em `mydraw_app`). Perfis: `local-storage` (MinIO), `local-db` (MySQL).
@@ -39,17 +43,120 @@ JWT: `GET /auth/me`, `POST /auth/logout`, `POST /drawings`, `DELETE /drawings/{i
 ## Convenções
 
 - **API**: PSR-4 `App\`, controllers magros, middleware `auth:api` (JWT). Uploads vão para MinIO via disk `s3`.
-- **APP**: Composition API `<script setup lang="ts">`. CSS em `src/assets/styles/components/<nome>.css` importado no `main.css`. Chamadas HTTP via `src/services/*` (contrato em `src/services/apiContract.ts`, rotas base em `src/services/routes.ts`), com fachadas em `src/api/*.ts` e Axios em `src/api/http.ts`. Estado de auth em `stores/auth.ts`. **Textos de interface (UI) no app em inglês** — ver regra `frontend-ui-english.mdc`.
+- **APP**: Composition API `<script setup lang="ts">`. Chamadas HTTP via `src/services/*` (contrato em `src/services/apiContract.ts`, rotas base em `src/services/routes.ts`), com fachadas em `src/api/*.ts` e Axios em `src/api/http.ts`. Estado de auth em `stores/auth.ts`. **Textos de interface (UI) no app em inglês** — ver regra `frontend-ui-english.mdc`.
 - **Backend**: antes de alterar listagem/leitura de posts/galeria, revisar e preservar o fluxo de cache existente (`PostListCache` e invalidação relacionada).
 - **Frontend**: ao mexer em cards/galeria/criação/edição, avaliar opções de thumbnail na pré-visualização (qualidade, proporção, fallback e custo de carregamento).
 - **Layout/Themes**: em qualquer ajuste visual, validar e manter paridade entre temas light/dark (cores, contraste, estados e componentes afetados).
-- **Teste Frontend**: priorizar MCP Playwright para validar alterações visuais/fluxos antes de concluir a tarefa.
 - **Commits**: imperativo, em português.
 - **Idioma**: responder sempre em português (BR).
 
+## CSS — split por rota
+
+O `main.css` carrega **apenas** o CSS da rota inicial (galeria) e do shell (nav, layout, base). CSS de telas secundárias fica em arquivos `route-<nome>.css` importados via `<style src="…">` na view correspondente.
+
+**`main.css`** (boot): `base.css`, `layout.css`, `material-symbols.css`, `top-nav-bar`, `bottom-nav-bar`, `floating-action-button`, `gallery-hero`, `gallery-filters`, `masonry-grid`, `gallery-card`, `app-modal`, `loading-indicator` + diretivas `@tailwind`.
+
+**Arquivos `route-*.css`** (lazy): cada um importa os CSS de componentes daquela rota e termina com `@tailwind components;`. Exemplos: `route-login.css`, `route-edit-post.css`, `route-post-view.css`, `route-profile-edit.css`, `route-admin-management.css`, `route-post-reorder.css`.
+
+### Regras ao alterar CSS
+
+1. **Nunca** adicionar CSS de telas secundárias no `main.css` — criar/editar o `route-*.css` da view e adicionar `<style src="@/assets/styles/route-<nome>.css"></style>` no `.vue`.
+2. Cada `route-*.css` deve terminar com `@tailwind components;` para que `@layer components` funcione quando o arquivo é processado isoladamente pelo PostCSS/Tailwind.
+3. CSS usado na galeria/shell (rota inicial) permanece no `main.css`.
+4. Ao criar um componente novo reutilizado em várias rotas, adicionar o CSS dele em cada `route-*.css` que o usa (ou no `main.css` se for componente global do shell).
+
+## Rotas — lazy loading
+
+Todas as views em `src/router/index.ts` usam import dinâmico: `const XView = () => import('@/views/X.vue')`. Nunca importar views com `import` estático no router.
+
+Componentes pesados dentro de uma view (ex.: `PostView` no modal da galeria) devem usar `defineAsyncComponent` + `<Suspense>` com fallback visual.
+
+## Vite — performance dev
+
+`vite.config.ts` configura `server.warmup.clientFiles` para pré-transformar módulos da rota inicial e `optimizeDeps.include` para pré-empacotar deps centrais (`vue`, `pinia`, `vue-router`, `axios`). O container Docker executa `warmup-vite.mjs` em background no startup para aquecer o cache de transformação via HTTP.
+
+Ao adicionar dependências ou módulos frequentes na rota inicial, considerar incluí-los no `warmup`.
+
+## Playwright — teste frontend
+
+Usar MCP Playwright (`user-playwright`) para validar alterações visuais e fluxos antes de concluir tarefas. Disponível via `CallMcpTool` com server `user-playwright`.
+
+### Ferramentas MCP principais
+
+| Tool | Uso |
+|---|---|
+| `browser_navigate` | Abrir URL (`http://127.0.0.1:5173/…`) |
+| `browser_snapshot` | Árvore de acessibilidade da página (melhor que screenshot para inspecionar) |
+| `browser_take_screenshot` | Captura visual PNG |
+| `browser_click` | Clicar em elemento (usar `target` do snapshot) |
+| `browser_wait_for` | Esperar texto aparecer/sumir ou tempo |
+| `browser_evaluate` | Executar JS na página (métricas, queries DOM) |
+| `browser_console_messages` | Ler console (erros, warnings) |
+| `browser_network_requests` | Listar requests HTTP feitas pela página |
+| `browser_close` | Fechar página/sessão |
+
+### Fluxo padrão de validação
+
+1. `browser_navigate` → URL da rota alterada
+2. `browser_wait_for` → texto/elemento chave visível
+3. `browser_take_screenshot` → conferir visual
+4. `browser_console_messages level=error` → zero erros
+5. Interagir (`browser_click`) e repetir verificação se necessário
+
+### Testes E2E automatizados
+
+Config em `apps/mydraw_app/playwright.config.ts`. Specs em `apps/mydraw_app/e2e/`. Base URL `http://127.0.0.1:5173`.
+
+```
+cd apps/mydraw_app
+npx playwright test              # roda todos
+npx playwright test --ui         # modo interativo
+npx playwright test -g "gallery" # filtrar por nome
+```
+
+## Capacitor — mobile
+
+App ID: `app.mydrow.gallery`. Config em `apps/mydraw_app/capacitor.config.ts`. Projeto Android em `apps/mydraw_app/android/`.
+
+### Modo de operação
+
+- **Bundle (padrão)**: `npm run build:mobile` gera `dist/` → `cap sync` copia para o nativo.
+- **Live reload**: `CAP_USE_LIVE_RELOAD=true` → WebView aponta para Vite na LAN (`VITE_DEV_HOST`).
+- Hash history (`createWebHashHistory`) no WebView evita 404 em refresh/assets locais.
+
+### Convenções mobile
+
+- Plugins nativos (`SplashScreen`, `StatusBar`, `GoogleSignIn`) são inicializados de forma **não-bloqueante** em `src/utils/nativeShell.ts` — não travar o `app.mount()`.
+- `@capawesome/capacitor-google-sign-in` é importado via `import()` dinâmico em `src/utils/googleIdentity.ts` para não entrar no bundle da web.
+- Build mobile usa `vite build --mode mobile` que resolve URLs da API/MinIO para IP da LAN via `vite.config.ts`.
+
+### Comandos (rodar em `apps/mydraw_app/`)
+
+| Comando | O que faz |
+|---|---|
+| `npm run build:mobile` | Build Vite modo mobile (dist/) |
+| `npm run sync:android` | Build + `cap sync android` |
+| `npm run cap:run:android` | Build + sync + instala e roda no device/emulador |
+| `npm run dev:android` | Live reload no device (Vite :5173 na LAN) |
+| `npm run cap:android` | Abre projeto no Android Studio |
+| `npm run android:sha1` | SHA1 do keystore (para Google OAuth) |
+| `npx cap sync` | Sync genérico (Android + iOS) |
+| `npx cap run android` | Instala e roda (sem rebuild) |
+| `npx cap open android` | Abre Android Studio |
+
 ## Comandos (Docker Compose)
 
-Ex.: `docker compose up -d --build` · `docker compose logs -f` · `docker compose exec api php artisan …` · `docker compose exec app npm …` — ver `README.md`.
+```
+docker compose up -d --build
+docker compose --profile local-storage up -d --build
+docker compose logs -f --tail=200
+docker compose exec api php artisan migrate
+docker compose exec api composer require nome/pacote
+docker compose exec app npm install
+docker compose exec app npm run build
+docker compose restart app
+docker compose --profile local-storage --profile local-db down -v --remove-orphans
+```
 
 ## Referências visuais
 

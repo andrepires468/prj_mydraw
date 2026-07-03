@@ -1,8 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 import { SplashScreen } from '@capacitor/splash-screen'
 import { StatusBar, Style } from '@capacitor/status-bar'
-import { initNativeGoogleSignIn } from '@/utils/googleIdentity'
-import { formatGoogleSignInError } from '@/utils/formatGoogleSignInError'
 
 function resolveStatusBarStyle(): Style {
   const isDark =
@@ -27,11 +25,4 @@ export async function initNativeShell(): Promise<void> {
     /* plugin opcional */
   }
 
-  try {
-    await initNativeGoogleSignIn()
-  } catch (err) {
-    if (import.meta.env.DEV) {
-      console.error('[Google Sign-In] Native init failed:', formatGoogleSignInError(err), err)
-    }
-  }
 }

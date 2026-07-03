@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import {
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import {
   listPosts,
@@ -25,7 +33,6 @@ import GalleryCard, {
 import LoadingIndicator from '@/components/gallery/LoadingIndicator.vue'
 import type { GallerySort } from '@/components/gallery/types'
 import AppModal from '@/components/common/AppModal.vue'
-import PostView from '@/views/PostView.vue'
 
 interface PostCard {
   id: number
@@ -79,6 +86,7 @@ function writeStoredSort(value: GallerySort): void {
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+const GalleryPostView = defineAsyncComponent(() => import('@/views/PostView.vue'))
 
 const editorProfile = ref<EditorProfile | null>(null)
 
@@ -454,12 +462,17 @@ onUnmounted(() => {
         </RouterLink>
       </template>
 
-      <PostView
-        :post-id="activePostId"
-        :initial-post="selectedPostFromList"
-        embedded
-        @close="closePostModal"
-      />
+      <Suspense>
+        <GalleryPostView
+          :post-id="activePostId"
+          :initial-post="selectedPostFromList"
+          embedded
+          @close="closePostModal"
+        />
+        <template #fallback>
+          <LoadingIndicator label="Loading post..." />
+        </template>
+      </Suspense>
     </AppModal>
 
     <LoadingIndicator v-if="loading" label="Loading posts..." />

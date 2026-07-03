@@ -1,0 +1,9 @@
+@import './components/login-page.css';
+@import './components/auth-brand.css';
+@import './components/auth-card.css';
+@import './components/auth-field.css';
+@import './components/auth-button.css';
+@import './components/auth-footer.css';
+@import './components/google-sign-in.css';
+
+@tailwind components;

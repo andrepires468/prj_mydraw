@@ -480,3 +480,5 @@ async function submit() {
     />
   </div>
 </template>
+
+<style src="@/assets/styles/route-profile-edit.css"></style>

@@ -1,0 +1,5 @@
+@import './components/post-view.css';
+@import './components/post-presentation.css';
+@import './components/post-picture-viewer.css';
+
+@tailwind components;

@@ -1,13 +1,6 @@
 import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
 import { defineComponent, h, type Component } from 'vue'
 import { isNativePlatform } from '@/utils/platform'
-import GalleryView from '@/views/GalleryView.vue'
-import LoginView from '@/views/LoginView.vue'
-import ProfileEditView from '@/views/ProfileEditView.vue'
-import EditPostView from '@/views/EditPostView.vue'
-import PostView from '@/views/PostView.vue'
-import AdminManagementView from '@/views/AdminManagementView.vue'
-import PostReorderView from '@/views/PostReorderView.vue'
 import { isJwtExpired } from '@/utils/jwt'
 
 function storedUserIsAdmin(): boolean {
@@ -26,6 +19,14 @@ const GalleryPostModalRoute: Component = defineComponent({
   name: 'GalleryPostModalRoute',
   render: () => h('div', { 'aria-hidden': 'true', class: 'hidden' }),
 })
+
+const GalleryView = () => import('@/views/GalleryView.vue')
+const LoginView = () => import('@/views/LoginView.vue')
+const ProfileEditView = () => import('@/views/ProfileEditView.vue')
+const EditPostView = () => import('@/views/EditPostView.vue')
+const PostView = () => import('@/views/PostView.vue')
+const AdminManagementView = () => import('@/views/AdminManagementView.vue')
+const PostReorderView = () => import('@/views/PostReorderView.vue')
 
 /** Hash history no WebView Capacitor evita 404 em refresh e assets locais. */
 const routerHistory = isNativePlatform() ? createWebHashHistory() : createWebHistory()

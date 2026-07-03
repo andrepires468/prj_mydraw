@@ -12,7 +12,6 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 
-void initNativeShell().finally(() => {
-  initAndroidBackButton(router)
-  app.mount('#app')
-})
+app.mount('#app')
+initAndroidBackButton(router)
+void initNativeShell()

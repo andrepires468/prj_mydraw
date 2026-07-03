@@ -138,3 +138,5 @@ async function extractAllPendingMetadata() {
     </section>
   </main>
 </template>
+
+<style src="@/assets/styles/route-admin-management.css"></style>

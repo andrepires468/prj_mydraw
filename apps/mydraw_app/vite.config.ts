@@ -48,32 +48,52 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-  /** Caminhos relativos — necessário para assets no WebView Capacitor (file:// / capacitor://). */
-  base: './',
-  define: envDefine,
-  plugins: [vue()],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    /** Caminhos relativos — necessário para assets no WebView Capacitor (file:// / capacitor://). */
+    base: './',
+    define: envDefine,
+    plugins: [vue()],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+      },
     },
-  },
-  // O Vite 8 usa LightningCSS como transformer/minifier padrão, que inlina
-  // CSS vars definidas em `:root`, quebrando a troca de tema (light/dark)
-  // via classe `.dark` no HTML. Forçamos o PostCSS/esbuild para preservar
-  // os `var(--color-...)` no CSS final.
-  css: {
-    transformer: 'postcss',
-  },
-  build: {
-    cssMinify: 'esbuild',
-  },
-  server: {
-    host: true,
-    port: 5173,
-    strictPort: true,
-    watch: {
-      usePolling: true,
+    // O Vite 8 usa LightningCSS como transformer/minifier padrão, que inlina
+    // CSS vars definidas em `:root`, quebrando a troca de tema (light/dark)
+    // via classe `.dark` no HTML. Forçamos o PostCSS/esbuild para preservar
+    // os `var(--color-...)` no CSS final.
+    css: {
+      transformer: 'postcss',
     },
-  },
+    build: {
+      cssMinify: 'esbuild',
+    },
+    optimizeDeps: {
+      include: ['vue', 'pinia', 'vue-router', 'axios'],
+    },
+    server: {
+      host: true,
+      port: 5173,
+      strictPort: true,
+      hmr: {
+        host: 'localhost',
+      },
+      watch: {
+        usePolling: true,
+        interval: 1000,
+      },
+      warmup: {
+        clientFiles: [
+          './index.html',
+          './src/main.ts',
+          './src/App.vue',
+          './src/router/index.ts',
+          './src/views/GalleryView.vue',
+          './src/components/layout/*.vue',
+          './src/components/gallery/*.vue',
+          './src/components/common/{AppModal,MaterialIcon}.vue',
+          './src/assets/styles/main.css',
+        ],
+      },
+    },
   }
 })

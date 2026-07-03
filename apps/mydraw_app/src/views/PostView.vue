@@ -459,3 +459,5 @@ watch(
     />
   </component>
 </template>
+
+<style src="@/assets/styles/route-post-view.css"></style>

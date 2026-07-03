@@ -1044,3 +1044,5 @@ onBeforeUnmount(() => {
     />
   </main>
 </template>
+
+<style src="@/assets/styles/route-edit-post.css"></style>

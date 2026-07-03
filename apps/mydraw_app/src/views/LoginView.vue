@@ -152,3 +152,5 @@ async function submit() {
     </main>
   </div>
 </template>
+
+<style src="@/assets/styles/route-login.css"></style>

@@ -1,7 +1,6 @@
 /**
  * Google Sign-In — GIS no browser; Credential Manager nativo no Capacitor.
  */
-import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in'
 import { Capacitor } from '@capacitor/core'
 import { isNativePlatform } from '@/utils/platform'
 import {
@@ -12,8 +11,17 @@ import {
 let gsiInitialized = false
 let nativeInitialized = false
 let nativeInitPromise: Promise<void> | null = null
+let googleSignInModulePromise: Promise<
+  typeof import('@capawesome/capacitor-google-sign-in')
+> | null = null
 
 let credentialHandler: ((credential: string) => void) | undefined
+
+async function getGoogleSignInPlugin() {
+  googleSignInModulePromise ??= import('@capawesome/capacitor-google-sign-in')
+  const { GoogleSignIn } = await googleSignInModulePromise
+  return GoogleSignIn
+}
 
 export function setGoogleCredentialHandler(
   fn: ((credential: string) => void) | undefined,
@@ -46,6 +54,7 @@ export async function initNativeGoogleSignIn(): Promise<void> {
   }
 
   nativeInitPromise = (async () => {
+    const GoogleSignIn = await getGoogleSignInPlugin()
     await GoogleSignIn.initialize({ clientId })
     nativeInitialized = true
   })()
@@ -121,6 +130,7 @@ export async function signInWithGoogleNative(): Promise<string | null> {
   await initNativeGoogleSignIn()
 
   try {
+    const GoogleSignIn = await getGoogleSignInPlugin()
     const result = await GoogleSignIn.signIn()
     const token = result.idToken?.trim()
     if (!token) {
@@ -161,6 +171,7 @@ export async function handleGoogleRedirectCallback(): Promise<string | null> {
   }
 
   await initNativeGoogleSignIn()
+  const GoogleSignIn = await getGoogleSignInPlugin()
   const result = await GoogleSignIn.handleRedirectCallback()
   return result.idToken ?? null
 }

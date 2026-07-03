@@ -5,6 +5,7 @@
 @import './components/top-nav-bar.css';
 @import './components/bottom-nav-bar.css';
 @import './components/floating-action-button.css';
+@import './components/app-footer.css';
 @import './components/gallery-hero.css';
 @import './components/gallery-filters.css';
 @import './components/masonry-grid.css';

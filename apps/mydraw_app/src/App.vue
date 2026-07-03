@@ -4,6 +4,7 @@ import { RouterView, useRoute, useRouter } from 'vue-router'
 import TopNavBar from '@/components/layout/TopNavBar.vue'
 import BottomNavBar from '@/components/layout/BottomNavBar.vue'
 import FloatingActionButton from '@/components/layout/FloatingActionButton.vue'
+import AppFooter from '@/components/layout/AppFooter.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
@@ -41,6 +42,8 @@ onMounted(() => {
     <TopNavBar v-if="!isAuthRoute" />
 
     <RouterView :key="routerViewKey" />
+
+    <AppFooter />
 
     <template v-if="!isAuthRoute">
       <BottomNavBar />

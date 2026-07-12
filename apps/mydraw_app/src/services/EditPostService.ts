@@ -93,7 +93,7 @@ export interface ExtractImageMetadataResponse {
   post: PostRow
 }
 
-/** Resposta agregada quando `include_ai_categorize` é usado com `all_posts`. */
+/** Resposta de extract com post_id (opcionalmente com AI). */
 export interface AiCategorizationBatchSummary {
   skipped?: boolean
   reason?: string
@@ -106,45 +106,34 @@ export interface AiCategorizationBatchSummary {
   errors: Array<{ post_id: number; message: string; http_status: number }>
 }
 
-/** Eco do backend: escopo do lote e limite aplicado. */
+/** Eco do backend: post processado. */
 export interface AdminGalleryMetadataBatchInfo {
-  posts_limit: number | null
-  scope_post_ids: number[] | null
+  post_id: number
+  scope_post_ids: number[]
 }
 
-export interface ExtractAllPostsMetadataResponse {
+export interface ExtractPostMetadataResponse {
   summary: ExtractImageMetadataSummary
   errors: ExtractImageMetadataErrorItem[]
-  posts_touched: number
+  post: PostRow
   ai_categorization_batch?: AiCategorizationBatchSummary
   batch?: AdminGalleryMetadataBatchInfo
 }
 
-export type ExtractGalleryMetadataResponse =
-  | ExtractImageMetadataResponse
-  | ExtractAllPostsMetadataResponse
+export type ExtractGalleryMetadataResponse = ExtractPostMetadataResponse
 
-export async function extractGalleryMetadata(
-  options:
-    | { postId: number }
-    | { allPosts: true; includeAiCategorize?: boolean; postsLimit?: number },
-): Promise<ExtractGalleryMetadataResponse> {
-  const body =
-    'postId' in options
-      ? { post_id: options.postId }
-      : {
-          all_posts: true,
-          ...(options.includeAiCategorize
-            ? { include_ai_categorize: true }
-            : {}),
-          ...(typeof options.postsLimit === 'number'
-            ? { posts_limit: options.postsLimit }
-            : {}),
-        }
+export async function extractGalleryMetadata(options: {
+  postId: number
+  includeAiCategorize?: boolean
+}): Promise<ExtractGalleryMetadataResponse> {
+  const body = {
+    post_id: options.postId,
+    ...(options.includeAiCategorize ? { include_ai_categorize: true } : {}),
+  }
   const { data } = await http.post<ApiEnvelope<ExtractGalleryMetadataResponse>>(
     routes.posts.metadataExtract,
     body,
-    /** Metadados + até ~4 min de Gemini por post; margem para lote pequeno. */
+    /** Metadados + até ~4 min de Gemini; margem para um post. */
     { timeout: 360_000 },
   )
   return unwrapEnvelope<ExtractGalleryMetadataResponse>(data)

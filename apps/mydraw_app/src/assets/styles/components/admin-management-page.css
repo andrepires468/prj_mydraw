@@ -51,12 +51,39 @@
     @apply text-sm leading-relaxed text-on-surface-variant mb-6;
   }
 
+  .admin-management-page__ratings {
+    @apply mb-6 p-4 rounded-2xl border border-outline-variant/30;
+    background-color: var(--surface-container-lowest, transparent);
+  }
+
+  .admin-management-page__ratings-title {
+    @apply text-[10px] uppercase tracking-[0.1em] font-bold text-on-surface-variant mb-3;
+  }
+
+  .admin-management-page__ratings-list {
+    @apply flex flex-col gap-2.5 m-0 p-0 list-none;
+  }
+
+  .admin-management-page__ratings-item {
+    @apply flex items-start gap-3;
+  }
+
+  .admin-management-page__ratings-badge {
+    @apply shrink-0 min-w-[3.25rem] text-center text-xs font-bold tracking-wide text-on-surface px-2 py-1 rounded-lg;
+    background-color: var(--surface-soft-bg);
+    border: 1px solid color-mix(in srgb, var(--outline-variant, #888) 40%, transparent);
+  }
+
+  .admin-management-page__ratings-desc {
+    @apply text-sm leading-snug text-on-surface-variant pt-0.5;
+  }
+
   .admin-management-page__field-row {
     @apply mb-6;
   }
 
   .admin-management-page__field {
-    @apply flex flex-col gap-2 max-w-[12rem];
+    @apply flex flex-col gap-2 max-w-[14rem];
   }
 
   .admin-management-page__label {

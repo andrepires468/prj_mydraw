@@ -412,6 +412,9 @@ class EditPostService
     }
 
     /**
+     * Extrai metadados embutidos de um post (post_id obrigatório).
+     * Com include_ai_categorize, também categoriza tags/rating via Gemini nesse post.
+     *
      * @return array<string, mixed>
      */
     public function extractGalleryMetadata(Request $request): array
@@ -420,52 +423,42 @@ class EditPostService
 
         $user = $this->ensureAuthenticatedAdmin($request);
 
-        $allPosts = $request->boolean('all_posts');
-
-        if ($allPosts && $request->has('post_id')) {
-            throw new ApiException(422, 'Invalid payload.', ['error' => 'invalid_payload']);
-        }
-        if (!$allPosts && !$request->filled('post_id')) {
-            throw new ApiException(422, 'Invalid payload.', ['error' => 'invalid_payload']);
-        }
-        if ($request->boolean('include_ai_categorize') && !$allPosts) {
+        if (!$request->filled('post_id')) {
             throw new ApiException(
                 422,
-                'include_ai_categorize requires all_posts.',
-                ['error' => 'invalid_payload']
+                'post_id is required.',
+                ['error' => 'post_id_required']
             );
         }
 
-        if ($allPosts) {
-            $postsLimit = $this->parseOptionalPostsLimit($request);
-
-            $scope = null;
-            if ($postsLimit !== null) {
-                $scope = $this->resolveBatchScopePostIds($postsLimit);
-            }
-
-            $out = $this->galleryMetadataExtraction->extractMissingForAllPosts($user, $scope);
-            $out['batch'] = [
-                'posts_limit'    => $postsLimit,
-                'scope_post_ids' => $scope,
-            ];
-
-            if ($request->boolean('include_ai_categorize')) {
-                $out['ai_categorization_batch'] = $this->geminiPostCategorization->categorizeMissingForAllPosts(
-                    $user,
-                    $scope
-                );
-            }
-
-            return $out;
+        $postId = (int) $request->input('post_id');
+        if ($postId < 1) {
+            throw new ApiException(
+                422,
+                'post_id is required.',
+                ['error' => 'post_id_required']
+            );
         }
 
-        $post = $this->findOwnedPost($request, (int) $request->input('post_id'), $user);
+        $post = Post::query()->find($postId);
         if (!$post) {
             throw new ApiException(404, 'Not found.', ['error' => 'not_found']);
         }
 
-        return $this->galleryMetadataExtraction->extractMissingForPost($post, $user);
+        $out = $this->galleryMetadataExtraction->extractMissingForPost($post, $user);
+        $out['batch'] = [
+            'post_id'        => $postId,
+            'scope_post_ids' => [$postId],
+        ];
+
+        if ($request->boolean('include_ai_categorize')) {
+            $out['ai_categorization_batch'] = $this->geminiPostCategorization->categorizeMissingForAllPosts(
+                $user,
+                [$postId]
+            );
+        }
+
+        return $out;
     }
 
     /**
@@ -523,51 +516,4 @@ class EditPostService
         return $post;
     }
 
-    /**
-     * Limite opcional de posts por requisição (admin management). Null = sem limite.
-     */
-    private function parseOptionalPostsLimit(Request $request): ?int
-    {
-        if (!$request->has('posts_limit')) {
-            return null;
-        }
-
-        $raw = $request->input('posts_limit');
-        if ($raw === null || $raw === '') {
-            return null;
-        }
-
-        $v = (int) $raw;
-        if ($v < 1 || $v > 100) {
-            throw new ApiException(
-                422,
-                'posts_limit must be between 1 and 100.',
-                ['error' => 'invalid_posts_limit']
-            );
-        }
-
-        return $v;
-    }
-
-    /**
-     * Primeiros N post_ids que ainda precisam de metadados embutidos OU categorização IA.
-     *
-     * @return int[]
-     */
-    private function resolveBatchScopePostIds(int $postsLimit): array
-    {
-        $ids = Gallery::query()
-            ->where(function ($q): void {
-                $q->whereNull('metadata_type')
-                    ->orWhereNull('ai_categorized_at');
-            })
-            ->distinct()
-            ->orderBy('post_id')
-            ->pluck('post_id')
-            ->map(static fn ($id) => (int) $id)
-            ->values()
-            ->all();
-
-        return array_slice($ids, 0, $postsLimit);
-    }
 }

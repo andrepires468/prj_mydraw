@@ -36,10 +36,15 @@ final class GeminiGenerateContentClient
     }
 
     /**
+     * @param  int|null  $requestTimeoutSeconds  Override per-request timeout (e.g. shorter for multi-image).
      * @return array<string, mixed>
      */
-    public function generateJson(string $model, string $apiKey, string $userText): array
-    {
+    public function generateJson(
+        string $model,
+        string $apiKey,
+        string $userText,
+        ?int $requestTimeoutSeconds = null
+    ): array {
         $apiKey = trim($apiKey);
         if ($apiKey === '') {
             throw new \InvalidArgumentException('GEMINI_API_KEY is empty.');
@@ -64,6 +69,10 @@ final class GeminiGenerateContentClient
             ],
         ];
 
+        $timeout = $requestTimeoutSeconds !== null
+            ? max(30, min(240, $requestTimeoutSeconds))
+            : $this->requestTimeoutSeconds;
+
         $max429Attempts = max(1, min(10, (int) env('GEMINI_429_MAX_ATTEMPTS', 5)));
         $response         = null;
         $attempt          = 0;
@@ -72,8 +81,9 @@ final class GeminiGenerateContentClient
             $attempt++;
             try {
                 $response = $this->http->post($url, [
-                    'query' => ['key' => $apiKey],
-                    'json'  => $payload,
+                    'query'   => ['key' => $apiKey],
+                    'json'    => $payload,
+                    'timeout' => $timeout,
                 ]);
                 break;
             } catch (RequestException $e) {

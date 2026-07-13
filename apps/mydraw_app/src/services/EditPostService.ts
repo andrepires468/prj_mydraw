@@ -102,6 +102,10 @@ export interface AiCategorizationBatchSummary {
     posts_with_updates: number
     posts_skipped_no_prompt: number
     posts_failed: number
+    tags_duration_ms?: number | null
+    ratings_duration_ms?: number | null
+    process_tags?: boolean
+    process_ratings?: boolean
   }
   errors: Array<{ post_id: number; message: string; http_status: number }>
 }
@@ -125,18 +129,27 @@ export type ExtractGalleryMetadataResponse = ExtractPostMetadataResponse
 export async function extractGalleryMetadata(options: {
   postId: number
   includeAiCategorize?: boolean
+  processAiTags?: boolean
+  processAiRatings?: boolean
 }): Promise<ExtractGalleryMetadataResponse> {
-  const body = {
-    post_id: options.postId,
-    ...(options.includeAiCategorize ? { include_ai_categorize: true } : {}),
-  }
   const { data } = await http.post<ApiEnvelope<ExtractGalleryMetadataResponse>>(
     routes.posts.metadataExtract,
-    body,
-    /** Metadados + até ~4 min de Gemini; margem para um post. */
-    { timeout: 360_000 },
+    {
+      post_id: options.postId,
+      include_ai_categorize: options.includeAiCategorize === true,
+      process_ai_tags: options.processAiTags === true,
+      process_ai_ratings: options.processAiRatings === true,
+    },
+    /** Metadados + pipelines IA por post; até ~30 min. */
+    { timeout: 1_800_000 },
   )
   return unwrapEnvelope<ExtractGalleryMetadataResponse>(data)
+}
+
+export interface CategorizePostAiErrorItem {
+  gallery_id?: number
+  error: string
+  message?: string
 }
 
 export interface CategorizePostAiSummary {
@@ -146,15 +159,22 @@ export interface CategorizePostAiSummary {
     updated: number
     skipped_missing_prompt: number
     failed: number
+    gemini_calls?: number
+    prompts_reused?: number
+    prompt_terms?: number
+    concatenated_prompt_chars?: number
+    prompt_tags?: number
+    context_tags?: number
+    tags_duration_ms?: number | null
+    ratings_duration_ms?: number | null
+    post_content_rating?: string | null
+    post_updated?: boolean
+    process_tags?: boolean
+    process_ratings?: boolean
     source_gallery_id?: number | null
     skipped?: boolean
     reason?: string
   }
-}
-
-export interface CategorizePostAiErrorItem {
-  gallery_id: number
-  error: string
 }
 
 export interface CategorizePostAiResponse {
@@ -169,7 +189,8 @@ export async function categorizePostWithAi(
   const { data } = await http.post<ApiEnvelope<CategorizePostAiResponse>>(
     routes.posts.aiCategorize(postId),
     {},
-    { timeout: 360_000 },
+    /** 1 chamada IA por post; margem de até ~30 min. */
+    { timeout: 1_800_000 },
   )
   return unwrapEnvelope<CategorizePostAiResponse>(data)
 }

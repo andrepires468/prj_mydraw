@@ -58,6 +58,11 @@ class EditPostController extends Controller
         $this->validate($request, [
             'post_id'               => 'required|integer|min:1',
             'include_ai_categorize' => 'sometimes|boolean',
+            'process_ai_tags'       => 'sometimes|boolean',
+            'process_ai_ratings'    => 'sometimes|boolean',
+            // Legacy aliases (same meaning as process_*).
+            'reprocess_ai_tags'     => 'sometimes|boolean',
+            'reprocess_ai_ratings'  => 'sometimes|boolean',
         ]);
 
         return ApiResponse::success($this->editPostService->extractGalleryMetadata($request));

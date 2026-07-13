@@ -7,6 +7,7 @@ use App\Services\GeminiGenerateContentClient;
 use App\Services\GeminiPostCategorizationService;
 use App\Services\ImageMetadataExtractor;
 use App\Services\LoraMetadataEnricher;
+use App\Services\OllamaGenerateJsonClient;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(LoraMetadataEnricher::class);
         $this->app->singleton(GalleryMetadataExtractionService::class);
         $this->app->singleton(GeminiGenerateContentClient::class);
+        $this->app->singleton(OllamaGenerateJsonClient::class);
         $this->app->singleton(GeminiPostCategorizationService::class);
     }
 }

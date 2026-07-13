@@ -82,6 +82,53 @@
     @apply mb-6;
   }
 
+  .admin-management-page__switches {
+    @apply flex flex-col gap-3 mb-6;
+  }
+
+  .admin-management-page__switch-row {
+    @apply flex items-center justify-between gap-4 w-full text-left px-4 py-3 rounded-2xl border border-outline-variant/30 transition-colors;
+    background-color: var(--surface-container-lowest, transparent);
+    cursor: pointer;
+  }
+
+  .admin-management-page__switch-row:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--outline-variant, #888) 60%, transparent);
+  }
+
+  .admin-management-page__switch-row:disabled {
+    @apply opacity-60 cursor-not-allowed;
+  }
+
+  .admin-management-page__switch-copy {
+    @apply flex flex-col gap-0.5 min-w-0;
+  }
+
+  .admin-management-page__switch-label {
+    @apply text-sm font-semibold text-on-surface;
+  }
+
+  .admin-management-page__switch-hint {
+    @apply text-xs leading-snug text-on-surface-variant;
+  }
+
+  .admin-management-page__switch {
+    @apply relative inline-flex items-center h-5 w-9 rounded-full bg-surface-container-highest transition-colors shrink-0;
+  }
+
+  .admin-management-page__switch--on {
+    @apply bg-primary;
+  }
+
+  .admin-management-page__switch-thumb {
+    @apply absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-surface-container-lowest transition-transform;
+    box-shadow: var(--switch-thumb-shadow);
+  }
+
+  .admin-management-page__switch--on .admin-management-page__switch-thumb {
+    transform: translateX(1rem);
+  }
+
   .admin-management-page__field {
     @apply flex flex-col gap-2 max-w-[14rem];
   }

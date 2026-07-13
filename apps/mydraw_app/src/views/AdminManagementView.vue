@@ -41,6 +41,10 @@ const successMsg = ref<string | null>(null)
 const lastSummary = ref<string | null>(null)
 /** Post ID obrigatório para extrair metadados + categorizar com IA. */
 const postIdInput = ref<number | null>(null)
+/** On by default: always process/overwrite AI tags when enabled. */
+const processAiTags = ref(true)
+/** On by default: always process/overwrite AI ratings when enabled. */
+const processAiRatings = ref(true)
 
 const parsedPostId = computed(() => {
   const raw = Number(postIdInput.value)
@@ -48,13 +52,30 @@ const parsedPostId = computed(() => {
   return Math.floor(raw)
 })
 
-const canRun = computed(() => parsedPostId.value !== null && !busy.value)
+const canRun = computed(
+  () =>
+    parsedPostId.value !== null &&
+    !busy.value &&
+    (processAiTags.value || processAiRatings.value),
+)
+
+function formatDurationMs(ms: number | null | undefined): string | null {
+  if (ms == null || !Number.isFinite(ms) || ms < 0) return null
+  if (ms < 1000) return `${Math.round(ms)}ms`
+  return `${(ms / 1000).toFixed(1)}s`
+}
 
 async function runForPost() {
   if (busy.value) return
   const postId = parsedPostId.value
   if (postId === null) {
     errorMsg.value = 'Post ID is required.'
+    successMsg.value = null
+    lastSummary.value = null
+    return
+  }
+  if (!processAiTags.value && !processAiRatings.value) {
+    errorMsg.value = 'Enable at least Process tags or Process ratings.'
     successMsg.value = null
     lastSummary.value = null
     return
@@ -68,19 +89,35 @@ async function runForPost() {
     const res: ExtractGalleryMetadataResponse = await extractGalleryMetadata({
       postId,
       includeAiCategorize: true,
+      processAiTags: processAiTags.value,
+      processAiRatings: processAiRatings.value,
     })
     const { summary } = res
     successMsg.value = `Processed post ${postId}: ${summary.total} image(s).`
     let detail = `Post ${postId}. Metadata: updated ${summary.updated}, no embedded data ${summary.no_metadata}, failed ${summary.failed}.`
+    const parts: string[] = []
+    if (processAiTags.value) parts.push('tags')
+    if (processAiRatings.value) parts.push('ratings')
+    detail += ` Process: ${parts.join(' + ')}.`
 
     const ai = res.ai_categorization_batch
     if (ai?.skipped && ai.reason === 'gemini_not_configured') {
-      detail += ' AI tags: skipped (Gemini not configured).'
+      detail += ' AI: skipped (Gemini not configured).'
     } else if (ai?.skipped && ai.reason === 'ai_categorization_disabled') {
-      detail += ' AI tags: skipped (AI categorization disabled in server config).'
+      detail += ' AI: skipped (AI categorization disabled in server config).'
+    } else if (ai?.skipped && ai.reason === 'nothing_selected') {
+      detail += ' AI: skipped (nothing selected).'
     } else if (ai && !ai.skipped) {
       const s = ai.summary
       detail += ` AI: ${s.posts_with_updates} post(s) updated, ${s.posts_skipped_no_prompt} skipped, ${s.posts_failed} failed.`
+      const tagsTime = formatDurationMs(s.tags_duration_ms)
+      const ratingsTime = formatDurationMs(s.ratings_duration_ms)
+      if (tagsTime) detail += ` Tags time: ${tagsTime}.`
+      if (ratingsTime) detail += ` Ratings time: ${ratingsTime}.`
+      const rating = res.post?.content_rating
+      if (rating) {
+        detail += ` Post rating: ${rating}.`
+      }
       if (ai.errors?.length) {
         const e = ai.errors[0]
         detail += ` First AI error: post ${e.post_id} — ${e.message} (HTTP ${e.http_status}).`
@@ -127,8 +164,10 @@ async function runForPost() {
       </h2>
       <p class="admin-management-page__card-desc">
         Enter a post ID, then run extraction for that post only: pull SD parameters from images
-        still missing embedded metadata, then one Gemini call (first eligible image prompt) to
-        set tags and content rating on the post and its pending images.
+        still missing embedded metadata, then run the selected AI pipelines. Process tags uses one
+        concatenated prompt for the post. Process ratings classifies each image separately
+        (identical prompts are reused); the post gets the most restrictive rating
+        (PG &lt; PG-13 &lt; R &lt; X &lt; XXX). Keep at least one switch on.
       </p>
       <aside
         class="admin-management-page__ratings"
@@ -165,6 +204,59 @@ async function runForPost() {
           />
         </label>
       </div>
+
+      <div
+        class="admin-management-page__switches"
+        role="group"
+        aria-label="AI process options"
+      >
+        <button
+          type="button"
+          class="admin-management-page__switch-row"
+          role="switch"
+          :aria-checked="processAiTags"
+          :disabled="busy"
+          @click="processAiTags = !processAiTags"
+        >
+          <span class="admin-management-page__switch-copy">
+            <span class="admin-management-page__switch-label">Process tags</span>
+            <span class="admin-management-page__switch-hint">
+              Run tag AI and overwrite post tags (visual + scene context).
+            </span>
+          </span>
+          <span
+            class="admin-management-page__switch"
+            :class="{ 'admin-management-page__switch--on': processAiTags }"
+            aria-hidden="true"
+          >
+            <span class="admin-management-page__switch-thumb" />
+          </span>
+        </button>
+
+        <button
+          type="button"
+          class="admin-management-page__switch-row"
+          role="switch"
+          :aria-checked="processAiRatings"
+          :disabled="busy"
+          @click="processAiRatings = !processAiRatings"
+        >
+          <span class="admin-management-page__switch-copy">
+            <span class="admin-management-page__switch-label">Process ratings</span>
+            <span class="admin-management-page__switch-hint">
+              Rate each image from its own prompt; post gets the most restrictive rating.
+            </span>
+          </span>
+          <span
+            class="admin-management-page__switch"
+            :class="{ 'admin-management-page__switch--on': processAiRatings }"
+            aria-hidden="true"
+          >
+            <span class="admin-management-page__switch-thumb" />
+          </span>
+        </button>
+      </div>
+
       <button
         type="button"
         class="admin-management-page__primary"

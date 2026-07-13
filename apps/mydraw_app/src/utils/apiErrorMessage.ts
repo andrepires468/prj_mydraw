@@ -4,8 +4,11 @@ import { ApiEnvelopeError } from '@/services/apiContract'
 const GEMINI_TIMEOUT_UI_MESSAGE =
   'Gemini did not respond in time (up to 4 minutes per post). The request timed out. Try again with fewer posts per run or wait and retry.'
 
+const OLLAMA_TIMEOUT_UI_MESSAGE =
+  'Ollama did not respond in time. Confirm Ollama is running on Windows, the model is pulled (e.g. qwen2.5:7b), and try again.'
+
 const CLIENT_TIMEOUT_UI_MESSAGE =
-  'The request timed out before the server finished. Metadata extraction and Gemini can take several minutes; try again with posts per run = 1.'
+  'The request timed out before the server finished. Metadata extraction and AI categorization can take several minutes; try again.'
 
 function isTimeoutLikeAxiosError(err: import('axios').AxiosError): boolean {
   return (
@@ -39,6 +42,9 @@ export function getApiErrorMessage(err: unknown): string {
       if (code === 'gemini_timeout') {
         return GEMINI_TIMEOUT_UI_MESSAGE
       }
+      if (code === 'ollama_timeout' || code === 'ollama_model_not_found') {
+        return err.message || OLLAMA_TIMEOUT_UI_MESSAGE
+      }
       if ('errors' in payload) {
         const errors = (payload as { errors?: Record<string, string[]> }).errors
         const first = errors ? Object.values(errors)[0]?.[0] : undefined
@@ -69,7 +75,17 @@ export function getApiErrorMessage(err: unknown): string {
         Code?: number
       }
       if (env.Data?.error === 'gemini_timeout' || env.Code === 504) {
-        return GEMINI_TIMEOUT_UI_MESSAGE
+        return env.Data?.error === 'ollama_timeout'
+          ? OLLAMA_TIMEOUT_UI_MESSAGE
+          : GEMINI_TIMEOUT_UI_MESSAGE
+      }
+      if (
+        env.Data?.error === 'ollama_timeout' ||
+        env.Data?.error === 'ollama_model_not_found'
+      ) {
+        return typeof env.Message === 'string' && env.Message
+          ? env.Message
+          : OLLAMA_TIMEOUT_UI_MESSAGE
       }
       if (typeof env.Message === 'string' && env.Message) {
         const fieldErr =

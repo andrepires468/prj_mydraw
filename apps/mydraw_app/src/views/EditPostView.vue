@@ -631,12 +631,28 @@ async function categorizeWithAi() {
     } else if (cat.skipped && cat.reason === 'gemini_not_configured') {
       lines.push('AI tags/rating: skipped (Gemini not configured).')
     } else {
+      const calls = cat.gemini_calls ?? 0
+      const terms = cat.prompt_terms ?? 0
+      const promptTags = cat.prompt_tags ?? 0
+      const contextTags = cat.context_tags ?? 0
+      const tagsTime =
+        cat.tags_duration_ms != null && Number.isFinite(cat.tags_duration_ms)
+          ? ` tags ${(cat.tags_duration_ms / 1000).toFixed(1)}s`
+          : ''
+      const ratingsTime =
+        cat.ratings_duration_ms != null && Number.isFinite(cat.ratings_duration_ms)
+          ? ` ratings ${(cat.ratings_duration_ms / 1000).toFixed(1)}s`
+          : ''
+      const postRating = cat.post_content_rating
+        ? ` Post rating: ${cat.post_content_rating}.`
+        : ''
+      const postUpdated = cat.post_updated ? 'updated' : 'not updated'
       lines.push(
-        `AI tags/rating: updated ${cat.updated} of ${cat.total_with_prompt} with prompt; skipped (no prompt) ${cat.skipped_missing_prompt}; failed ${cat.failed}.`,
+        `AI post tags: ${postUpdated}; images with prompt ${cat.total_with_prompt}; concatenated terms ${terms}; prompt tags ${promptTags}; context tags ${contextTags}; AI calls ${calls}; failed ${cat.failed}.${tagsTime}${ratingsTime}.${postRating}`,
       )
     }
     if (res.errors.length > 0) {
-      lines.push(`${res.errors.length} image warning(s) — see API errors if needed.`)
+      lines.push(`${res.errors.length} warning(s) — see API errors if needed.`)
     }
     successMsg.value = lines.join(' ')
   } catch (err) {

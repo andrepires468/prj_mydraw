@@ -419,8 +419,6 @@ class EditPostService
      */
     public function extractGalleryMetadata(Request $request): array
     {
-        ini_set('max_execution_time', '300'); // 5 minutes
-
         $user = $this->ensureAuthenticatedAdmin($request);
 
         if (!$request->filled('post_id')) {
@@ -445,6 +443,9 @@ class EditPostService
             throw new ApiException(404, 'Not found.', ['error' => 'not_found']);
         }
 
+        $imageCount = Gallery::query()->where('post_id', $postId)->count();
+        $this->geminiPostCategorization->raiseExecutionTimeBudget(max(1, $imageCount));
+
         $out = $this->galleryMetadataExtraction->extractMissingForPost($post, $user);
         $out['batch'] = [
             'post_id'        => $postId,
@@ -452,10 +453,42 @@ class EditPostService
         ];
 
         if ($request->boolean('include_ai_categorize')) {
+            $processTags = $request->exists('process_ai_tags')
+                ? $request->boolean('process_ai_tags')
+                : ($request->exists('reprocess_ai_tags')
+                    ? $request->boolean('reprocess_ai_tags')
+                    : true);
+            $processRatings = $request->exists('process_ai_ratings')
+                ? $request->boolean('process_ai_ratings')
+                : ($request->exists('reprocess_ai_ratings')
+                    ? $request->boolean('reprocess_ai_ratings')
+                    : true);
+
+            if (!$processTags && !$processRatings) {
+                throw new ApiException(
+                    422,
+                    'Select at least one of process_ai_tags or process_ai_ratings.',
+                    ['error' => 'nothing_selected']
+                );
+            }
+
             $out['ai_categorization_batch'] = $this->geminiPostCategorization->categorizeMissingForAllPosts(
                 $user,
-                [$postId]
+                [$postId],
+                $processTags,
+                $processRatings,
             );
+            // Refresh post so content_rating / ai_tags reflect categorization.
+            $refreshed = Post::query()
+                ->with([
+                    'images' => static function ($q): void {
+                        $q->orderBy('position')->orderBy('id');
+                    },
+                ])
+                ->find($postId);
+            if ($refreshed) {
+                $out['post'] = $refreshed;
+            }
         }
 
         return $out;
@@ -472,6 +505,9 @@ class EditPostService
         if (!$post) {
             throw new ApiException(404, 'Not found.', ['error' => 'not_found']);
         }
+
+        $imageCount = Gallery::query()->where('post_id', $post->id)->count();
+        $this->geminiPostCategorization->raiseExecutionTimeBudget(max(1, $imageCount));
 
         return $this->geminiPostCategorization->categorizePost($post, $user);
     }

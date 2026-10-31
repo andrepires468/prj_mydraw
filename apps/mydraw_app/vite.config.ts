@@ -48,8 +48,8 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    /** Caminhos relativos — necessário para assets no WebView Capacitor (file:// / capacitor://). */
-    base: './',
+    /** Relativo só no WebView Capacitor. Na web, `/` evita 404 de assets em rotas aninhadas. */
+    base: mode === 'mobile' ? './' : '/',
     define: envDefine,
     plugins: [vue()],
     resolve: {
